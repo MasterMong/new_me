@@ -35,8 +35,9 @@
 
                     <flux:sidebar.item
                         wire:navigate
-                        href="#"
-                        class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 font-medium"
+                        :href="route('learn.dashboard')"
+                        :current="request()->routeIs('learn.dashboard')"
+                        class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
                     >
                         <x-slot name="icon">
                             <span class="material-symbols-outlined text-[20px]">school</span>
@@ -46,8 +47,9 @@
 
                     <flux:sidebar.item
                         wire:navigate
-                        href="#"
-                        class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 font-medium"
+                        :href="route('courses.index')"
+                        :current="request()->routeIs('courses.index')"
+                        class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
                     >
                         <x-slot name="icon">
                             <span class="material-symbols-outlined text-[20px]">search</span>
@@ -57,8 +59,21 @@
 
                     <flux:sidebar.item
                         wire:navigate
-                        href="#"
-                        class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 font-medium"
+                        :href="route('learn.results.index')"
+                        :current="request()->routeIs('learn.results.index')"
+                        class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
+                    >
+                        <x-slot name="icon">
+                            <span class="material-symbols-outlined text-[20px]">analytics</span>
+                        </x-slot>
+                        ผลการเรียนรู้
+                    </flux:sidebar.item>
+
+                    <flux:sidebar.item
+                        wire:navigate
+                        :href="route('learn.certificates.index')"
+                        :current="request()->routeIs('learn.certificates.*')"
+                        class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
                     >
                         <x-slot name="icon">
                             <span class="material-symbols-outlined text-[20px]">workspace_premium</span>
@@ -68,8 +83,9 @@
 
                     <flux:sidebar.item
                         wire:navigate
-                        href="#"
-                        class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 font-medium"
+                        :href="route('learn.notifications.index')"
+                        :current="request()->routeIs('learn.notifications.*')"
+                        class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
                     >
                         <x-slot name="icon">
                             <span class="material-symbols-outlined text-[20px]">notifications</span>
@@ -161,9 +177,10 @@
             {{-- Settings --}}
             <flux:sidebar.nav class="mb-2">
                 <flux:sidebar.item
-                    :href="route('profile.edit')"
+                    :href="route('learn.settings.index')"
+                    :current="request()->routeIs('learn.settings.*')"
                     wire:navigate
-                    class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 font-medium"
+                    class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
                 >
                     <x-slot name="icon">
                         <span class="material-symbols-outlined text-[20px]">settings</span>
@@ -203,7 +220,7 @@
                         </flux:menu.radio.group>
                         <flux:menu.separator />
                         <flux:menu.radio.group>
-                            <flux:menu.item :href="route('profile.edit')" icon="cog" wire:navigate>
+                            <flux:menu.item :href="route('learn.settings.index')" icon="cog" wire:navigate>
                                 {{ __('Settings') }}
                             </flux:menu.item>
                         </flux:menu.radio.group>
@@ -250,7 +267,7 @@
                             </div>
                         </div>
                         <flux:menu.separator />
-                        <flux:menu.item :href="route('profile.edit')" icon="cog" wire:navigate>
+                        <flux:menu.item :href="route('learn.settings.index')" icon="cog" wire:navigate>
                             {{ __('Settings') }}
                         </flux:menu.item>
                     </flux:menu.radio.group>

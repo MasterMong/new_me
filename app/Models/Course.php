@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Course extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'title', 'description', 'thumbnail_url', 'duration_hours', 'passing_score_pct',
         'has_test', 'require_review', 'is_published', 'created_by',

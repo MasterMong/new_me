@@ -24,7 +24,25 @@ class Show extends Component
             return $module->contents->where('content_type', 'video')->sum('duration_minutes');
         });
 
-        return view('livewire.public.courses.show', compact('course', 'avgRating', 'enrollmentCount', 'totalDurationMinutes'))
+        $isEnrolled = auth()->check() && $course->enrollments()->where('user_id', auth()->id())->exists();
+
+        return view('livewire.public.courses.show', compact('course', 'avgRating', 'enrollmentCount', 'totalDurationMinutes', 'isEnrolled'))
             ->layout('layouts.public', ['title' => $course->title]);
+    }
+
+    public function enroll()
+    {
+        if (! auth()->check()) {
+            return redirect()->route('login');
+        }
+
+        $this->course->enrollments()->firstOrCreate([
+            'user_id' => auth()->id(),
+        ], [
+            'enrolled_at' => now(),
+            'status' => 'active',
+        ]);
+
+        return redirect()->route('learn.courses.show', $this->course);
     }
 }

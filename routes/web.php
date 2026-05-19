@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\UserRole;
 use App\Livewire\Admin\Courses\Create as AdminCoursesCreate;
 use App\Livewire\Admin\Courses\Edit as AdminCoursesEdit;
 use App\Livewire\Admin\Courses\Index as AdminCoursesIndex;
@@ -9,6 +10,15 @@ use App\Livewire\Admin\Groups\Index as AdminGroupsIndex;
 use App\Livewire\Admin\Groups\Members as AdminGroupMembers;
 use App\Livewire\Admin\Reports\Index as AdminReportsIndex;
 use App\Livewire\Admin\Users\Index as AdminUsersIndex;
+use App\Livewire\Learner\AssessmentPlayer;
+use App\Livewire\Learner\Certificates;
+use App\Livewire\Learner\CoursePath;
+use App\Livewire\Learner\CoursePlayer;
+use App\Livewire\Learner\CourseReview;
+use App\Livewire\Learner\Dashboard;
+use App\Livewire\Learner\Notifications;
+use App\Livewire\Learner\Results;
+use App\Livewire\Learner\Settings;
 use App\Livewire\Public\Courses\Index as PublicCoursesIndex;
 use App\Livewire\Public\Courses\Show as PublicCoursesShow;
 use App\Livewire\Public\Directory as PublicDirectory;
@@ -26,7 +36,25 @@ Route::get('/directory', PublicDirectory::class)->name('directory');
 Route::view('/contact', 'contact')->name('contact');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::view('dashboard', 'dashboard')->name('dashboard');
+    Route::get('dashboard', function () {
+        if (auth()->user()->role === UserRole::Admin) {
+            return redirect()->route('admin.dashboard');
+        }
+
+        return redirect()->route('learn.dashboard');
+    })->name('dashboard');
+});
+
+Route::middleware(['auth', 'verified', 'learner'])->prefix('learn')->name('learn.')->group(function () {
+    Route::get('/', Dashboard::class)->name('dashboard');
+    Route::get('/courses/{course}', CoursePath::class)->name('courses.show');
+    Route::get('/courses/{course}/modules/{module}', CoursePlayer::class)->name('courses.play');
+    Route::get('/assessments/{assessment}', AssessmentPlayer::class)->name('assessments.show');
+    Route::get('/certificates', Certificates::class)->name('certificates.index');
+    Route::get('/notifications', Notifications::class)->name('notifications.index');
+    Route::get('/settings', Settings::class)->name('settings.index');
+    Route::get('/results', Results::class)->name('results.index');
+    Route::get('/courses/{course}/review', CourseReview::class)->name('courses.review');
 });
 
 Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {

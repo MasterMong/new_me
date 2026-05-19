@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Affiliation;
+use App\Models\Position;
 use App\Models\User;
 use Livewire\Livewire;
 
@@ -11,8 +13,8 @@ test('profile page is displayed', function () {
 
 test('profile information can be updated', function () {
     $user = User::factory()->create();
-    $position = \App\Models\Position::factory()->create();
-    $affiliation = \App\Models\Affiliation::factory()->create();
+    $position = Position::factory()->create();
+    $affiliation = Affiliation::factory()->create();
 
     $this->actingAs($user);
 
@@ -39,8 +41,8 @@ test('profile information can be updated', function () {
 
 test('email verification status is unchanged when email address is unchanged', function () {
     $user = User::factory()->create([
-        'position_id' => \App\Models\Position::factory()->create()->id,
-        'affiliation_id' => \App\Models\Affiliation::factory()->create()->id,
+        'position_id' => Position::factory()->create()->id,
+        'affiliation_id' => Affiliation::factory()->create()->id,
     ]);
 
     $this->actingAs($user);

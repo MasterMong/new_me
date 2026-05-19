@@ -19,7 +19,7 @@ class User extends Authenticatable
     protected $fillable = [
         'prefix', 'first_name', 'last_name', 'email', 'password',
         'position_id', 'position_other', 'affiliation_id', 'school_name',
-        'experience', 'phone', 'role', 'is_active',
+        'experience', 'phone', 'role', 'is_active', 'email_notifications_enabled',
     ];
 
     protected $hidden = [
@@ -36,6 +36,7 @@ class User extends Authenticatable
             'experience' => UserExperience::class,
             'role' => UserRole::class,
             'is_active' => 'boolean',
+            'email_notifications_enabled' => 'boolean',
         ];
     }
 

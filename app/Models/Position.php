@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Position extends Model
 {
     use HasFactory;
+
     public $timestamps = false;
 
     protected $guarded = [];

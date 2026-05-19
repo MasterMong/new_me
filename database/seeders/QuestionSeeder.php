@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Enums\GradingMode;
-use App\Enums\QuestionType;
 use App\Models\Assessment;
 use App\Models\Course;
 use App\Models\Question;

@@ -55,9 +55,15 @@
                         </div>
 
                         @auth
-                            <a href="{{ route('dashboard') }}" class="block w-full py-3 bg-primary text-on-primary font-bold rounded-xl text-center hover:opacity-90 transition-all">
-                                เข้าสู่บทเรียน
-                            </a>
+                            @if($isEnrolled)
+                                <a href="{{ route('learn.courses.show', $course) }}" wire:navigate class="block w-full py-3 bg-primary text-on-primary font-bold rounded-xl text-center hover:opacity-90 transition-all">
+                                    เข้าสู่บทเรียน
+                                </a>
+                            @else
+                                <button wire:click="enroll" class="block w-full py-3 bg-primary text-on-primary font-bold rounded-xl text-center hover:opacity-90 transition-all">
+                                    ลงทะเบียนเรียน
+                                </button>
+                            @endif
                         @else
                             <a href="{{ route('login') }}" class="block w-full py-3 bg-primary text-on-primary font-bold rounded-xl text-center hover:opacity-90 transition-all">
                                 เข้าสู่ระบบเพื่อเรียน

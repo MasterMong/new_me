@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Module extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'course_id', 'module_number', 'title', 'description', 'thumbnail_url',
         'is_required', 'requires_expert_review', 'max_test_attempts', 'is_sequential', 'sort_order',

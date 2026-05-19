@@ -4,12 +4,15 @@ namespace App\Models;
 
 use App\Enums\AssessmentType;
 use App\Enums\GradingMode;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Assessment extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'course_id', 'module_id', 'type', 'title', 'passing_score_pct',
         'max_attempts', 'grading_mode', 'is_required_for_cert', 'requires_expert_review',
