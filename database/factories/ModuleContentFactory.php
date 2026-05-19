@@ -13,6 +13,7 @@ class ModuleContentFactory extends Factory
         return [
             'module_id' => Module::factory(),
             'content_type' => fake()->randomElement(ContentType::cases())->value,
+            'assessment_id' => null,
             'title' => fake()->sentence(5),
             'file_url' => fake()->url(),
             'duration_minutes' => fake()->randomFloat(2, 5, 120),

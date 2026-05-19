@@ -17,6 +17,7 @@ class ModuleFactory extends Factory
             'thumbnail_url' => 'https://picsum.photos/seed/module_'.fake()->numberBetween(1, 1000).'/400/300',
             'is_required' => true,
             'requires_expert_review' => false,
+            'is_sequential' => fake()->boolean(30),
             'max_test_attempts' => 3,
             'sort_order' => fake()->numberBetween(0, 100),
         ];

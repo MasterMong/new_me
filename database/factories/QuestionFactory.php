@@ -13,7 +13,7 @@ class QuestionFactory extends Factory
     {
         return [
             'assessment_id' => Assessment::factory(),
-            'question_type' => QuestionType::MultipleChoice->value,
+            'question_type' => fake()->randomElement(QuestionType::cases())->value,
             'question_text' => fake()->sentence().'?',
             'points' => 1,
             'grading_mode' => GradingMode::Auto->value,

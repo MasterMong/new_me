@@ -289,6 +289,18 @@ class LearnerProgressSeeder extends Seeder
                         'is_correct' => $isInCorrectSlot,
                     ]
                 );
+            } elseif ($question->question_type === 'short_answer') {
+                $answerText = $isInCorrectSlot ? $question->correct_answer : 'คำตอบที่ผิด';
+
+                TestAnswer::firstOrCreate(
+                    ['attempt_id' => $attempt->id, 'question_id' => $question->id],
+                    [
+                        'selected_choice_id' => null,
+                        'essay_text' => $answerText,
+                        'score' => $isInCorrectSlot ? $question->points : 0.0,
+                        'is_correct' => $isInCorrectSlot,
+                    ]
+                );
             } else {
                 // Essay — score pending review or partial
                 $score = $isInCorrectSlot ? $question->points : ($question->points * 0.5);

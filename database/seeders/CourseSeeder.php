@@ -56,6 +56,7 @@ class CourseSeeder extends Seeder
                 'thumbnail_url' => 'https://picsum.photos/seed/module_1_'.$m['number'].'/400/300',
                 'is_required' => true,
                 'requires_expert_review' => $m['number'] === 4,
+                'is_sequential' => true, // Enable sequential learning for course 1
                 'max_test_attempts' => 3,
                 'sort_order' => $m['sort_order'],
             ]);
@@ -77,6 +78,29 @@ class CourseSeeder extends Seeder
                 'duration_minutes' => null,
                 'sort_order' => 2,
             ]);
+
+            // Add a mini-test inside module 2
+            if ($m['number'] === 2) {
+                $assessment = Assessment::create([
+                    'course_id' => $course1->id,
+                    'module_id' => $module->id,
+                    'type' => AssessmentType::PostTest->value,
+                    'title' => 'แบบทดสอบย่อย: '.$m['title'],
+                    'passing_score_pct' => 100, // Must get all correct to proceed if sequential
+                    'max_attempts' => 5,
+                    'grading_mode' => GradingMode::Auto->value,
+                    'is_required_for_cert' => false,
+                ]);
+
+                ModuleContent::create([
+                    'module_id' => $module->id,
+                    'content_type' => ContentType::Test->value,
+                    'assessment_id' => $assessment->id,
+                    'title' => 'ทดสอบความรู้: '.$m['title'],
+                    'duration_minutes' => 10.00,
+                    'sort_order' => 3,
+                ]);
+            }
         }
 
         Assessment::create([

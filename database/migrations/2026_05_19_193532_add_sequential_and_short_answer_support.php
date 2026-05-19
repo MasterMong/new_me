@@ -22,6 +22,7 @@ return new class extends Migration
 
         Schema::table('questions', function (Blueprint $table) {
             $table->enum('question_type', ['multiple_choice', 'essay', 'file_upload', 'short_answer'])->change();
+            $table->string('correct_answer')->nullable()->after('question_text');
         });
     }
 
@@ -31,6 +32,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('questions', function (Blueprint $table) {
+            $table->dropColumn('correct_answer');
             $table->enum('question_type', ['multiple_choice', 'essay', 'file_upload'])->change();
         });
 
