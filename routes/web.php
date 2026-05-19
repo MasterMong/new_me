@@ -29,6 +29,7 @@ use App\Livewire\Learner\MyProgress;
 use App\Livewire\Learner\Notifications;
 use App\Livewire\Learner\Results;
 use App\Livewire\Learner\Settings;
+use App\Livewire\Public\Contact;
 use App\Livewire\Public\Courses\Index as PublicCoursesIndex;
 use App\Livewire\Public\Courses\Show as PublicCoursesShow;
 use App\Livewire\Public\Directory as PublicDirectory;
@@ -43,7 +44,7 @@ Route::view('/', 'welcome')->name('home');
 Route::get('/courses', PublicCoursesIndex::class)->name('courses.index');
 Route::get('/courses/{course}', PublicCoursesShow::class)->name('courses.show');
 Route::get('/directory', PublicDirectory::class)->name('directory');
-Route::view('/contact', 'contact')->name('contact');
+Route::get('/contact', Contact::class)->name('contact');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {

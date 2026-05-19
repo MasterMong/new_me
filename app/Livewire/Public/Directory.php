@@ -2,22 +2,16 @@
 
 namespace App\Livewire\Public;
 
-use App\Models\Certificate;
-use Illuminate\View\View;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
 use Livewire\Component;
-use Livewire\WithPagination;
 
+#[Layout('layouts.guest')]
+#[Title('ทำเนียบนักติดตาม - ME-Learning')]
 class Directory extends Component
 {
-    use WithPagination;
-
-    public function render(): View
+    public function render()
     {
-        $certificates = Certificate::with(['user', 'course'])
-            ->orderByDesc('issued_date')
-            ->paginate(12);
-
-        return view('livewire.public.directory', compact('certificates'))
-            ->layout('layouts.public', ['title' => 'ทำเนียบนักติดตาม']);
+        return view('livewire.public.directory');
     }
 }
