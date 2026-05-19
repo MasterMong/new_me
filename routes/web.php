@@ -25,6 +25,7 @@ use App\Livewire\Learner\CoursePath;
 use App\Livewire\Learner\CoursePlayer;
 use App\Livewire\Learner\CourseReview;
 use App\Livewire\Learner\Dashboard;
+use App\Livewire\Learner\MyProgress;
 use App\Livewire\Learner\Notifications;
 use App\Livewire\Learner\Results;
 use App\Livewire\Learner\Settings;
