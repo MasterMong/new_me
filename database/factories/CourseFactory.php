@@ -12,6 +12,7 @@ class CourseFactory extends Factory
         return [
             'title' => fake()->sentence(6),
             'description' => fake()->paragraph(),
+            'thumbnail_url' => 'https://picsum.photos/seed/course_'.fake()->numberBetween(1, 1000).'/800/450',
             'duration_hours' => fake()->randomFloat(1, 3, 40),
             'passing_score_pct' => 60,
             'has_test' => true,

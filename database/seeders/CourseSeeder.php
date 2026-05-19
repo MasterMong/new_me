@@ -7,6 +7,7 @@ use App\Enums\ContentType;
 use App\Enums\GradingMode;
 use App\Models\Assessment;
 use App\Models\Course;
+use App\Models\CourseImage;
 use App\Models\Module;
 use App\Models\ModuleContent;
 use App\Models\User;
@@ -21,6 +22,7 @@ class CourseSeeder extends Seeder
         $course1 = Course::create([
             'title' => 'หลักสูตรพัฒนาศักยภาพนักติดตาม ประเมินผลการบริหารและการจัดการศึกษาขั้นพื้นฐาน',
             'description' => 'หลักสูตรสำหรับการพัฒนาศักยภาพนักติดตามและประเมินผลการบริหารและการจัดการศึกษาขั้นพื้นฐาน เพื่อให้มีความรู้ ความเข้าใจ และทักษะในการติดตาม ประเมินผลอย่างมีประสิทธิภาพ',
+            'thumbnail_url' => 'https://picsum.photos/seed/course_1/800/450',
             'duration_hours' => 6.0,
             'passing_score_pct' => 60,
             'has_test' => true,
@@ -28,6 +30,14 @@ class CourseSeeder extends Seeder
             'is_published' => true,
             'created_by' => $admin->id,
         ]);
+
+        for ($i = 1; $i <= 4; $i++) {
+            CourseImage::create([
+                'course_id' => $course1->id,
+                'image_url' => 'https://picsum.photos/seed/gallery_1_'.$i.'/800/600',
+                'sort_order' => $i * 10,
+            ]);
+        }
 
         $modules1 = [
             ['number' => 1, 'title' => 'ความรู้พื้นฐานการติดตามและประเมินผล', 'sort_order' => 1],
@@ -43,6 +53,7 @@ class CourseSeeder extends Seeder
                 'module_number' => $m['number'],
                 'title' => $m['title'],
                 'description' => 'เนื้อหาของ'.$m['title'],
+                'thumbnail_url' => 'https://picsum.photos/seed/module_1_'.$m['number'].'/400/300',
                 'is_required' => true,
                 'requires_expert_review' => $m['number'] === 4,
                 'max_test_attempts' => 3,
@@ -95,6 +106,7 @@ class CourseSeeder extends Seeder
         $course2 = Course::create([
             'title' => 'หลักสูตรการพัฒนาการนิเทศการศึกษาเพื่อยกระดับคุณภาพการศึกษา',
             'description' => 'หลักสูตรพัฒนาศักยภาพศึกษานิเทศก์ให้มีความสามารถในการนิเทศการศึกษาอย่างมีประสิทธิภาพ',
+            'thumbnail_url' => 'https://picsum.photos/seed/course_2/800/450',
             'duration_hours' => 8.0,
             'passing_score_pct' => 60,
             'has_test' => true,
@@ -102,6 +114,14 @@ class CourseSeeder extends Seeder
             'is_published' => true,
             'created_by' => $admin->id,
         ]);
+
+        for ($i = 1; $i <= 3; $i++) {
+            CourseImage::create([
+                'course_id' => $course2->id,
+                'image_url' => 'https://picsum.photos/seed/gallery_2_'.$i.'/800/600',
+                'sort_order' => $i * 10,
+            ]);
+        }
 
         $modules2 = [
             ['number' => 1, 'title' => 'หลักการและแนวคิดการนิเทศการศึกษา', 'sort_order' => 1],
@@ -115,6 +135,7 @@ class CourseSeeder extends Seeder
                 'module_number' => $m['number'],
                 'title' => $m['title'],
                 'description' => 'เนื้อหาของ'.$m['title'],
+                'thumbnail_url' => 'https://picsum.photos/seed/module_2_'.$m['number'].'/400/300',
                 'is_required' => true,
                 'requires_expert_review' => $m['number'] === 3,
                 'max_test_attempts' => 3,

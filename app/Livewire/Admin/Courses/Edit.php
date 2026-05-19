@@ -3,10 +3,15 @@
 namespace App\Livewire\Admin\Courses;
 
 use App\Models\Course;
+use App\Models\CourseImage;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class Edit extends Component
 {
+    use WithFileUploads;
+
     public Course $course;
 
     public string $title = '';
@@ -23,6 +28,14 @@ class Edit extends Component
 
     public bool $isPublished = false;
 
+    public $thumbnail;
+
+    public string $thumbnailUrl = '';
+
+    public $gallery = [];
+
+    public array $existingGallery = [];
+
     public function mount(Course $course): void
     {
         $this->course = $course;
@@ -33,6 +46,8 @@ class Edit extends Component
         $this->hasTest = $course->has_test;
         $this->requireReview = $course->require_review;
         $this->isPublished = $course->is_published;
+        $this->thumbnailUrl = $course->thumbnail_url ?? '';
+        $this->existingGallery = $course->images()->get()->toArray();
     }
 
     protected function rules(): array
@@ -45,6 +60,8 @@ class Edit extends Component
             'hasTest' => ['boolean'],
             'requireReview' => ['boolean'],
             'isPublished' => ['boolean'],
+            'thumbnail' => ['nullable', 'image', 'max:2048'],
+            'gallery.*' => ['image', 'max:2048'],
         ];
     }
 
@@ -65,9 +82,17 @@ class Edit extends Component
     {
         $this->validate();
 
+        if ($this->thumbnail) {
+            $path = $this->thumbnail->store('courses/thumbnails', 'public');
+            $thumbnailUrl = Storage::disk('public')->url($path);
+        } else {
+            $thumbnailUrl = $this->course->thumbnail_url;
+        }
+
         $this->course->update([
             'title' => $this->title,
             'description' => $this->description ?: null,
+            'thumbnail_url' => $thumbnailUrl,
             'duration_hours' => $this->durationHours ?: null,
             'passing_score_pct' => $this->passingScorePct,
             'has_test' => $this->hasTest,
@@ -75,9 +100,27 @@ class Edit extends Component
             'is_published' => $this->isPublished,
         ]);
 
+        if ($this->gallery) {
+            foreach ($this->gallery as $image) {
+                $path = $image->store('courses/gallery', 'public');
+                $this->course->images()->create([
+                    'image_url' => Storage::disk('public')->url($path),
+                    'sort_order' => $this->course->images()->max('sort_order') + 10,
+                ]);
+            }
+        }
+
         session()->flash('status', 'บันทึกคอร์สเรียบร้อยแล้ว');
 
         $this->redirect(route('admin.courses.index'), navigate: true);
+    }
+
+    public function removeGalleryImage(int $imageId): void
+    {
+        $image = CourseImage::findOrFail($imageId);
+        // Optional: delete from storage
+        $image->delete();
+        $this->existingGallery = $this->course->images()->get()->toArray();
     }
 
     public function delete(): void

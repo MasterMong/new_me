@@ -9,6 +9,11 @@
 
             <div class="flex flex-col lg:flex-row gap-12">
                 <div class="lg:w-2/3 space-y-6">
+                    @if($course->thumbnail_url)
+                        <div class="w-full aspect-[21/9] rounded-3xl overflow-hidden mb-8 border border-outline-variant/10 shadow-lg">
+                            <img src="{{ $course->thumbnail_url }}" alt="{{ $course->title }}" class="w-full h-full object-cover">
+                        </div>
+                    @endif
                     <h1 class="text-3xl lg:text-4xl font-extrabold font-headline text-primary tracking-tight leading-snug">
                         {{ $course->title }}
                     </h1>
@@ -59,6 +64,20 @@
                             </a>
                         @endauth
                     </div>
+
+                    {{-- Course Images Gallery --}}
+                    @if($course->images->isNotEmpty())
+                        <div class="mt-6 space-y-3">
+                            <h3 class="text-sm font-bold text-primary px-1">รูปภาพหลักสูตร</h3>
+                            <div class="grid grid-cols-2 gap-3">
+                                @foreach($course->images as $image)
+                                    <div class="aspect-square rounded-xl overflow-hidden border border-outline-variant/10 bg-surface">
+                                        <img src="{{ $image->image_url }}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -78,9 +97,15 @@
                         @foreach($course->modules as $module)
                             <div class="bg-surface-container-lowest rounded-2xl p-6 border border-outline-variant/10">
                                 <div class="flex items-start gap-4">
-                                    <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold font-headline flex-shrink-0">
-                                        {{ $module->module_number }}
-                                    </div>
+                                    @if($module->thumbnail_url)
+                                        <div class="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 border border-outline-variant/10">
+                                            <img src="{{ $module->thumbnail_url }}" class="w-full h-full object-cover">
+                                        </div>
+                                    @else
+                                        <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold font-headline flex-shrink-0">
+                                            {{ $module->module_number }}
+                                        </div>
+                                    @endif
                                     <div class="flex-grow">
                                         <h3 class="font-bold text-primary">{{ $module->title }}</h3>
                                         @if($module->description)

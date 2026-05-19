@@ -8,10 +8,14 @@ use App\Models\Course;
 use App\Models\LearnerGroup;
 use App\Models\Module;
 use App\Models\ModuleContent;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class Modules extends Component
 {
+    use WithFileUploads;
+
     public Course $course;
 
     // ── UI state ────────────────────────────────────────────────
@@ -35,6 +39,10 @@ class Modules extends Component
     public bool $moduleRequiresExpertReview = false;
 
     public int $moduleMaxTestAttempts = 3;
+
+    public $moduleThumbnail;
+
+    public string $moduleThumbnailUrl = '';
 
     // ── Content form ────────────────────────────────────────────
     public string $contentType = 'video';
@@ -83,6 +91,7 @@ class Modules extends Component
         $this->moduleIsRequired = $module->is_required;
         $this->moduleRequiresExpertReview = $module->requires_expert_review;
         $this->moduleMaxTestAttempts = $module->max_test_attempts;
+        $this->moduleThumbnailUrl = $module->thumbnail_url ?? '';
         $this->showModuleModal = true;
     }
 
@@ -90,10 +99,20 @@ class Modules extends Component
     {
         $this->validate($this->moduleRules(), $this->moduleMessages());
 
+        if ($this->moduleThumbnail) {
+            $path = $this->moduleThumbnail->store('modules/thumbnails', 'public');
+            $thumbnailUrl = Storage::disk('public')->url($path);
+        } else {
+            $thumbnailUrl = $this->editingModuleId
+                ? Module::findOrFail($this->editingModuleId)->thumbnail_url
+                : null;
+        }
+
         if ($this->editingModuleId) {
             Module::findOrFail($this->editingModuleId)->update([
                 'title' => $this->moduleTitle,
                 'description' => $this->moduleDescription ?: null,
+                'thumbnail_url' => $thumbnailUrl,
                 'is_required' => $this->moduleIsRequired,
                 'requires_expert_review' => $this->moduleRequiresExpertReview,
                 'max_test_attempts' => $this->moduleMaxTestAttempts,
@@ -107,6 +126,7 @@ class Modules extends Component
                 'sort_order' => $maxSort + 10,
                 'title' => $this->moduleTitle,
                 'description' => $this->moduleDescription ?: null,
+                'thumbnail_url' => $thumbnailUrl,
                 'is_required' => $this->moduleIsRequired,
                 'requires_expert_review' => $this->moduleRequiresExpertReview,
                 'max_test_attempts' => $this->moduleMaxTestAttempts,
@@ -200,6 +220,7 @@ class Modules extends Component
             'moduleIsRequired' => ['boolean'],
             'moduleRequiresExpertReview' => ['boolean'],
             'moduleMaxTestAttempts' => ['required', 'integer', 'min:1', 'max:10'],
+            'moduleThumbnail' => ['nullable', 'image', 'max:2048'],
         ];
     }
 
@@ -246,6 +267,8 @@ class Modules extends Component
         $this->moduleIsRequired = true;
         $this->moduleRequiresExpertReview = false;
         $this->moduleMaxTestAttempts = 3;
+        $this->moduleThumbnail = null;
+        $this->moduleThumbnailUrl = '';
         $this->resetValidation();
     }
 

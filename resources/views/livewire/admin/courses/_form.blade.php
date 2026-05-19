@@ -119,6 +119,51 @@
             </div>
         </div>
 
+        {{-- Section 4: Image Gallery --}}
+        <div class="rounded-2xl border border-outline-variant/30 bg-white p-6">
+            <div class="flex items-center gap-3 mb-5 pb-4 border-b border-outline-variant/20">
+                <div class="flex size-9 items-center justify-center rounded-xl bg-primary/10">
+                    <span class="material-symbols-outlined text-[20px] text-primary">gallery_thumbnail</span>
+                </div>
+                <div>
+                    <h2 class="text-base font-semibold font-headline text-on-surface">คลังรูปภาพ</h2>
+                    <p class="text-xs text-on-surface/50">รูปภาพเพิ่มเติมที่แสดงในหน้าคอร์ส</p>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <flux:field>
+                    <flux:label>เพิ่มรูปภาพในคลัง</flux:label>
+                    <flux:input type="file" wire:model="gallery" multiple accept="image/*" />
+                    <flux:description>สามารถเลือกได้หลายรูป (สูงสุด 2MB ต่อรูป)</flux:description>
+                    <flux:error name="gallery.*" />
+                </flux:field>
+
+                @if ($existingGallery)
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-4">
+                        @foreach ($existingGallery as $image)
+                            <div class="relative group aspect-square rounded-xl overflow-hidden border border-outline-variant/20">
+                                <img src="{{ $image['image_url'] }}" class="w-full h-full object-cover" alt="Gallery image">
+                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <flux:button
+                                        variant="danger"
+                                        size="sm"
+                                        icon="trash"
+                                        wire:click="removeGalleryImage({{ $image['id'] }})"
+                                        wire:confirm="ลบรูปภาพนี้?"
+                                    />
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+
+                <div wire:loading wire:target="gallery" class="text-xs text-primary animate-pulse">
+                    กำลังอัปโหลดรูปภาพ...
+                </div>
+            </div>
+        </div>
+
     </div>
 
     {{-- ── RIGHT COLUMN: Sidebar ── --}}
@@ -146,6 +191,36 @@
             <p class="text-xs text-on-surface/50 mt-2">
                 {{ $isPublished ? 'ผู้เรียนสามารถมองเห็นและลงทะเบียนได้' : 'คอร์สนี้ยังไม่แสดงต่อผู้เรียน' }}
             </p>
+        </div>
+
+        {{-- Thumbnail card --}}
+        <div class="rounded-2xl border border-outline-variant/30 bg-white p-5">
+            <div class="flex items-center gap-2 mb-4 pb-3 border-b border-outline-variant/20">
+                <span class="material-symbols-outlined text-[18px] text-primary">image</span>
+                <h3 class="text-sm font-semibold font-headline text-on-surface">รูปหน้าปก (Thumbnail)</h3>
+            </div>
+
+            <div class="space-y-4">
+                @if ($thumbnail)
+                    <div class="aspect-video rounded-xl overflow-hidden border border-outline-variant/20 bg-surface">
+                        <img src="{{ $thumbnail->temporaryUrl() }}" class="w-full h-full object-cover">
+                    </div>
+                @elseif ($thumbnailUrl)
+                    <div class="aspect-video rounded-xl overflow-hidden border border-outline-variant/20 bg-surface">
+                        <img src="{{ $thumbnailUrl }}" class="w-full h-full object-cover">
+                    </div>
+                @endif
+
+                <flux:field>
+                    <flux:input type="file" wire:model="thumbnail" accept="image/*" />
+                    <flux:description>รูปที่แสดงในหน้าหลักและหน้ารายละเอียด (สูงสุด 2MB)</flux:description>
+                    <flux:error name="thumbnail" />
+                </flux:field>
+
+                <div wire:loading wire:target="thumbnail" class="text-xs text-primary animate-pulse">
+                    กำลังอัปโหลดรูปภาพ...
+                </div>
+            </div>
         </div>
 
         {{-- Course summary (edit only) --}}

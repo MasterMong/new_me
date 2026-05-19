@@ -28,9 +28,13 @@
                 @foreach($courses as $course)
                     <a href="{{ route('courses.show', $course) }}" class="group bg-surface-container-lowest rounded-[2rem] overflow-hidden transition-all duration-300 hover:shadow-[0px_20px_40px_rgba(25,28,29,0.06)] flex flex-col">
                         <div class="relative h-56 overflow-hidden bg-primary/5">
-                            <div class="flex items-center justify-center h-full">
-                                <span class="material-symbols-outlined text-7xl text-primary/20">menu_book</span>
-                            </div>
+                            @if($course->thumbnail_url)
+                                <img src="{{ $course->thumbnail_url }}" alt="{{ $course->title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                            @else
+                                <div class="flex items-center justify-center h-full">
+                                    <span class="material-symbols-outlined text-7xl text-primary/20">menu_book</span>
+                                </div>
+                            @endif
                             @if($course->reviews_avg_rating >= 4.5)
                                 <div class="absolute top-4 left-4 bg-secondary-container text-on-secondary-container px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider">
                                     แนะนำ

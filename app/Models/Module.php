@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Module extends Model
 {
     protected $fillable = [
-        'course_id', 'module_number', 'title', 'description',
+        'course_id', 'module_number', 'title', 'description', 'thumbnail_url',
         'is_required', 'requires_expert_review', 'max_test_attempts', 'sort_order',
     ];
 

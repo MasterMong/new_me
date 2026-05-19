@@ -48,10 +48,16 @@
                 {{-- Module card header --}}
                 <div class="flex items-start justify-between gap-4 p-5">
                     <div class="flex items-start gap-4 min-w-0">
-                        {{-- Number badge --}}
-                        <div class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary font-bold text-sm font-headline">
-                            {{ $module->module_number }}
-                        </div>
+                        {{-- Thumbnail or Number badge --}}
+                        @if ($module->thumbnail_url)
+                            <div class="size-16 shrink-0 rounded-xl overflow-hidden border border-outline-variant/20">
+                                <img src="{{ $module->thumbnail_url }}" class="w-full h-full object-cover">
+                            </div>
+                        @else
+                            <div class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary font-bold text-sm font-headline">
+                                {{ $module->module_number }}
+                            </div>
+                        @endif
                         <div class="min-w-0">
                             <p class="font-semibold text-on-surface text-base leading-tight">{{ $module->title }}</p>
                             @if ($module->description)
@@ -249,6 +255,26 @@
                     <flux:description>คำตอบจะถูกส่งให้ผู้เชี่ยวชาญตรวจสอบ</flux:description>
                 </flux:field>
             </div>
+
+            <flux:field>
+                <flux:label>รูปหน้าปกโมดูล (Thumbnail)</flux:label>
+                <div class="flex items-center gap-4 mt-1">
+                    @if ($moduleThumbnail)
+                        <div class="size-20 shrink-0 rounded-xl overflow-hidden border border-outline-variant/20 bg-surface">
+                            <img src="{{ $moduleThumbnail->temporaryUrl() }}" class="w-full h-full object-cover">
+                        </div>
+                    @elseif ($moduleThumbnailUrl)
+                        <div class="size-20 shrink-0 rounded-xl overflow-hidden border border-outline-variant/20 bg-surface">
+                            <img src="{{ $moduleThumbnailUrl }}" class="w-full h-full object-cover">
+                        </div>
+                    @endif
+                    <div class="flex-1">
+                        <flux:input type="file" wire:model="moduleThumbnail" accept="image/*" />
+                        <flux:description class="mt-1">ขนาดสูงสุด 2MB</flux:description>
+                    </div>
+                </div>
+                <flux:error name="moduleThumbnail" />
+            </flux:field>
         </div>
 
         <div class="flex gap-3 mt-6 justify-end">

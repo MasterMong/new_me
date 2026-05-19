@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class Course extends Model
 {
     protected $fillable = [
-        'title', 'description', 'duration_hours', 'passing_score_pct',
+        'title', 'description', 'thumbnail_url', 'duration_hours', 'passing_score_pct',
         'has_test', 'require_review', 'is_published', 'created_by',
     ];
 
@@ -59,6 +59,11 @@ class Course extends Model
     public function certificateTemplate(): HasOne
     {
         return $this->hasOne(CertificateTemplate::class);
+    }
+
+    public function images(): HasMany
+    {
+        return $this->hasMany(CourseImage::class)->orderBy('sort_order');
     }
 
     public function scopePublished(Builder $query): Builder
