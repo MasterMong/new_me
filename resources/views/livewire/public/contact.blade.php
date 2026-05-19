@@ -85,19 +85,19 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <flux:field>
                                     <flux:label>ชื่อ-นามสกุล <span class="text-error">*</span></flux:label>
-                                    <flux:input wire:model="name" placeholder="ระบุชื่อของคุณ..." size="xl" class="!rounded-2xl" />
+                                    <flux:input wire:model="name" placeholder="ระบุชื่อของคุณ..." class="!rounded-2xl" />
                                     <flux:error name="name" />
                                 </flux:field>
                                 <flux:field>
                                     <flux:label>อีเมลติดต่อ <span class="text-error">*</span></flux:label>
-                                    <flux:input type="email" wire:model="email" placeholder="email@example.com" size="xl" class="!rounded-2xl" />
+                                    <flux:input type="email" wire:model="email" placeholder="email@example.com" class="!rounded-2xl" />
                                     <flux:error name="email" />
                                 </flux:field>
                             </div>
 
                             <flux:field>
                                 <flux:label>หัวข้อติดต่อ <span class="text-error">*</span></flux:label>
-                                <flux:select wire:model="subject" placeholder="เลือกหัวข้อที่ต้องการติดต่อ..." size="xl" class="!rounded-2xl">
+                                <flux:select wire:model="subject" placeholder="เลือกหัวข้อที่ต้องการติดต่อ..." class="!rounded-2xl">
                                     <flux:select.option value="general">สอบถามทั่วไป</flux:select.option>
                                     <flux:select.option value="technical">ปัญหาด้านเทคนิค / การใช้งาน</flux:select.option>
                                     <flux:select.option value="certificate">ปัญหาเกี่ยวกับใบประกาศนียบัตร</flux:select.option>
@@ -113,7 +113,7 @@
                             </flux:field>
 
                             <div class="pt-4">
-                                <flux:button type="submit" variant="primary" size="xl" class="w-full !rounded-2xl h-14 font-bold tracking-wide">
+                                <flux:button type="submit" variant="primary" class="w-full !rounded-2xl h-14 font-bold tracking-wide">
                                     ส่งข้อความ
                                     <flux:icon name="paper-airplane" variant="micro" class="ms-2" />
                                 </flux:button>

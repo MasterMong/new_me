@@ -22,16 +22,15 @@
                 <flux:input 
                     placeholder="ค้นหาชื่อ-นามสกุล หรือ รหัสใบประกาศ..." 
                     icon="magnifying-glass"
-                    size="xl"
                     class="!rounded-2xl"
                 />
             </div>
             <div class="flex gap-4 w-full md:w-auto">
-                <flux:select placeholder="ทุกรุ่นการอบรม" class="w-full md:w-48 !rounded-2xl" size="xl">
+                <flux:select placeholder="ทุกรุ่นการอบรม" class="w-full md:w-48 !rounded-2xl">
                     <flux:select.option>รุ่นที่ 1 (2566)</flux:select.option>
                     <flux:select.option>รุ่นที่ 2 (2567)</flux:select.option>
                 </flux:select>
-                <flux:button variant="primary" size="xl" class="!rounded-2xl shrink-0">ค้นหา</flux:button>
+                <flux:button variant="primary" class="!rounded-2xl shrink-0">ค้นหา</flux:button>
             </div>
         </div>
     </div>

@@ -6,7 +6,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-#[Layout('layouts.guest')]
+#[Layout('layouts.public')]
 #[Title('ติดต่อเรา - ME-Learning')]
 class Contact extends Component
 {
