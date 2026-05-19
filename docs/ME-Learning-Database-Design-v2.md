@@ -122,6 +122,7 @@
 | `has_test` | BOOLEAN DEFAULT TRUE | มีแบบทดสอบ |
 | `require_review` | BOOLEAN DEFAULT TRUE | ต้องรีวิวเพื่อรับเกียรติบัตร |
 | `is_published` | BOOLEAN DEFAULT FALSE | สถานะเผยแพร่ |
+| `thumbnail_url` | VARCHAR(500) NULL | 🆕 รูปหน้าปกหลักสูตร |
 | `created_by` | BIGINT FK → `users.id` | Admin ผู้สร้าง |
 | `created_at` | TIMESTAMP | |
 | `updated_at` | TIMESTAMP | |
@@ -158,6 +159,8 @@ Module บทเรียน (9 Modules/หลักสูตร)
 | `is_required` | BOOLEAN DEFAULT TRUE | 🆕 บังคับต้องเรียนเพื่อรับเกียรติบัตร |
 | `requires_expert_review` | BOOLEAN DEFAULT FALSE | 3 Modules ที่ต้องให้ ผชช. ตรวจ |
 | `max_test_attempts` | INT DEFAULT 3 | ทำซ้ำได้ 3 ครั้ง |
+| `thumbnail_url` | VARCHAR(500) NULL | 🆕 รูปหน้าปก Module |
+| `is_sequential` | BOOLEAN DEFAULT FALSE | 🆕 ต้องเรียนตามลำดับ |
 | `sort_order` | INT | |
 | `created_at` | TIMESTAMP | |
 
@@ -175,7 +178,8 @@ Module บทเรียน (9 Modules/หลักสูตร)
 |--------|------|------|
 | `id` | INT PK AUTO_INCREMENT | |
 | `module_id` | INT FK → `modules.id` | |
-| `content_type` | ENUM('video','document','link') | คลิป / เอกสาร / ลิงก์ |
+| `content_type` | ENUM('video','document','link','test') | 🆕 คลิป / เอกสาร / ลิงก์ / แบบทดสอบ |
+| `assessment_id` | INT FK → `assessments.id` NULL | 🆕 กรณี content_type='test' |
 | `title` | VARCHAR(500) NOT NULL | ชื่อ เช่น 1.1, 1.2 |
 | `file_url` | VARCHAR(1000) | URL ไฟล์ (อัปโหลด/URL) |
 | `duration_minutes` | DECIMAL(8,2) NULL | ความยาววิดีโอ (นาที) |
@@ -242,7 +246,7 @@ Module บทเรียน (9 Modules/หลักสูตร)
 |--------|------|------|
 | `id` | BIGINT PK AUTO_INCREMENT | |
 | `assessment_id` | INT FK → `assessments.id` | |
-| `question_type` | ENUM('multiple_choice','essay','file_upload') | ประเภทคำถาม |
+| `question_type` | ENUM('multiple_choice','essay','file_upload','short_answer') | 🆕 ประเภทคำถาม (+Short Answer) |
 | `question_text` | TEXT NOT NULL | เนื้อหาคำถาม |
 | `points` | DECIMAL(5,2) DEFAULT 1 | คะแนนเต็ม |
 | `grading_mode` | ENUM('auto','manual') | 🆕 auto=เลือกตอบเฉลยทันที, manual=ต้องตรวจ |

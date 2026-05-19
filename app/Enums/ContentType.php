@@ -7,4 +7,5 @@ enum ContentType: string
     case Video = 'video';
     case Document = 'document';
     case Link = 'link';
+    case Test = 'test';
 }

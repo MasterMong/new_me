@@ -47,11 +47,22 @@
                 @forelse ($courses as $course)
                     <flux:table.row wire:key="course-{{ $course->id }}">
                         <flux:table.cell>
-                            <div>
-                                <p class="font-medium text-on-surface">{{ $course->title }}</p>
-                                @if ($course->duration_hours)
-                                    <p class="text-xs text-on-surface/50 mt-0.5">{{ $course->duration_hours }} ชั่วโมง</p>
+                            <div class="flex items-center gap-3">
+                                @if ($course->thumbnail_url)
+                                    <div class="size-10 shrink-0 rounded-lg overflow-hidden border border-outline-variant/20 bg-surface">
+                                        <img src="{{ $course->thumbnail_url }}" class="w-full h-full object-cover">
+                                    </div>
+                                @else
+                                    <div class="size-10 shrink-0 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                                        <span class="material-symbols-outlined text-[20px]">book</span>
+                                    </div>
                                 @endif
+                                <div class="min-w-0">
+                                    <p class="font-medium text-on-surface truncate">{{ $course->title }}</p>
+                                    @if ($course->duration_hours)
+                                        <p class="text-xs text-on-surface/50 mt-0.5">{{ $course->duration_hours }} ชั่วโมง</p>
+                                    @endif
+                                </div>
                             </div>
                         </flux:table.cell>
                         <flux:table.cell class="text-on-surface/70">

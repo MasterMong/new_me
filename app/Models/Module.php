@@ -10,12 +10,13 @@ class Module extends Model
 {
     protected $fillable = [
         'course_id', 'module_number', 'title', 'description', 'thumbnail_url',
-        'is_required', 'requires_expert_review', 'max_test_attempts', 'sort_order',
+        'is_required', 'requires_expert_review', 'max_test_attempts', 'is_sequential', 'sort_order',
     ];
 
     protected $casts = [
         'is_required' => 'boolean',
         'requires_expert_review' => 'boolean',
+        'is_sequential' => 'boolean',
     ];
 
     public function course(): BelongsTo

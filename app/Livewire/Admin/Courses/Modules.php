@@ -40,6 +40,8 @@ class Modules extends Component
 
     public int $moduleMaxTestAttempts = 3;
 
+    public bool $moduleIsSequential = false;
+
     public $moduleThumbnail;
 
     public string $moduleThumbnailUrl = '';
@@ -52,6 +54,8 @@ class Modules extends Component
     public string $contentFileUrl = '';
 
     public string $contentDurationMinutes = '';
+
+    public ?int $contentAssessmentId = null;
 
     public array $selectedGroupIds = [];
 
@@ -91,6 +95,7 @@ class Modules extends Component
         $this->moduleIsRequired = $module->is_required;
         $this->moduleRequiresExpertReview = $module->requires_expert_review;
         $this->moduleMaxTestAttempts = $module->max_test_attempts;
+        $this->moduleIsSequential = $module->is_sequential ?? false;
         $this->moduleThumbnailUrl = $module->thumbnail_url ?? '';
         $this->showModuleModal = true;
     }
@@ -116,6 +121,7 @@ class Modules extends Component
                 'is_required' => $this->moduleIsRequired,
                 'requires_expert_review' => $this->moduleRequiresExpertReview,
                 'max_test_attempts' => $this->moduleMaxTestAttempts,
+                'is_sequential' => $this->moduleIsSequential,
             ]);
         } else {
             $nextNumber = $this->course->modules()->count() + 1;
@@ -130,6 +136,7 @@ class Modules extends Component
                 'is_required' => $this->moduleIsRequired,
                 'requires_expert_review' => $this->moduleRequiresExpertReview,
                 'max_test_attempts' => $this->moduleMaxTestAttempts,
+                'is_sequential' => $this->moduleIsSequential,
             ]);
         }
 
@@ -161,6 +168,7 @@ class Modules extends Component
         $this->contentDurationMinutes = $content->duration_minutes !== null
             ? (string) $content->duration_minutes
             : '';
+        $this->contentAssessmentId = $content->assessment_id;
         $this->selectedGroupIds = $content->groupAccess()
             ->pluck('group_id')
             ->map(fn ($id) => (string) $id)
@@ -179,6 +187,7 @@ class Modules extends Component
             'duration_minutes' => $this->contentDurationMinutes !== ''
                 ? (float) $this->contentDurationMinutes
                 : null,
+            'assessment_id' => $this->contentType === 'test' ? $this->contentAssessmentId : null,
         ];
 
         if ($this->editingContentId) {
@@ -220,6 +229,7 @@ class Modules extends Component
             'moduleIsRequired' => ['boolean'],
             'moduleRequiresExpertReview' => ['boolean'],
             'moduleMaxTestAttempts' => ['required', 'integer', 'min:1', 'max:10'],
+            'moduleIsSequential' => ['boolean'],
             'moduleThumbnail' => ['nullable', 'image', 'max:2048'],
         ];
     }
@@ -238,10 +248,11 @@ class Modules extends Component
     protected function contentRules(): array
     {
         return [
-            'contentType' => ['required', 'in:video,document,link'],
+            'contentType' => ['required', 'in:video,document,link,test'],
             'contentTitle' => ['required', 'string', 'max:500'],
             'contentFileUrl' => ['nullable', 'string', 'max:1000'],
             'contentDurationMinutes' => ['nullable', 'numeric', 'min:0'],
+            'contentAssessmentId' => ['nullable', 'required_if:contentType,test', 'exists:assessments,id'],
             'selectedGroupIds' => ['array'],
             'selectedGroupIds.*' => ['integer', 'exists:learner_groups,id'],
         ];
@@ -267,6 +278,7 @@ class Modules extends Component
         $this->moduleIsRequired = true;
         $this->moduleRequiresExpertReview = false;
         $this->moduleMaxTestAttempts = 3;
+        $this->moduleIsSequential = false;
         $this->moduleThumbnail = null;
         $this->moduleThumbnailUrl = '';
         $this->resetValidation();
@@ -280,6 +292,7 @@ class Modules extends Component
         $this->contentTitle = '';
         $this->contentFileUrl = '';
         $this->contentDurationMinutes = '';
+        $this->contentAssessmentId = null;
         $this->selectedGroupIds = [];
         $this->resetValidation();
     }
@@ -294,6 +307,7 @@ class Modules extends Component
         return view('livewire.admin.courses.modules', [
             'modules' => $modules,
             'contentTypes' => ContentType::cases(),
+            'courseAssessments' => $this->course->assessments()->orderBy('title')->get(),
             'allGroups' => LearnerGroup::where('is_active', true)->orderBy('name')->get(),
         ])->layout('layouts.app', ['title' => 'โมดูล: '.$this->course->title]);
     }

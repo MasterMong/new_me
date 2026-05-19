@@ -43,7 +43,7 @@
 |---|-------|------|----------|
 | 1 | `/learn` | หน้าหลักผู้เรียน | แสดงหลักสูตรที่ลงทะเบียน, สถานะความคืบหน้า, ปุ่ม "เข้าสู่บทเรียน" |
 | 2 | `/learn/courses/:courseId` | บทเรียน (Learning Path) | แสดง Learning Path: Pre-Test → Module 1-9 → Post-Test เรียงลำดับ, แสดงสถานะแต่ละ Module (ล็อค / กำลังเรียน / เรียนจบ), ระยะเวลาชม, ✓ เครื่องหมายถูกเมื่อจบ, Module ที่ล็อคจะ disable (ตาม prerequisite); content item ที่ไม่มีสิทธิ์จะซ่อนตาม content_group_access |
-| 3 | `/learn/courses/:courseId/modules/:moduleId` | เนื้อหา Module | แสดงเนื้อหาราย Module: คลิปวิดีโอ (เก็บชั่วโมงรับชม, ตำแหน่งล่าสุด), ไฟล์เอกสาร/ใบความรู้ (ดาวน์โหลดได้), ลิงก์เพิ่มเติม, เรียงตาม sort_order เช่น 1.1, 1.2, 1.3 |
+| 3 | `/learn/courses/:courseId/modules/:moduleId` | เนื้อหา Module | แสดงเนื้อหาราย Module: คลิปวิดีโอ, ไฟล์เอกสาร, ลิงก์เพิ่มเติม, และแบบทดสอบ (Quiz), เรียงตาม sort_order; หากเปิดใช้งาน sequential ระบบจะล็อคเนื้อหาถัดไปจนกว่าจะจบเนื้อหาก่อนหน้า |
 | 4 | `/learn/courses/:courseId/assessments/:assessmentId` | ทำแบบทดสอบ | หน้าทำแบบทดสอบ (Pre-test / Post-test / Module test): แสดงคำถามทีละข้อ/ทั้งหมด, เลือกตอบ (multiple_choice) → เฉลยทันที (auto), เขียนบรรยาย (essay) → พิมพ์ในระบบ, อัปโหลดใบงาน (file_upload) → เลือกไฟล์, แสดงครั้งที่ทำ (1/3, 2/3, 3/3), ปุ่ม "ส่งคำตอบ" |
 | 5 | `/learn/courses/:courseId/assessments/:assessmentId/result` | ผลแบบทดสอบ | แสดงผลหลังส่ง: คะแนนที่ได้ / คะแนนเต็ม / ร้อยละ / ดาว, สถานะ ผ่าน/ไม่ผ่าน, ข้อที่ auto-grade → เห็นผลทันที, ข้อที่ manual → แสดง "รอผู้เชี่ยวชาญตรวจ", ข้อเสนอแนะจาก ผชช. (ถ้าตรวจแล้ว), ปุ่ม "ทำใหม่" (ถ้ายังไม่ครบ 3 ครั้ง) |
 | 6 | `/learn/results` | ผลการเรียนรู้ | สรุปผลทุกหลักสูตรที่ลงทะเบียน: ตาราง Pre-test / M1-M9 / Post-test / สถานะ ผ่าน-ไม่ผ่าน, ดูผลคะแนนแต่ละ Module, ดาวน์โหลดรายงานผล PDF, วันที่ออกรายงาน |
@@ -120,7 +120,8 @@
   │
   ├─ /learn/* → ต้อง login + role='learner'
   │    └─ เช็ค module_prerequisites → ผ่าน prerequisite แล้ว?
-  │         └─ เช็ค content_group_access → ผู้เรียนอยู่ในกลุ่มที่เห็น content item นี้?
+  │    └─ เช็ค module->is_sequential → หากใช่ ต้องเรียนจบเนื้อหาก่อนหน้าก่อนเข้าถึงเนื้อหาถัดไป
+  │    └─ เช็ค content_group_access → ผู้เรียนอยู่ในกลุ่มที่เห็น content item นี้?
   │              └─ อนุญาต / ซ่อน content item ที่ไม่มีสิทธิ์
   │
   ├─ /expert/* → ต้อง login + role='expert'

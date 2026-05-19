@@ -3,10 +3,14 @@
 namespace App\Livewire\Admin\Courses;
 
 use App\Models\Course;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class Create extends Component
 {
+    use WithFileUploads;
+
     public string $title = '';
 
     public string $description = '';
@@ -21,6 +25,14 @@ class Create extends Component
 
     public bool $isPublished = false;
 
+    public $thumbnail;
+
+    public $gallery = [];
+
+    public $existingGallery = [];
+
+    public ?string $thumbnailUrl = null;
+
     protected function rules(): array
     {
         return [
@@ -31,6 +43,7 @@ class Create extends Component
             'hasTest' => ['boolean'],
             'requireReview' => ['boolean'],
             'isPublished' => ['boolean'],
+            'thumbnail' => ['nullable', 'image', 'max:2048'],
         ];
     }
 
@@ -51,9 +64,16 @@ class Create extends Component
     {
         $this->validate();
 
+        $thumbnailUrl = null;
+        if ($this->thumbnail) {
+            $path = $this->thumbnail->store('courses/thumbnails', 'public');
+            $thumbnailUrl = Storage::disk('public')->url($path);
+        }
+
         Course::create([
             'title' => $this->title,
             'description' => $this->description ?: null,
+            'thumbnail_url' => $thumbnailUrl,
             'duration_hours' => $this->durationHours ?: null,
             'passing_score_pct' => $this->passingScorePct,
             'has_test' => $this->hasTest,

@@ -35,6 +35,7 @@ The expert review workflow manages the process where experts (ผู้เชี
 - Typically 3 out of 9 modules in a course
 - These modules contain:
   - Essay questions (`question_type = 'essay'`)
+  - Short Answer questions (`question_type = 'short_answer'`)
   - File upload assignments (`question_type = 'file_upload'`)
   - Mixed assessments (`grading_mode = 'manual'` or `'mixed'`)
 
@@ -409,35 +410,43 @@ class ExpertSubmissionController extends Controller
 ```json
 {
   "submission": {
-    "attempt_id": 456,
-    "learner": {
-      "full_name": "นายสมชาย รักเรียน",
-      "email": "somchai@example.com",
-      "position": "ครูประเมินผล",
-      "experience": "2-5y",
-      "affiliation": "สพฐ. เขต 1"
-    },
-    "assessment": {
-      "id": 7,
-      "title": "Module 3: การสร้างเครื่องมือประเมินผล",
-      "max_score": 100,
-      "passing_score": 60
-    },
-    "attempt_details": {
-      "attempt_number": 1,
-      "stars_at_stake": 3,
-      "submitted_at": "2026-02-23T10:30:00Z"
-    },
-    "answers": [
-      {
-        "question_id": 123,
-        "question_type": "essay",
-        "question_text": "อธิบายขั้นตอนการสร้างแบบประเมิน...",
-        "answer": {
-          "essay_text": "ขั้นตอนการสร้างแบบประเมิน มีดังนี้...",
-          "word_count": 350
-        }
-      },
+        "attempt_id": 456,
+        "learner": {
+          "full_name": "นายสมชาย รักเรียน",
+          "email": "somchai@example.com",
+          "position": "ครูประเมินผล",
+          "experience": "2-5y",
+          "affiliation": "สพฐ. เขต 1"
+        },
+        "assessment": {
+          "id": 7,
+          "title": "Module 3: การสร้างเครื่องมือประเมินผล",
+          "max_score": 100,
+          "passing_score": 60
+        },
+        "attempt_details": {
+          "attempt_number": 1,
+          "stars_at_stake": 3,
+          "submitted_at": "2026-02-23T10:30:00Z"
+        },
+        "answers": [
+          {
+            "question_id": 121,
+            "question_type": "short_answer",
+            "question_text": "KPI คืออะไรสั้นๆ",
+            "answer": {
+              "essay_text": "ดัชนีชี้วัดความสำเร็จ"
+            }
+          },
+          {
+            "question_id": 123,
+            "question_type": "essay",
+            "question_text": "อธิบายขั้นตอนการสร้างแบบประเมิน...",
+            "answer": {
+              "essay_text": "ขั้นตอนการสร้างแบบประเมิน มีดังนี้...",
+              "word_count": 350
+            }
+          },
       {
         "question_id": 124,
         "question_type": "file_upload",

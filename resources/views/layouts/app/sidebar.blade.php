@@ -283,8 +283,18 @@
 
         <script>
             // Dark mode not yet designed — force light after Alpine and on each Livewire navigation
-            window.Flux?.applyAppearance('light');
-            document.addEventListener('livewire:navigated', () => window.Flux?.applyAppearance('light'));
+            const forceLightMode = () => {
+                if (window.Flux) {
+                    if (typeof window.Flux.applyAppearance === 'function') {
+                        window.Flux.applyAppearance('light');
+                    } else {
+                        window.Flux.appearance = 'light';
+                    }
+                }
+            }
+
+            forceLightMode();
+            document.addEventListener('livewire:navigated', forceLightMode);
         </script>
     </body>
 </html>

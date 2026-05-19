@@ -12,7 +12,7 @@ class ModuleContent extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'module_id', 'content_type', 'title', 'file_url', 'duration_minutes', 'sort_order',
+        'module_id', 'content_type', 'assessment_id', 'title', 'file_url', 'duration_minutes', 'sort_order',
     ];
 
     protected $casts = [
@@ -22,6 +22,11 @@ class ModuleContent extends Model
     public function module(): BelongsTo
     {
         return $this->belongsTo(Module::class);
+    }
+
+    public function assessment(): BelongsTo
+    {
+        return $this->belongsTo(Assessment::class);
     }
 
     public function groupAccess(): HasMany

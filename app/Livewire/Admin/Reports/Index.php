@@ -25,6 +25,7 @@ class Index extends Component
 
                 return [
                     'title' => $course->title,
+                    'thumbnail_url' => $course->thumbnail_url,
                     'enrollments' => $course->enrollments_count,
                     'completed' => $completed,
                     'certificates' => $course->certificates_count,

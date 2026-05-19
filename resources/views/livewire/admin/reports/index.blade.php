@@ -41,7 +41,20 @@
                 <flux:table.rows>
                     @forelse ($courseStats as $stat)
                         <flux:table.row wire:key="stat-{{ $loop->index }}">
-                            <flux:table.cell class="font-medium text-on-surface">{{ $stat['title'] }}</flux:table.cell>
+                            <flux:table.cell>
+                                <div class="flex items-center gap-3">
+                                    @if ($stat['thumbnail_url'])
+                                        <div class="size-8 shrink-0 rounded-lg overflow-hidden border border-outline-variant/20 bg-surface">
+                                            <img src="{{ $stat['thumbnail_url'] }}" class="w-full h-full object-cover">
+                                        </div>
+                                    @else
+                                        <div class="size-8 shrink-0 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                                            <span class="material-symbols-outlined text-[16px]">book</span>
+                                        </div>
+                                    @endif
+                                    <span class="font-medium text-on-surface truncate">{{ $stat['title'] }}</span>
+                                </div>
+                            </flux:table.cell>
                             <flux:table.cell class="text-on-surface/70">{{ number_format($stat['enrollments']) }}</flux:table.cell>
                             <flux:table.cell class="text-on-surface/70">{{ number_format($stat['completed']) }}</flux:table.cell>
                             <flux:table.cell>

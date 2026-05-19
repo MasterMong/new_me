@@ -69,8 +69,8 @@
                                 @else
                                     <flux:badge color="zinc" size="sm">ไม่บังคับ</flux:badge>
                                 @endif
-                                @if ($module->requires_expert_review)
-                                    <flux:badge color="amber" size="sm">ต้องตรวจโดยผู้เชี่ยวชาญ</flux:badge>
+                                @if ($module->is_sequential)
+                                    <flux:badge color="purple" size="sm">เรียนตามลำดับ</flux:badge>
                                 @endif
                                 <span class="text-xs text-on-surface/40">
                                     {{ $module->contents->count() }} เนื้อหา
@@ -127,6 +127,7 @@
                                                     \App\Enums\ContentType::Video    => ['red',   'วิดีโอ',  'play_circle'],
                                                     \App\Enums\ContentType::Document => ['blue',  'เอกสาร', 'description'],
                                                     \App\Enums\ContentType::Link     => ['green', 'ลิงก์',   'link'],
+                                                    \App\Enums\ContentType::Test     => ['purple', 'แบบทดสอบ', 'quiz'],
                                                 };
                                             @endphp
                                             <flux:badge color="{{ $typeColor }}" size="sm">{{ $typeLabel }}</flux:badge>
@@ -254,6 +255,12 @@
                     <flux:label>ต้องให้ผู้เชี่ยวชาญตรวจ</flux:label>
                     <flux:description>คำตอบจะถูกส่งให้ผู้เชี่ยวชาญตรวจสอบ</flux:description>
                 </flux:field>
+
+                <flux:field variant="inline">
+                    <flux:switch wire:model="moduleIsSequential" />
+                    <flux:label>เรียนตามลำดับ (Sequential)</flux:label>
+                    <flux:description>ผู้เรียนต้องจบเนื้อหาก่อนหน้าก่อนเข้าสู่เนื้อหาถัดไป</flux:description>
+                </flux:field>
             </div>
 
             <flux:field>
@@ -310,17 +317,22 @@
             {{-- Content type --}}
             <flux:field>
                 <flux:label>ประเภทเนื้อหา <span class="text-error">*</span></flux:label>
-                <div class="grid grid-cols-3 gap-2 mt-1">
-                    @foreach ([['video', 'play_circle', 'วิดีโอ', 'red'], ['document', 'description', 'เอกสาร', 'blue'], ['link', 'link', 'ลิงก์', 'green']] as [$val, $icon, $label, $color])
+                <div class="grid grid-cols-4 gap-2 mt-1">
+                    @foreach ([
+                        ['video', 'play_circle', 'วิดีโอ'],
+                        ['document', 'description', 'เอกสาร'],
+                        ['link', 'link', 'ลิงก์'],
+                        ['test', 'quiz', 'แบบทดสอบ']
+                    ] as [$val, $icon, $label])
                         <button
                             wire:click="$set('contentType', '{{ $val }}')"
                             type="button"
-                            class="flex flex-col items-center gap-1.5 rounded-xl border-2 p-3 text-sm font-medium transition-all
+                            class="flex flex-col items-center gap-1.5 rounded-xl border-2 p-3 text-xs font-medium transition-all
                                 {{ $contentType === $val
                                     ? 'border-primary bg-primary/5 text-primary'
                                     : 'border-outline-variant/40 text-on-surface/60 hover:border-primary/40 hover:bg-surface' }}"
                         >
-                            <span class="material-symbols-outlined text-[22px]">{{ $icon }}</span>
+                            <span class="material-symbols-outlined text-[20px]">{{ $icon }}</span>
                             {{ $label }}
                         </button>
                     @endforeach
@@ -335,14 +347,29 @@
                 <flux:error name="contentTitle" />
             </flux:field>
 
-            {{-- URL --}}
-            <flux:field>
-                <flux:label>
-                    {{ $contentType === 'video' ? 'URL วิดีโอ' : ($contentType === 'document' ? 'URL เอกสาร / ไฟล์' : 'URL ลิงก์') }}
-                </flux:label>
-                <flux:input wire:model="contentFileUrl" placeholder="https://..." />
-                <flux:error name="contentFileUrl" />
-            </flux:field>
+            {{-- URL / Test Selection --}}
+            @if ($contentType === 'test')
+                <flux:field>
+                    <flux:label>เลือกแบบทดสอบ <span class="text-error">*</span></flux:label>
+                    <flux:select wire:model="contentAssessmentId" placeholder="กรุณาเลือกแบบทดสอบ...">
+                        <flux:select.option value="">เลือกแบบทดสอบ...</flux:select.option>
+                        @foreach ($courseAssessments as $assessment)
+                            <flux:select.option :value="$assessment->id">
+                                {{ $assessment->title }} ({{ $assessment->type->name }})
+                            </flux:select.option>
+                        @endforeach
+                    </flux:select>
+                    <flux:error name="contentAssessmentId" />
+                </flux:field>
+            @else
+                <flux:field>
+                    <flux:label>
+                        {{ $contentType === 'video' ? 'URL วิดีโอ' : ($contentType === 'document' ? 'URL เอกสาร / ไฟล์' : 'URL ลิงก์') }}
+                    </flux:label>
+                    <flux:input wire:model="contentFileUrl" placeholder="https://..." />
+                    <flux:error name="contentFileUrl" />
+                </flux:field>
+            @endif
 
             {{-- Duration (video only visually, still saveable for others) --}}
             <flux:field>
