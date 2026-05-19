@@ -1,14 +1,17 @@
 <?php
 
 use App\Livewire\Admin\Courses\Create as AdminCoursesCreate;
-use App\Livewire\Admin\Courses\Modules as AdminCourseModules;
 use App\Livewire\Admin\Courses\Edit as AdminCoursesEdit;
 use App\Livewire\Admin\Courses\Index as AdminCoursesIndex;
+use App\Livewire\Admin\Courses\Modules as AdminCourseModules;
 use App\Livewire\Admin\Dashboard as AdminDashboard;
 use App\Livewire\Admin\Groups\Index as AdminGroupsIndex;
 use App\Livewire\Admin\Groups\Members as AdminGroupMembers;
 use App\Livewire\Admin\Reports\Index as AdminReportsIndex;
 use App\Livewire\Admin\Users\Index as AdminUsersIndex;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
@@ -30,3 +33,12 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
 });
 
 require __DIR__.'/settings.php';
+
+if (app()->isLocal()) {
+    Route::post('/quick-login', function (Request $request) {
+        $user = User::where('email', $request->input('email'))->firstOrFail();
+        Auth::login($user);
+
+        return redirect()->intended('/dashboard');
+    })->name('quick-login');
+}

@@ -54,5 +54,34 @@
             <span>{{ __('Don\'t have an account?') }}</span>
             <flux:link :href="route('register')" wire:navigate>{{ __('Sign up') }}</flux:link>
         </div>
+
+        @if(app()->isLocal())
+            <div class="mt-2 pt-4 border-t border-outline-variant/30">
+                <p class="text-xs text-center text-on-surface/40 mb-3 uppercase tracking-wider font-medium">Dev Quick Login</p>
+                <div class="flex flex-wrap justify-center gap-2">
+                    @php
+                        $quickUsers = [
+                            ['email' => 'admin@me-learning.go.th',   'label' => 'Admin',    'color' => 'bg-red-100 text-red-700 hover:bg-red-200'],
+                            ['email' => 'expert1@me-learning.go.th', 'label' => 'Expert 1', 'color' => 'bg-purple-100 text-purple-700 hover:bg-purple-200'],
+                            ['email' => 'expert2@me-learning.go.th', 'label' => 'Expert 2', 'color' => 'bg-purple-100 text-purple-700 hover:bg-purple-200'],
+                            ['email' => 'learner1@me-learning.go.th','label' => 'Learner 1','color' => 'bg-blue-100 text-blue-700 hover:bg-blue-200'],
+                            ['email' => 'learner2@me-learning.go.th','label' => 'Learner 2','color' => 'bg-blue-100 text-blue-700 hover:bg-blue-200'],
+                            ['email' => 'learner3@me-learning.go.th','label' => 'Learner 3','color' => 'bg-blue-100 text-blue-700 hover:bg-blue-200'],
+                            ['email' => 'learner4@me-learning.go.th','label' => 'Learner 4','color' => 'bg-blue-100 text-blue-700 hover:bg-blue-200'],
+                            ['email' => 'learner5@me-learning.go.th','label' => 'Learner 5','color' => 'bg-blue-100 text-blue-700 hover:bg-blue-200'],
+                        ];
+                    @endphp
+                    @foreach ($quickUsers as $u)
+                        <form method="POST" action="{{ route('quick-login') }}" class="inline">
+                            @csrf
+                            <input type="hidden" name="email" value="{{ $u['email'] }}" />
+                            <button type="submit" class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium transition-colors {{ $u['color'] }}">
+                                {{ $u['label'] }}
+                            </button>
+                        </form>
+                    @endforeach
+                </div>
+            </div>
+        @endif
     </div>
 </x-layouts::auth>
