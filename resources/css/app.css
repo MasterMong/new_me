@@ -10,6 +10,9 @@
 
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-headline: 'Manrope', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-label: 'Inter', sans-serif;
 
     --color-zinc-50: #fafafa;
     --color-zinc-100: #f5f5f5;
@@ -26,6 +29,60 @@
     --color-accent: var(--color-neutral-800);
     --color-accent-content: var(--color-neutral-800);
     --color-accent-foreground: var(--color-white);
+
+    /* ME-Learning Design System — Academic Curator */
+    --color-primary: #003e74;
+    --color-primary-container: #1a5694;
+    --color-primary-fixed: #d4e3ff;
+    --color-primary-fixed-dim: #a4c9ff;
+    --color-on-primary: #ffffff;
+    --color-on-primary-container: #aaccff;
+    --color-on-primary-fixed: #001c39;
+    --color-on-primary-fixed-variant: #004884;
+    --color-inverse-primary: #a4c9ff;
+    --color-surface-tint: #28609e;
+
+    --color-secondary: #745b00;
+    --color-secondary-container: #fdd355;
+    --color-secondary-fixed: #ffe08b;
+    --color-secondary-fixed-dim: #ebc246;
+    --color-on-secondary: #ffffff;
+    --color-on-secondary-container: #735a00;
+    --color-on-secondary-fixed: #241a00;
+    --color-on-secondary-fixed-variant: #584400;
+
+    --color-tertiary: #603200;
+    --color-tertiary-container: #824500;
+    --color-tertiary-fixed: #ffdcc3;
+    --color-tertiary-fixed-dim: #ffb77c;
+    --color-on-tertiary: #ffffff;
+    --color-on-tertiary-container: #ffbc85;
+    --color-on-tertiary-fixed: #2f1500;
+    --color-on-tertiary-fixed-variant: #6e3900;
+
+    --color-background: #f8f9fa;
+    --color-on-background: #191c1d;
+    --color-surface: #f8f9fa;
+    --color-surface-dim: #d9dadb;
+    --color-surface-bright: #f8f9fa;
+    --color-surface-variant: #e1e3e4;
+    --color-surface-container: #edeeef;
+    --color-surface-container-low: #f3f4f5;
+    --color-surface-container-lowest: #ffffff;
+    --color-surface-container-high: #e7e8e9;
+    --color-surface-container-highest: #e1e3e4;
+    --color-inverse-surface: #2e3132;
+    --color-inverse-on-surface: #f0f1f2;
+    --color-on-surface: #191c1d;
+    --color-on-surface-variant: #424750;
+
+    --color-outline: #727781;
+    --color-outline-variant: #c2c6d2;
+
+    --color-error: #ba1a1a;
+    --color-error-container: #ffdad6;
+    --color-on-error: #ffffff;
+    --color-on-error-container: #93000a;
 }
 
 @layer theme {
@@ -64,3 +121,28 @@ select:focus[data-flux-control] {
 /* \[:where(&)\]:size-4 {
     @apply size-4;
 } */
+
+/* ME-Learning Custom Components */
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    font-family: 'Material Symbols Outlined';
+    font-style: normal;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+}
+
+.glass-nav {
+    background: rgba(248, 249, 250, 0.7);
+    backdrop-filter: blur(24px);
+}
+
+.hero-gradient {
+    background: linear-gradient(135deg, #003e74 0%, #1a5694 100%);
+}
