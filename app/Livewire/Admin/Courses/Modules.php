@@ -146,6 +146,47 @@ class Modules extends Component
     public function deleteModule(int $moduleId): void
     {
         Module::findOrFail($moduleId)->delete();
+        $this->course->load('modules');
+        $this->reorderModules();
+    }
+
+    public function moveModule(int $moduleId, string $direction): void
+    {
+        $modules = $this->course->modules()->orderBy('sort_order')->get();
+        $index = $modules->search(fn ($m) => $m->id === $moduleId);
+
+        if ($index === false) {
+            return;
+        }
+
+        if ($direction === 'up' && $index > 0) {
+            $prev = $modules[$index - 1];
+            $curr = $modules[$index];
+
+            $temp = $prev->sort_order;
+            $prev->update(['sort_order' => $curr->sort_order]);
+            $curr->update(['sort_order' => $temp]);
+        } elseif ($direction === 'down' && $index < $modules->count() - 1) {
+            $next = $modules[$index + 1];
+            $curr = $modules[$index];
+
+            $temp = $next->sort_order;
+            $next->update(['sort_order' => $curr->sort_order]);
+            $curr->update(['sort_order' => $temp]);
+        }
+
+        $this->reorderModules();
+    }
+
+    protected function reorderModules(): void
+    {
+        $modules = $this->course->modules()->orderBy('sort_order')->get();
+        foreach ($modules as $i => $module) {
+            $module->update([
+                'sort_order' => ($i + 1) * 10,
+                'module_number' => $i + 1,
+            ]);
+        }
     }
 
     // ── Content CRUD ────────────────────────────────────────────
@@ -216,7 +257,48 @@ class Modules extends Component
 
     public function deleteContent(int $contentId): void
     {
-        ModuleContent::findOrFail($contentId)->delete();
+        $content = ModuleContent::findOrFail($contentId);
+        $moduleId = $content->module_id;
+        $content->delete();
+        $this->reorderContents($moduleId);
+    }
+
+    public function moveContent(int $contentId, string $direction): void
+    {
+        $content = ModuleContent::findOrFail($contentId);
+        $moduleId = $content->module_id;
+        $contents = ModuleContent::where('module_id', $moduleId)->orderBy('sort_order')->get();
+        $index = $contents->search(fn ($c) => $c->id === $contentId);
+
+        if ($index === false) {
+            return;
+        }
+
+        if ($direction === 'up' && $index > 0) {
+            $prev = $contents[$index - 1];
+            $curr = $contents[$index];
+
+            $temp = $prev->sort_order;
+            $prev->update(['sort_order' => $curr->sort_order]);
+            $curr->update(['sort_order' => $temp]);
+        } elseif ($direction === 'down' && $index < $contents->count() - 1) {
+            $next = $contents[$index + 1];
+            $curr = $contents[$index];
+
+            $temp = $next->sort_order;
+            $next->update(['sort_order' => $curr->sort_order]);
+            $curr->update(['sort_order' => $temp]);
+        }
+
+        $this->reorderContents($moduleId);
+    }
+
+    protected function reorderContents(int $moduleId): void
+    {
+        $contents = ModuleContent::where('module_id', $moduleId)->orderBy('sort_order')->get();
+        foreach ($contents as $i => $content) {
+            $content->update(['sort_order' => ($i + 1) * 10]);
+        }
     }
 
     // ── Validation ──────────────────────────────────────────────

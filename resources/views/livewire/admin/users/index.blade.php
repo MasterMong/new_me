@@ -93,7 +93,8 @@
                                 <flux:dropdown>
                                     <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" class="rounded-full hover:bg-surface-container" />
                                     <flux:menu class="min-w-40">
-                                        <flux:menu.item icon="eye">ดูรายละเอียด</flux:menu.item>
+                                        <flux:menu.item wire:click="editUser({{ $user->id }})" icon="pencil-square">แก้ไขข้อมูล</flux:menu.item>
+                                        <flux:menu.item wire:click="confirmPasswordReset({{ $user->id }})" icon="key">รีเซ็ตรหัสผ่าน</flux:menu.item>
                                         <flux:menu.item
                                             wire:click="toggleActive({{ $user->id }})"
                                             wire:confirm="{{ $user->is_active ? 'ยืนยันการระงับบัญชีผู้ใช้นี้?' : 'ยืนยันการเปิดใช้งานบัญชีผู้ใช้นี้?' }}"
@@ -127,4 +128,87 @@
             {{ $users->links() }}
         </div>
     @endif
+
+    {{-- Edit User Modal --}}
+    <flux:modal wire:model="showingEditModal" class="md:w-[600px] space-y-6">
+        <div>
+            <flux:heading size="lg">แก้ไขข้อมูลผู้ใช้</flux:heading>
+            <flux:subheading>ปรับปรุงข้อมูลพื้นฐานและบทบาทในระบบ</flux:subheading>
+        </div>
+
+        <form wire:submit="saveUser" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <flux:select label="คำนำหน้า" wire:model="prefix">
+                    @foreach($prefixes as $p)
+                        <flux:select.option value="{{ $p->value }}">{{ $p->value }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+                <flux:select label="บทบาท" wire:model="role">
+                    @foreach($userRoles as $r)
+                        <flux:select.option value="{{ $r->value }}">
+                            {{ match($r) {
+                                \App\Enums\UserRole::Admin  => 'ผู้ดูแลระบบ',
+                                \App\Enums\UserRole::Expert => 'ผู้เชี่ยวชาญ',
+                                \App\Enums\UserRole::Learner => 'ผู้เรียน',
+                            } }}
+                        </flux:select.option>
+                    @endforeach
+                </flux:select>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <flux:input label="ชื่อ" wire:model="first_name" />
+                <flux:input label="นามสกุล" wire:model="last_name" />
+            </div>
+
+            <flux:input label="อีเมล" wire:model="email" type="email" />
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <flux:select label="ตำแหน่ง" wire:model="position_id">
+                    <flux:select.option value="">เลือกตำแหน่ง</flux:select.option>
+                    @foreach($positions as $pos)
+                        <flux:select.option value="{{ $pos->id }}">{{ $pos->name }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+                <flux:select label="สังกัด" wire:model="affiliation_id">
+                    <flux:select.option value="">เลือกสังกัด</flux:select.option>
+                    @foreach($affiliations as $aff)
+                        <flux:select.option value="{{ $aff->id }}">{{ $aff->name }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+            </div>
+
+            <flux:select label="ประสบการณ์" wire:model="experience">
+                @foreach($experiences as $exp)
+                    <flux:select.option value="{{ $exp->value }}">{{ $exp->label() }}</flux:select.option>
+                @endforeach
+            </flux:select>
+
+            <div class="flex gap-2 justify-end mt-6">
+                <flux:modal.close>
+                    <flux:button variant="ghost">ยกเลิก</flux:button>
+                </flux:modal.close>
+                <flux:button type="submit" variant="primary">บันทึกการแก้ไข</flux:button>
+            </div>
+        </form>
+    </flux:modal>
+
+    {{-- Password Reset Modal --}}
+    <flux:modal wire:model="showingPasswordModal" class="md:w-[400px] space-y-6">
+        <div>
+            <flux:heading size="lg">รีเซ็ตรหัสผ่าน</flux:heading>
+            <flux:subheading>กำหนดรหัสผ่านใหม่สำหรับผู้ใช้งานนี้</flux:subheading>
+        </div>
+
+        <form wire:submit="resetPassword" class="space-y-4">
+            <flux:input label="รหัสผ่านใหม่" wire:model="new_password" type="password" placeholder="อย่างน้อย 8 ตัวอักษร" />
+
+            <div class="flex gap-2 justify-end mt-6">
+                <flux:modal.close>
+                    <flux:button variant="ghost">ยกเลิก</flux:button>
+                </flux:modal.close>
+                <flux:button type="submit" variant="primary">ยืนยันการเปลี่ยน</flux:button>
+            </div>
+        </form>
+    </flux:modal>
 </div>

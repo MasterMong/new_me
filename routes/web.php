@@ -1,6 +1,9 @@
 <?php
 
 use App\Enums\UserRole;
+use App\Livewire\Admin\CertificatesManager;
+use App\Livewire\Admin\CourseReviews;
+use App\Livewire\Admin\Courses\Assessments;
 use App\Livewire\Admin\Courses\Create as AdminCoursesCreate;
 use App\Livewire\Admin\Courses\Edit as AdminCoursesEdit;
 use App\Livewire\Admin\Courses\Index as AdminCoursesIndex;
@@ -8,6 +11,8 @@ use App\Livewire\Admin\Courses\Modules as AdminCourseModules;
 use App\Livewire\Admin\Dashboard as AdminDashboard;
 use App\Livewire\Admin\Groups\Index as AdminGroupsIndex;
 use App\Livewire\Admin\Groups\Members as AdminGroupMembers;
+use App\Livewire\Admin\Reporting\CourseProgress;
+use App\Livewire\Admin\Reporting\UserProgress;
 use App\Livewire\Admin\Reports\Index as AdminReportsIndex;
 use App\Livewire\Admin\Users\Index as AdminUsersIndex;
 use App\Livewire\Expert\IndividualReport;
@@ -58,6 +63,7 @@ Route::middleware(['auth', 'verified', 'learner'])->prefix('learn')->name('learn
     Route::get('/courses/{course}', CoursePath::class)->name('courses.show');
     Route::get('/courses/{course}/modules/{module}', CoursePlayer::class)->name('courses.play');
     Route::get('/assessments/{assessment}', AssessmentPlayer::class)->name('assessments.show');
+    Route::get('/progress', MyProgress::class)->name('progress');
     Route::get('/certificates', Certificates::class)->name('certificates.index');
     Route::get('/notifications', Notifications::class)->name('notifications.index');
     Route::get('/settings', Settings::class)->name('settings.index');
@@ -71,7 +77,13 @@ Route::middleware(['auth', 'verified', 'expert'])->prefix('expert')->name('exper
     Route::get('/submissions/{attempt}/review', ReviewSubmission::class)->name('submissions.review');
     Route::get('/reports', Reports::class)->name('reports.index');
     Route::get('/reports/{user}', IndividualReport::class)->name('reports.show');
-    Route::get('/settings', App\Livewire\Expert\Settings::class)->name('settings.index');
+    Route::get('/settings', App\Livewire\Expert\Settings::class)->name('settings');
+
+    // Reporting (Shared with Admin)
+    Route::prefix('reporting')->name('reporting.')->group(function () {
+        Route::get('/course-progress', CourseProgress::class)->name('course-progress');
+        Route::get('/user-progress', UserProgress::class)->name('user-progress');
+    });
 });
 
 Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -80,9 +92,18 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::get('/courses/create', AdminCoursesCreate::class)->name('courses.create');
     Route::get('/courses/{course}/edit', AdminCoursesEdit::class)->name('courses.edit');
     Route::get('/courses/{course}/modules', AdminCourseModules::class)->name('courses.modules');
+    Route::get('/courses/{course}/assessments', Assessments::class)->name('courses.assessments');
     Route::get('/users', AdminUsersIndex::class)->name('users.index');
     Route::get('/groups', AdminGroupsIndex::class)->name('groups.index');
     Route::get('/groups/{group}/members', AdminGroupMembers::class)->name('groups.members');
+    Route::get('/reviews', CourseReviews::class)->name('reviews.index');
+    Route::get('/certificates', CertificatesManager::class)->name('certificates.index');
+
+    // Reporting
+    Route::prefix('reporting')->name('reporting.')->group(function () {
+        Route::get('/course-progress', CourseProgress::class)->name('course-progress');
+        Route::get('/user-progress', UserProgress::class)->name('user-progress');
+    });
     Route::get('/reports', AdminReportsIndex::class)->name('reports.index');
 });
 

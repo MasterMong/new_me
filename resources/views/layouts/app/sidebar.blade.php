@@ -60,14 +60,14 @@
 
                         <flux:sidebar.item
                             wire:navigate
-                            :href="route('learn.results.index')"
-                            :current="request()->routeIs('learn.results.index')"
+                            :href="route('learn.progress')"
+                            :current="request()->routeIs('learn.progress')"
                             class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
                         >
                             <x-slot name="icon">
-                                <span class="material-symbols-outlined text-[20px]">analytics</span>
+                                <span class="material-symbols-outlined text-[20px]">leaderboard</span>
                             </x-slot>
-                            ผลการเรียนรู้
+                            ความก้าวหน้าของฉัน
                         </flux:sidebar.item>
 
                         <flux:sidebar.item
@@ -182,7 +182,51 @@
                                 <x-slot name="icon">
                                     <span class="material-symbols-outlined text-[20px]">bar_chart</span>
                                 </x-slot>
-                                รายงาน
+                                รายงานภาพรวม
+                            </flux:sidebar.item>
+                            <flux:sidebar.item
+                                wire:navigate
+                                :href="route('admin.reporting.course-progress')"
+                                :current="request()->routeIs('admin.reporting.course-progress')"
+                                class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
+                            >
+                                <x-slot name="icon">
+                                    <span class="material-symbols-outlined text-[20px]">leaderboard</span>
+                                </x-slot>
+                                ความก้าวหน้าตามคอร์ส
+                            </flux:sidebar.item>
+                            <flux:sidebar.item
+                                wire:navigate
+                                :href="route('admin.reporting.user-progress')"
+                                :current="request()->routeIs('admin.reporting.user-progress')"
+                                class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
+                            >
+                                <x-slot name="icon">
+                                    <span class="material-symbols-outlined text-[20px]">person_check</span>
+                                </x-slot>
+                                ความก้าวหน้าตามผู้เรียน
+                            </flux:sidebar.item>
+                            <flux:sidebar.item
+                                wire:navigate
+                                :href="route('admin.reviews.index')"
+                                :current="request()->routeIs('admin.reviews.*')"
+                                class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
+                            >
+                                <x-slot name="icon">
+                                    <span class="material-symbols-outlined text-[20px]">reviews</span>
+                                </x-slot>
+                                รีวิวจากผู้เรียน
+                            </flux:sidebar.item>
+                            <flux:sidebar.item
+                                wire:navigate
+                                :href="route('admin.certificates.index')"
+                                :current="request()->routeIs('admin.certificates.*')"
+                                class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
+                            >
+                                <x-slot name="icon">
+                                    <span class="material-symbols-outlined text-[20px]">workspace_premium</span>
+                                </x-slot>
+                                จัดการเกียรติบัตร
                             </flux:sidebar.item>
                         @endif
                         @if(auth()->user()->role === \App\Enums\UserRole::Expert)

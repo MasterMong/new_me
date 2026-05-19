@@ -18,10 +18,15 @@
                 </div>
             </div>
         </div>
-        <flux:button variant="primary" wire:click="openCreateModule">
-            <span class="material-symbols-outlined text-[18px]">add</span>
-            เพิ่มโมดูล
-        </flux:button>
+        <div class="flex items-center gap-2">
+            <flux:button variant="ghost" icon="document-text" wire:navigate :href="route('admin.courses.assessments', $course)">
+                คลังแบบทดสอบ
+            </flux:button>
+            <flux:button variant="primary" wire:click="openCreateModule">
+                <span class="material-symbols-outlined text-[18px]">add</span>
+                เพิ่มโมดูล
+            </flux:button>
+        </div>
     </div>
 
     {{-- Empty state --}}
@@ -82,28 +87,33 @@
                     </div>
 
                     <div class="flex items-center gap-2 shrink-0">
-                        <flux:button size="sm" variant="ghost" wire:click="openCreateContent({{ $module->id }})">
-                            <span class="material-symbols-outlined text-[16px]">add</span>
+                        <div class="flex items-center border border-outline-variant/30 rounded-xl bg-surface p-1 me-2">
+                            <flux:button size="xs" variant="ghost" icon="chevron-up" wire:click="moveModule({{ $module->id }}, 'up')" :disabled="$loop->first" class="rounded-lg h-7 w-7" />
+                            <flux:button size="xs" variant="ghost" icon="chevron-down" wire:click="moveModule({{ $module->id }}, 'down')" :disabled="$loop->last" class="rounded-lg h-7 w-7" />
+                        </div>
+
+                        <flux:button size="sm" variant="ghost" wire:click="openCreateContent({{ $module->id }})" class="hover:bg-primary/5 hover:text-primary">
+                            <span class="material-symbols-outlined text-[18px]">add_circle</span>
                             เพิ่มเนื้อหา
                         </flux:button>
+                        
                         <flux:dropdown>
-                            <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" />
+                            <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" class="rounded-full" />
                             <flux:menu>
-                                <flux:menu.item icon="pencil" wire:click="openEditModule({{ $module->id }})">
-                                    แก้ไขโมดูล
-                                </flux:menu.item>
+                                <flux:menu.item icon="pencil" wire:click="openEditModule({{ $module->id }})">แก้ไขรายละเอียด</flux:menu.item>
                                 <flux:menu.separator />
                                 <flux:menu.item
                                     icon="trash"
                                     variant="danger"
                                     wire:click="deleteModule({{ $module->id }})"
-                                    wire:confirm="ยืนยันการลบโมดูล '{{ $module->title }}'? เนื้อหาทั้งหมดจะถูกลบด้วย"
+                                    wire:confirm="ยืนยันการลบโมดูล '{{ $module->title }}'? เนื้อหาทั้งหมดในโมดูลจะถูกลบ"
                                 >
                                     ลบโมดูล
                                 </flux:menu.item>
                             </flux:menu>
                         </flux:dropdown>
                     </div>
+
                 </div>
 
                 {{-- Content table --}}
@@ -180,22 +190,29 @@
                                         </flux:table.cell>
 
                                         <flux:table.cell class="pe-6">
-                                            <flux:dropdown>
-                                                <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" class="rounded-full h-8 w-8" />
-                                                <flux:menu class="min-w-32">
-                                                    <flux:menu.item icon="pencil" wire:click="openEditContent({{ $content->id }})">แก้ไข</flux:menu.item>
-                                                    <flux:menu.separator />
-                                                    <flux:menu.item
-                                                        icon="trash"
-                                                        variant="danger"
-                                                        wire:click="deleteContent({{ $content->id }})"
-                                                        wire:confirm="ยืนยันการลบเนื้อหา '{{ $content->title }}'?"
-                                                    >
-                                                        ลบ
-                                                    </flux:menu.item>
-                                                </flux:menu>
-                                            </flux:dropdown>
+                                            <div class="flex items-center justify-end gap-1">
+                                                <div class="flex items-center bg-surface/50 rounded-lg p-0.5 me-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <flux:button size="xs" variant="ghost" icon="chevron-up" wire:click="moveContent({{ $content->id }}, 'up')" :disabled="$loop->first" class="h-6 w-6" />
+                                                    <flux:button size="xs" variant="ghost" icon="chevron-down" wire:click="moveContent({{ $content->id }}, 'down')" :disabled="$loop->last" class="h-6 w-6" />
+                                                </div>
+                                                <flux:dropdown>
+                                                    <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" class="rounded-full h-8 w-8" />
+                                                    <flux:menu class="min-w-32">
+                                                        <flux:menu.item icon="pencil" wire:click="openEditContent({{ $content->id }})">แก้ไข</flux:menu.item>
+                                                        <flux:menu.separator />
+                                                        <flux:menu.item
+                                                            icon="trash"
+                                                            variant="danger"
+                                                            wire:click="deleteContent({{ $content->id }})"
+                                                            wire:confirm="ยืนยันการลบเนื้อหา '{{ $content->title }}'?"
+                                                        >
+                                                            ลบ
+                                                        </flux:menu.item>
+                                                    </flux:menu>
+                                                </flux:dropdown>
+                                            </div>
                                         </flux:table.cell>
+
                                     </flux:table.row>
                                 @endforeach
                             </flux:table.rows>

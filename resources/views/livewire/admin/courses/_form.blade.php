@@ -4,27 +4,29 @@
     <div class="lg:col-span-2 space-y-6">
 
         {{-- Section 1: Basic Info --}}
-        <div class="rounded-2xl border border-outline-variant/30 bg-white p-6">
-            <div class="flex items-center gap-3 mb-5 pb-4 border-b border-outline-variant/20">
-                <div class="flex size-9 items-center justify-center rounded-xl bg-primary/10">
-                    <span class="material-symbols-outlined text-[20px] text-primary">auto_stories</span>
+        <div class="rounded-3xl border border-outline-variant/30 bg-white p-8 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
+            <div class="flex items-center gap-4 mb-8 pb-6 border-b border-outline-variant/20">
+                <div class="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                    <span class="material-symbols-outlined text-[24px]">auto_stories</span>
                 </div>
                 <div>
-                    <h2 class="text-base font-semibold font-headline text-on-surface">ข้อมูลหลัก</h2>
-                    <p class="text-xs text-on-surface/50">ชื่อและคำอธิบายที่ผู้เรียนจะเห็น</p>
+                    <h2 class="text-lg font-bold font-headline text-on-surface tracking-tight">ข้อมูลหลักสูตร</h2>
+                    <p class="text-sm text-on-surface/50">รายละเอียดเบื้องต้นสำหรับผู้เรียน</p>
                 </div>
             </div>
 
-            <div class="space-y-5">
+            <div class="space-y-6">
                 <flux:field>
-                    <flux:label>ชื่อคอร์ส <span class="text-error">*</span></flux:label>
-                    <div x-data="{ count: {{ strlen($title) }} }">
+                    <flux:label class="text-sm font-bold text-on-surface/70">ชื่อหลักสูตร <span class="text-error">*</span></flux:label>
+                    <div x-data="{ count: {{ strlen($title) }} }" class="relative">
                         <flux:input
                             wire:model="title"
                             x-on:input="count = $event.target.value.length"
-                            placeholder="ระบุชื่อคอร์ส..."
+                            placeholder="เช่น การพัฒนาภาวะผู้นำยุคใหม่..."
                             maxlength="255"
+                            class="bg-surface/30 focus:bg-white transition-colors"
                         />
+
                         <p class="text-xs text-right text-on-surface/40 mt-1" x-text="`${count}/255`"></p>
                     </div>
                     <flux:error name="title" />
@@ -44,16 +46,17 @@
         </div>
 
         {{-- Section 2: Course Details --}}
-        <div class="rounded-2xl border border-outline-variant/30 bg-white p-6">
-            <div class="flex items-center gap-3 mb-5 pb-4 border-b border-outline-variant/20">
-                <div class="flex size-9 items-center justify-center rounded-xl bg-primary/10">
-                    <span class="material-symbols-outlined text-[20px] text-primary">tune</span>
+        <div class="rounded-3xl border border-outline-variant/30 bg-white p-8 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
+            <div class="flex items-center gap-4 mb-8 pb-6 border-b border-outline-variant/20">
+                <div class="flex size-12 items-center justify-center rounded-2xl bg-amber-100/50 text-amber-600">
+                    <span class="material-symbols-outlined text-[24px]">tune</span>
                 </div>
                 <div>
-                    <h2 class="text-base font-semibold font-headline text-on-surface">รายละเอียดคอร์ส</h2>
-                    <p class="text-xs text-on-surface/50">เงื่อนไขและข้อกำหนดของหลักสูตร</p>
+                    <h2 class="text-lg font-bold font-headline text-on-surface tracking-tight">การตั้งค่าและเกณฑ์การวัดผล</h2>
+                    <p class="text-sm text-on-surface/50">เงื่อนไขการผ่านหลักสูตรและระยะเวลา</p>
                 </div>
             </div>
+
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <flux:field>
@@ -170,58 +173,65 @@
     <div class="space-y-4 lg:sticky lg:top-6 lg:self-start">
 
         {{-- Publishing card --}}
-        <div class="rounded-2xl border border-outline-variant/30 bg-white p-5">
-            <div class="flex items-center gap-2 mb-4 pb-3 border-b border-outline-variant/20">
-                <span class="material-symbols-outlined text-[18px] text-primary">rocket_launch</span>
-                <h3 class="text-sm font-semibold font-headline text-on-surface">การเผยแพร่</h3>
-            </div>
-
-            {{-- Status indicator --}}
-            <div class="flex items-center gap-2 mb-4 px-3 py-2 rounded-xl bg-surface">
-                <div class="size-2 rounded-full transition-colors {{ $isPublished ? 'bg-green-500' : 'bg-zinc-400' }}"></div>
-                <span class="text-sm font-medium text-on-surface">
-                    {{ $isPublished ? 'เผยแพร่แล้ว' : 'ฉบับร่าง' }}
-                </span>
-            </div>
-
-            <flux:field variant="inline">
-                <flux:switch wire:model.live="isPublished" />
-                <flux:label>เผยแพร่คอร์ส</flux:label>
-            </flux:field>
-            <p class="text-xs text-on-surface/50 mt-2">
-                {{ $isPublished ? 'ผู้เรียนสามารถมองเห็นและลงทะเบียนได้' : 'คอร์สนี้ยังไม่แสดงต่อผู้เรียน' }}
-            </p>
-        </div>
-
-        {{-- Thumbnail card --}}
-        <div class="rounded-2xl border border-outline-variant/30 bg-white p-5">
-            <div class="flex items-center gap-2 mb-4 pb-3 border-b border-outline-variant/20">
-                <span class="material-symbols-outlined text-[18px] text-primary">image</span>
-                <h3 class="text-sm font-semibold font-headline text-on-surface">รูปหน้าปก (Thumbnail)</h3>
+        <div class="rounded-3xl border border-outline-variant/30 bg-white p-6 shadow-sm overflow-hidden">
+            <div class="flex items-center gap-3 mb-5 pb-4 border-b border-outline-variant/20">
+                <div class="size-8 rounded-lg bg-primary/5 flex items-center justify-center text-primary">
+                    <span class="material-symbols-outlined text-[18px]">rocket_launch</span>
+                </div>
+                <h3 class="text-sm font-bold font-headline text-on-surface uppercase tracking-tight">สถานะการเผยแพร่</h3>
             </div>
 
             <div class="space-y-4">
-                @if ($thumbnail)
-                    <div class="aspect-video rounded-xl overflow-hidden border border-outline-variant/20 bg-surface">
-                        <img src="{{ $thumbnail->temporaryUrl() }}" class="w-full h-full object-cover">
+                <div class="flex items-center justify-between p-3 rounded-2xl {{ $isPublished ? 'bg-green-50 border border-green-100' : 'bg-zinc-50 border border-zinc-100' }}">
+                    <div class="flex items-center gap-2">
+                        <div class="size-2 rounded-full {{ $isPublished ? 'bg-green-500 animate-pulse' : 'bg-zinc-400' }}"></div>
+                        <span class="text-sm font-bold {{ $isPublished ? 'text-green-700' : 'text-zinc-600' }}">
+                            {{ $isPublished ? 'Published' : 'Draft Mode' }}
+                        </span>
                     </div>
-                @elseif ($thumbnailUrl)
-                    <div class="aspect-video rounded-xl overflow-hidden border border-outline-variant/20 bg-surface">
-                        <img src="{{ $thumbnailUrl }}" class="w-full h-full object-cover">
-                    </div>
-                @endif
-
-                <flux:field>
-                    <flux:input type="file" wire:model="thumbnail" accept="image/*" />
-                    <flux:description>รูปที่แสดงในหน้าหลักและหน้ารายละเอียด (สูงสุด 2MB)</flux:description>
-                    <flux:error name="thumbnail" />
-                </flux:field>
-
-                <div wire:loading wire:target="thumbnail" class="text-xs text-primary animate-pulse">
-                    กำลังอัปโหลดรูปภาพ...
+                    <flux:switch wire:model.live="isPublished" />
                 </div>
+                
+                <p class="text-[11px] text-on-surface/40 leading-relaxed px-1">
+                    {{ $isPublished 
+                        ? 'หลักสูตรนี้เปิดให้ผู้เรียนเข้าถึงและลงทะเบียนได้ทันที' 
+                        : 'หลักสูตรนี้จะยังไม่แสดงผลในหน้าแรกและหน้าค้นหา' }}
+                </p>
             </div>
         </div>
+
+        {{-- Thumbnail card --}}
+        <div class="rounded-3xl border border-outline-variant/30 bg-white p-6 shadow-sm">
+            <div class="flex items-center gap-3 mb-5 pb-4 border-b border-outline-variant/20">
+                <div class="size-8 rounded-lg bg-primary/5 flex items-center justify-center text-primary">
+                    <span class="material-symbols-outlined text-[18px]">image</span>
+                </div>
+                <h3 class="text-sm font-bold font-headline text-on-surface uppercase tracking-tight">รูปหน้าปก</h3>
+            </div>
+
+            <div class="space-y-4">
+                <div class="relative group aspect-video rounded-2xl overflow-hidden border-2 border-dashed border-outline-variant/50 bg-surface flex flex-col items-center justify-center transition-all hover:border-primary/50">
+                    @if ($thumbnail)
+                        <img src="{{ $thumbnail->temporaryUrl() }}" class="absolute inset-0 w-full h-full object-cover">
+                    @elseif ($thumbnailUrl)
+                        <img src="{{ $thumbnailUrl }}" class="absolute inset-0 w-full h-full object-cover">
+                    @else
+                        <span class="material-symbols-outlined text-[32px] text-on-surface/20">add_photo_alternate</span>
+                        <p class="text-[10px] font-bold text-on-surface/40 mt-2 uppercase">Upload Thumbnail</p>
+                    @endif
+                    
+                    <input type="file" wire:model="thumbnail" class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*">
+                </div>
+
+                <div wire:loading wire:target="thumbnail" class="flex items-center gap-2 text-[10px] text-primary font-bold animate-pulse">
+                    <span class="material-symbols-outlined text-[14px]">sync</span>
+                    UPDATING PREVIEW...
+                </div>
+                
+                <p class="text-[10px] text-on-surface/40 text-center">แนะนำขนาด 1280x720px (ไม่เกิน 2MB)</p>
+            </div>
+        </div>
+
 
         {{-- Course summary (edit only) --}}
         @if (isset($course))
