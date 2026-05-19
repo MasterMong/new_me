@@ -32,11 +32,11 @@
 
                 <flux:field>
                     <flux:label>คำอธิบายคอร์ส</flux:label>
-                    <flux:textarea
-                        wire:model="description"
-                        placeholder="อธิบายเนื้อหา เป้าหมาย และประโยชน์ที่ผู้เรียนจะได้รับ..."
-                        rows="5"
-                    />
+                    @include('partials.rich-editor', [
+                        'model'       => 'description',
+                        'value'       => $description,
+                        'placeholder' => 'อธิบายเนื้อหา เป้าหมาย และประโยชน์ที่ผู้เรียนจะได้รับ...',
+                    ])
                     <flux:description>แสดงในหน้าแนะนำคอร์สสำหรับผู้เรียนและหน้าสาธารณะ</flux:description>
                     <flux:error name="description" />
                 </flux:field>

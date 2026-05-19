@@ -146,3 +146,42 @@ select:focus[data-flux-control] {
 .hero-gradient {
     background: linear-gradient(135deg, #003e74 0%, #1a5694 100%);
 }
+
+/* ── Quill rich text editor ─────────────────────────────── */
+.ql-toolbar.ql-snow {
+    border-color: color-mix(in srgb, #c2c6d2 50%, transparent);
+    border-radius: 12px 12px 0 0;
+    background: #f8f9fa;
+    font-family: 'Inter', sans-serif;
+    padding: 8px 10px;
+}
+.ql-container.ql-snow {
+    border-color: color-mix(in srgb, #c2c6d2 50%, transparent);
+    border-radius: 0 0 12px 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+}
+.ql-editor {
+    min-height: 140px;
+    color: #191c1d;
+    line-height: 1.65;
+    padding: 12px 16px;
+}
+.ql-editor p { margin-bottom: 0.5em; }
+.ql-editor h2 { font-size: 1.2em; font-weight: 700; margin-bottom: 0.4em; }
+.ql-editor h3 { font-size: 1.05em; font-weight: 600; margin-bottom: 0.4em; }
+.ql-editor.ql-blank::before {
+    color: #191c1d;
+    opacity: 0.35;
+    font-style: normal;
+    left: 16px;
+}
+.ql-snow .ql-stroke { stroke: #525252; }
+.ql-snow .ql-fill  { fill: #525252; }
+.ql-snow .ql-picker { color: #525252; }
+.ql-snow.ql-toolbar button:hover .ql-stroke,
+.ql-snow.ql-toolbar button.ql-active .ql-stroke { stroke: #003e74; }
+.ql-snow.ql-toolbar button:hover .ql-fill,
+.ql-snow.ql-toolbar button.ql-active .ql-fill { fill: #003e74; }
+.ql-snow.ql-toolbar button:hover,
+.ql-snow.ql-toolbar button.ql-active { color: #003e74; }

@@ -221,7 +221,11 @@
 
             <flux:field>
                 <flux:label>คำอธิบาย</flux:label>
-                <flux:textarea wire:model="moduleDescription" placeholder="อธิบายเนื้อหาของโมดูลนี้..." rows="3" />
+                @include('partials.rich-editor', [
+                    'model'       => 'moduleDescription',
+                    'value'       => $moduleDescription,
+                    'placeholder' => 'อธิบายเนื้อหาของโมดูลนี้...',
+                ])
                 <flux:error name="moduleDescription" />
             </flux:field>
 
