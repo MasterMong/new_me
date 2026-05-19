@@ -108,68 +108,82 @@
 
                 {{-- Content table --}}
                 @if ($module->contents->isNotEmpty())
-                    <div class="border-t border-outline-variant/20">
+                    <div class="border-t border-outline-variant/20 bg-surface-container-lowest/50">
                         <flux:table>
                             <flux:table.columns>
-                                <flux:table.column class="ps-5 w-24">ประเภท</flux:table.column>
+                                <flux:table.column class="ps-6 w-24">ประเภท</flux:table.column>
                                 <flux:table.column>ชื่อเนื้อหา</flux:table.column>
-                                <flux:table.column>ลิงก์ / ไฟล์</flux:table.column>
+                                <flux:table.column>แหล่งข้อมูล</flux:table.column>
                                 <flux:table.column class="w-24">ระยะเวลา</flux:table.column>
-                                <flux:table.column class="w-28">การมองเห็น</flux:table.column>
-                                <flux:table.column class="w-12"></flux:table.column>
+                                <flux:table.column class="w-32">กลุ่มเป้าหมาย</flux:table.column>
+                                <flux:table.column class="pe-6 w-12"></flux:table.column>
                             </flux:table.columns>
+
                             <flux:table.rows>
                                 @foreach ($module->contents as $content)
-                                    <flux:table.row wire:key="content-{{ $content->id }}">
-                                        <flux:table.cell class="ps-5">
+                                    <flux:table.row wire:key="content-{{ $content->id }}" class="premium-table-row">
+                                        <flux:table.cell class="ps-6">
                                             @php
                                                 [$typeColor, $typeLabel, $typeIcon] = match($content->content_type) {
                                                     \App\Enums\ContentType::Video    => ['red',   'วิดีโอ',  'play_circle'],
                                                     \App\Enums\ContentType::Document => ['blue',  'เอกสาร', 'description'],
                                                     \App\Enums\ContentType::Link     => ['green', 'ลิงก์',   'link'],
-                                                    \App\Enums\ContentType::Test     => ['purple', 'แบบทดสอบ', 'quiz'],
+                                                    \App\Enums\ContentType::Test     => ['purple', 'ทดสอบ', 'quiz'],
                                                 };
                                             @endphp
-                                            <flux:badge color="{{ $typeColor }}" size="sm">{{ $typeLabel }}</flux:badge>
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="material-symbols-outlined text-[16px] text-{{ $typeColor }}-500">{{ $typeIcon }}</span>
+                                                <span class="text-[10px] font-bold uppercase tracking-wider text-{{ $typeColor }}-600">{{ $typeLabel }}</span>
+                                            </div>
                                         </flux:table.cell>
-                                        <flux:table.cell class="font-medium text-on-surface">
+
+                                        <flux:table.cell class="font-semibold text-on-surface">
                                             {{ $content->title }}
                                         </flux:table.cell>
+
                                         <flux:table.cell>
                                             @if ($content->file_url)
                                                 <a href="{{ $content->file_url }}" target="_blank"
-                                                   class="flex items-center gap-1 text-sm text-primary hover:underline max-w-xs truncate">
-                                                    <span class="material-symbols-outlined text-[14px]">open_in_new</span>
-                                                    <span class="truncate">{{ $content->file_url }}</span>
+                                                   class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-surface border border-outline-variant/10 text-[11px] text-primary hover:bg-primary hover:text-on-primary transition-all max-w-[160px]">
+                                                    <flux:icon name="link" variant="micro" />
+                                                    <span class="truncate">{{ str_replace(['https://', 'http://'], '', $content->file_url) }}</span>
                                                 </a>
                                             @else
-                                                <span class="text-on-surface/40 text-sm">-</span>
+                                                <span class="text-on-surface/30 italic text-xs">No link</span>
                                             @endif
                                         </flux:table.cell>
-                                        <flux:table.cell class="text-on-surface/60 text-sm">
-                                            {{ $content->duration_minutes ? number_format($content->duration_minutes, 0).' นาที' : '-' }}
+
+                                        <flux:table.cell class="text-on-surface/60 text-[11px] font-bold">
+                                            @if ($content->duration_minutes)
+                                                <div class="flex items-center gap-1">
+                                                    <flux:icon name="clock" variant="micro" class="opacity-50" />
+                                                    {{ number_format($content->duration_minutes, 0) }}m
+                                                </div>
+                                            @else
+                                                -
+                                            @endif
                                         </flux:table.cell>
+
                                         <flux:table.cell>
                                             @if ($content->groupAccess->isEmpty())
-                                                <flux:badge color="green" size="sm">ทุกกลุ่ม</flux:badge>
+                                                <span class="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-100">Public</span>
                                             @else
                                                 <flux:tooltip>
-                                                    <flux:badge color="amber" size="sm">
-                                                        {{ $content->groupAccess->count() }} กลุ่ม
-                                                    </flux:badge>
+                                                    <span class="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100 cursor-help">
+                                                        {{ $content->groupAccess->count() }} Groups
+                                                    </span>
                                                     <flux:tooltip.content>
                                                         {{ $content->groupAccess->map(fn($a) => $a->group?->name)->filter()->join(', ') }}
                                                     </flux:tooltip.content>
                                                 </flux:tooltip>
                                             @endif
                                         </flux:table.cell>
-                                        <flux:table.cell>
+
+                                        <flux:table.cell class="pe-6">
                                             <flux:dropdown>
-                                                <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" />
-                                                <flux:menu>
-                                                    <flux:menu.item icon="pencil" wire:click="openEditContent({{ $content->id }})">
-                                                        แก้ไข
-                                                    </flux:menu.item>
+                                                <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" class="rounded-full h-8 w-8" />
+                                                <flux:menu class="min-w-32">
+                                                    <flux:menu.item icon="pencil" wire:click="openEditContent({{ $content->id }})">แก้ไข</flux:menu.item>
                                                     <flux:menu.separator />
                                                     <flux:menu.item
                                                         icon="trash"

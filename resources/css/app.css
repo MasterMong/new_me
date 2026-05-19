@@ -185,3 +185,28 @@ select:focus[data-flux-control] {
 .ql-snow.ql-toolbar button.ql-active .ql-fill { fill: #003e74; }
 .ql-snow.ql-toolbar button:hover,
 .ql-snow.ql-toolbar button.ql-active { color: #003e74; }
+
+/* Premium Data Table Styling */
+.premium-table-container {
+    @apply rounded-3xl border border-outline-variant/30 bg-surface-container-lowest shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden transition-all duration-300;
+}
+
+.premium-table-container:hover {
+    @apply shadow-[0_8px_40px_rgb(0,0,0,0.06)] border-outline-variant/50;
+}
+
+flux-table-column {
+    @apply text-xs font-bold uppercase tracking-wider text-on-surface/50 py-4;
+}
+
+.premium-table-row {
+    @apply transition-colors duration-200 hover:bg-primary/[0.02];
+}
+
+.premium-table-empty {
+    @apply py-20 flex flex-col items-center justify-center text-on-surface/40;
+}
+
+.premium-table-empty-icon {
+    @apply text-[56px] mb-4 opacity-20 text-primary animate-pulse;
+}

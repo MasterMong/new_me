@@ -27,12 +27,15 @@
 
     {{-- Course Completion Rates --}}
     <div>
-        <h2 class="text-lg font-bold font-headline text-on-surface mb-4">อัตราการสำเร็จรายคอร์ส</h2>
+        <div class="flex items-center justify-between mb-4 px-2">
+            <h2 class="text-xl font-bold font-headline text-on-surface">อัตราการสำเร็จรายคอร์ส</h2>
+            <flux:button variant="ghost" size="sm" icon="arrow-down-tray" class="rounded-xl">Export Report</flux:button>
+        </div>
 
-        <div class="rounded-2xl border border-outline-variant/30 bg-white overflow-hidden">
+        <div class="premium-table-container">
             <flux:table>
                 <flux:table.columns>
-                    <flux:table.column>คอร์ส</flux:table.column>
+                    <flux:table.column class="ps-6">คอร์สเรียน</flux:table.column>
                     <flux:table.column>ผู้ลงทะเบียน</flux:table.column>
                     <flux:table.column>สำเร็จแล้ว</flux:table.column>
                     <flux:table.column>ใบประกาศ</flux:table.column>

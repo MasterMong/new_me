@@ -80,54 +80,60 @@
 
     {{-- Recent Courses --}}
     <div>
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-bold font-headline text-on-surface">คอร์สล่าสุด</h2>
-            <flux:button variant="ghost" size="sm" href="{{ route('admin.courses.index') }}" wire:navigate>
+        <div class="flex items-center justify-between mb-4 px-2">
+            <h2 class="text-xl font-bold font-headline text-on-surface">คอร์สล่าสุด</h2>
+            <flux:button variant="ghost" size="sm" icon="arrow-right" icon-trailing href="{{ route('admin.courses.index') }}" wire:navigate class="rounded-xl">
                 ดูทั้งหมด
             </flux:button>
         </div>
 
-        <div class="rounded-2xl border border-outline-variant/30 bg-white overflow-hidden">
+        <div class="premium-table-container">
             <flux:table>
                 <flux:table.columns>
-                    <flux:table.column>ชื่อคอร์ส</flux:table.column>
+                    <flux:table.column class="ps-6">ชื่อคอร์ส</flux:table.column>
                     <flux:table.column>ผู้สร้าง</flux:table.column>
                     <flux:table.column>สถานะ</flux:table.column>
-                    <flux:table.column>วันที่สร้าง</flux:table.column>
+                    <flux:table.column class="pe-6">สร้างเมื่อ</flux:table.column>
                 </flux:table.columns>
                 <flux:table.rows>
                     @forelse ($recentCourses as $course)
-                        <flux:table.row wire:key="course-{{ $course->id }}">
-                            <flux:table.cell>
-                                <div class="flex items-center gap-3">
+                        <flux:table.row wire:key="course-{{ $course->id }}" class="premium-table-row">
+                            <flux:table.cell class="ps-6">
+                                <div class="flex items-center gap-3 py-1">
                                     @if ($course->thumbnail_url)
-                                        <div class="size-8 shrink-0 rounded-lg overflow-hidden border border-outline-variant/20 bg-surface">
+                                        <div class="size-10 shrink-0 rounded-xl overflow-hidden border border-outline-variant/20 shadow-sm">
                                             <img src="{{ $course->thumbnail_url }}" class="w-full h-full object-cover">
                                         </div>
                                     @else
-                                        <div class="size-8 shrink-0 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                                            <span class="material-symbols-outlined text-[16px]">book</span>
+                                        <div class="size-10 shrink-0 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/10">
+                                            <span class="material-symbols-outlined text-[20px]">book</span>
                                         </div>
                                     @endif
-                                    <span class="font-medium truncate">{{ $course->title }}</span>
+                                    <span class="font-bold text-on-surface truncate">{{ $course->title }}</span>
                                 </div>
                             </flux:table.cell>
-                            <flux:table.cell class="text-on-surface/70">{{ $course->creator?->fullName() ?? '-' }}</flux:table.cell>
+                            <flux:table.cell class="text-on-surface/70 font-medium">
+                                {{ $course->creator?->fullName() ?? '-' }}
+                            </flux:table.cell>
                             <flux:table.cell>
                                 @if ($course->is_published)
-                                    <flux:badge color="green" size="sm">เผยแพร่</flux:badge>
+                                    <flux:badge color="green" size="sm" class="font-bold uppercase tracking-wide text-[10px] px-2 py-0.5 rounded-full">Published</flux:badge>
                                 @else
-                                    <flux:badge color="zinc" size="sm">ฉบับร่าง</flux:badge>
+                                    <flux:badge color="zinc" size="sm" class="font-bold uppercase tracking-wide text-[10px] px-2 py-0.5 rounded-full">Draft</flux:badge>
                                 @endif
                             </flux:table.cell>
-                            <flux:table.cell class="text-on-surface/60 text-sm">
+                            <flux:table.cell class="pe-6 text-on-surface/50 text-[11px] font-bold">
                                 {{ $course->created_at->diffForHumans() }}
                             </flux:table.cell>
                         </flux:table.row>
                     @empty
                         <flux:table.row>
-                            <flux:table.cell colspan="4" class="text-center text-on-surface/50 py-8">
-                                ยังไม่มีคอร์สในระบบ
+                            <flux:table.cell colspan="4">
+                                <div class="premium-table-empty">
+                                    <span class="material-symbols-outlined premium-table-empty-icon">history</span>
+                                    <h3 class="text-lg font-bold text-on-surface/60">ยังไม่มีประวัติคอร์ส</h3>
+                                    <p class="text-sm text-on-surface/40 mt-1">คอร์สที่เพิ่งสร้างจะแสดงที่นี่</p>
+                                </div>
                             </flux:table.cell>
                         </flux:table.row>
                     @endforelse

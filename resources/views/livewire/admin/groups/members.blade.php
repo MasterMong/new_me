@@ -41,35 +41,31 @@
     />
 
     {{-- Members table --}}
-    <div class="rounded-2xl border border-outline-variant/30 bg-white overflow-hidden">
+    <div class="premium-table-container">
         <flux:table>
             <flux:table.columns>
-                <flux:table.column class="ps-4">ชื่อ-นามสกุล</flux:table.column>
-                <flux:table.column>อีเมล</flux:table.column>
+                <flux:table.column class="ps-6">สมาชิก</flux:table.column>
                 <flux:table.column>บทบาท</flux:table.column>
                 <flux:table.column>เพิ่มโดย</flux:table.column>
                 <flux:table.column>วันที่เพิ่ม</flux:table.column>
-                <flux:table.column></flux:table.column>
+                <flux:table.column class="pe-6"></flux:table.column>
             </flux:table.columns>
+
             <flux:table.rows>
                 @forelse ($members as $membership)
-                    <flux:table.row wire:key="member-{{ $membership->id }}">
-                        <flux:table.cell class="ps-4">
-                            <div class="flex items-center gap-3">
-                                <div class="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-sm">
+                    <flux:table.row wire:key="member-{{ $membership->id }}" class="premium-table-row">
+                        <flux:table.cell class="ps-6">
+                            <div class="flex items-center gap-4 py-1">
+                                <div class="size-10 shrink-0 rounded-full bg-gradient-to-tr from-primary/20 to-primary/5 flex items-center justify-center text-primary font-bold text-sm border border-primary/10">
                                     {{ $membership->user->initials() }}
                                 </div>
-                                <div>
-                                    <p class="font-medium text-on-surface">{{ $membership->user->fullName() }}</p>
-                                    @if ($membership->user->position)
-                                        <p class="text-xs text-on-surface/50">{{ $membership->user->position->name }}</p>
-                                    @endif
+                                <div class="min-w-0">
+                                    <p class="font-semibold text-on-surface leading-tight">{{ $membership->user->fullName() }}</p>
+                                    <p class="text-[11px] text-on-surface/50 mt-0.5 truncate">{{ $membership->user->email }}</p>
                                 </div>
                             </div>
                         </flux:table.cell>
-                        <flux:table.cell class="text-on-surface/70 text-sm">
-                            {{ $membership->user->email }}
-                        </flux:table.cell>
+
                         <flux:table.cell>
                             @php
                                 $roleLabel = match($membership->user->role) {
@@ -78,36 +74,39 @@
                                     \App\Enums\UserRole::Learner => ['label' => 'ผู้เรียน',      'color' => 'blue'],
                                 };
                             @endphp
-                            <flux:badge color="{{ $roleLabel['color'] }}" size="sm">{{ $roleLabel['label'] }}</flux:badge>
+                            <flux:badge color="{{ $roleLabel['color'] }}" size="sm" class="font-bold uppercase tracking-wide text-[10px] px-2 py-0.5 rounded-md">
+                                {{ $roleLabel['label'] }}
+                            </flux:badge>
                         </flux:table.cell>
-                        <flux:table.cell class="text-on-surface/60 text-sm">
+
+                        <flux:table.cell class="text-on-surface/60 text-sm font-medium">
                             {{ $membership->assignedBy?->fullName() ?? 'ระบบ' }}
                         </flux:table.cell>
-                        <flux:table.cell class="text-on-surface/60 text-sm">
-                            {{ $membership->assigned_at->format('d/m/Y') }}
+
+                        <flux:table.cell class="text-on-surface/60 text-sm font-medium">
+                            {{ $membership->assigned_at->translatedFormat('d M Y') }}
                         </flux:table.cell>
-                        <flux:table.cell>
-                            <flux:button
-                                variant="ghost"
-                                size="sm"
-                                icon="trash"
-                                wire:click="removeMember({{ $membership->id }})"
-                                wire:confirm="ยืนยันการนำ {{ $membership->user->fullName() }} ออกจากกลุ่มนี้?"
-                            />
+
+                        <flux:table.cell class="pe-6">
+                            <div class="flex justify-end">
+                                <flux:button
+                                    variant="ghost"
+                                    size="sm"
+                                    icon="trash"
+                                    class="rounded-full hover:bg-error/10 hover:text-error"
+                                    wire:click="removeMember({{ $membership->id }})"
+                                    wire:confirm="ยืนยันการนำ {{ $membership->user->fullName() }} ออกจากกลุ่มนี้?"
+                                />
+                            </div>
                         </flux:table.cell>
                     </flux:table.row>
                 @empty
                     <flux:table.row>
-                        <flux:table.cell colspan="6" class="py-16 text-center">
-                            <div class="flex flex-col items-center gap-3">
-                                <div class="flex size-14 items-center justify-center rounded-2xl bg-surface">
-                                    <span class="material-symbols-outlined text-[28px] text-on-surface/30">group</span>
-                                </div>
-                                <p class="text-on-surface/50">ยังไม่มีสมาชิกในกลุ่มนี้</p>
-                                <flux:button variant="primary" size="sm" wire:click="$set('showAddModal', true)">
-                                    <span class="material-symbols-outlined text-[16px]">person_add</span>
-                                    เพิ่มสมาชิกแรก
-                                </flux:button>
+                        <flux:table.cell colspan="5">
+                            <div class="premium-table-empty">
+                                <span class="material-symbols-outlined premium-table-empty-icon">group</span>
+                                <h3 class="text-lg font-bold text-on-surface/60">ยังไม่มีสมาชิกในกลุ่มนี้</h3>
+                                <p class="text-sm text-on-surface/40 mt-1">คลิกที่ปุ่ม "เพิ่มสมาชิก" เพื่อเริ่มเพิ่มผู้ใช้งานเข้าสู่กลุ่ม</p>
                             </div>
                         </flux:table.cell>
                     </flux:table.row>

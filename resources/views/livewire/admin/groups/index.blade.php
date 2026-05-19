@@ -20,63 +20,81 @@
     />
 
     {{-- Table --}}
-    <div class="rounded-2xl border border-outline-variant/30 bg-white overflow-hidden">
+    <div class="premium-table-container">
         <flux:table>
             <flux:table.columns>
-                <flux:table.column>ชื่อกลุ่ม</flux:table.column>
-                <flux:table.column>คำอธิบาย</flux:table.column>
+                <flux:table.column class="ps-6">กลุ่มผู้เรียน</flux:table.column>
                 <flux:table.column>สมาชิก</flux:table.column>
                 <flux:table.column>สถานะ</flux:table.column>
-                <flux:table.column></flux:table.column>
+                <flux:table.column class="pe-6"></flux:table.column>
             </flux:table.columns>
+
             <flux:table.rows>
                 @forelse ($groups as $group)
-                    <flux:table.row wire:key="group-{{ $group->id }}">
-                        <flux:table.cell class="font-medium text-on-surface">{{ $group->name }}</flux:table.cell>
-                        <flux:table.cell class="text-on-surface/60 text-sm max-w-xs truncate">
-                            {{ $group->description ?? '-' }}
+                    <flux:table.row wire:key="group-{{ $group->id }}" class="premium-table-row">
+                        <flux:table.cell class="ps-6">
+                            <div class="flex flex-col py-1">
+                                <p class="font-semibold text-on-surface leading-tight">{{ $group->name }}</p>
+                                @if ($group->description)
+                                    <p class="text-[11px] text-on-surface/50 mt-1 max-w-sm line-clamp-1">{{ $group->description }}</p>
+                                @endif
+                            </div>
                         </flux:table.cell>
+
                         <flux:table.cell>
-                            <flux:badge color="blue" size="sm">
-                                {{ number_format($group->users_count) }} คน
-                            </flux:badge>
+                            <div class="flex items-center gap-2">
+                                <flux:icon name="users" variant="micro" class="text-primary" />
+                                <span class="text-sm font-bold text-on-surface">{{ number_format($group->users_count) }}</span>
+                                <span class="text-[10px] text-on-surface/40 uppercase tracking-tighter font-bold">Members</span>
+                            </div>
                         </flux:table.cell>
+
                         <flux:table.cell>
                             @if ($group->is_active)
-                                <flux:badge color="green" size="sm">ใช้งาน</flux:badge>
+                                <flux:badge color="green" size="sm" class="font-bold uppercase tracking-wide text-[10px] px-2 py-0.5 rounded-full">
+                                    Enabled
+                                </flux:badge>
                             @else
-                                <flux:badge color="zinc" size="sm">ปิดการใช้งาน</flux:badge>
+                                <flux:badge color="zinc" size="sm" class="font-bold uppercase tracking-wide text-[10px] px-2 py-0.5 rounded-full">
+                                    Disabled
+                                </flux:badge>
                             @endif
                         </flux:table.cell>
-                        <flux:table.cell>
-                            <flux:dropdown>
-                                <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" />
-                                <flux:menu>
-                                    <flux:menu.item icon="users" wire:navigate :href="route('admin.groups.members', $group)">จัดการสมาชิก</flux:menu.item>
-                                    <flux:menu.item
-                                        wire:click="toggleActive({{ $group->id }})"
-                                        :icon="$group->is_active ? 'no-symbol' : 'check-circle'"
-                                    >
-                                        {{ $group->is_active ? 'ปิดการใช้งาน' : 'เปิดการใช้งาน' }}
-                                    </flux:menu.item>
-                                    <flux:menu.separator />
-                                    <flux:menu.item
-                                        icon="trash"
-                                        variant="danger"
-                                        wire:click="deleteGroup({{ $group->id }})"
-                                        wire:confirm="ยืนยันการลบกลุ่ม '{{ $group->name }}'?"
-                                    >
-                                        ลบ
-                                    </flux:menu.item>
-                                </flux:menu>
-                            </flux:dropdown>
+
+                        <flux:table.cell class="pe-6">
+                            <div class="flex justify-end">
+                                <flux:dropdown>
+                                    <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" class="rounded-full hover:bg-surface-container" />
+                                    <flux:menu class="min-w-44">
+                                        <flux:menu.item icon="users" wire:navigate :href="route('admin.groups.members', $group)">จัดการสมาชิกในกลุ่ม</flux:menu.item>
+                                        <flux:menu.item
+                                            wire:click="toggleActive({{ $group->id }})"
+                                            :icon="$group->is_active ? 'no-symbol' : 'check-circle'"
+                                        >
+                                            {{ $group->is_active ? 'ปิดการใช้งาน' : 'เปิดการใช้งาน' }}
+                                        </flux:menu.item>
+                                        <flux:menu.separator />
+                                        <flux:menu.item
+                                            icon="trash"
+                                            variant="danger"
+                                            wire:click="deleteGroup({{ $group->id }})"
+                                            wire:confirm="ยืนยันการลบกลุ่ม '{{ $group->name }}'?"
+                                        >
+                                            ลบกลุ่มนี้
+                                        </flux:menu.item>
+                                    </flux:menu>
+                                </flux:dropdown>
+                            </div>
                         </flux:table.cell>
                     </flux:table.row>
                 @empty
                     <flux:table.row>
-                        <flux:table.cell colspan="5" class="text-center text-on-surface/50 py-12">
-                            <span class="material-symbols-outlined text-[40px] block mb-2 text-on-surface/30">group_work</span>
-                            ยังไม่มีกลุ่มผู้เรียน
+                        <flux:table.cell colspan="4">
+                            <div class="premium-table-empty">
+                                <span class="material-symbols-outlined premium-table-empty-icon">group_work</span>
+                                <h3 class="text-lg font-bold text-on-surface/60">ไม่พบกลุ่มผู้เรียน</h3>
+                                <p class="text-sm text-on-surface/40 mt-1">เริ่มต้นด้วยการสร้างกลุ่มใหม่เพื่อจัดการสิทธิ์เข้าถึง</p>
+                            </div>
                         </flux:table.cell>
                     </flux:table.row>
                 @endforelse
