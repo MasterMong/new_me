@@ -73,7 +73,7 @@ ME-Learning เป็นระบบ e-Learning สำหรับพัฒน�
 | A-01 | ในฐานะ Admin ฉันต้องการสร้างหลักสูตรใหม่ และแก้ไขข้อมูลหลักสูตรที่มีอยู่ | Must |
 | A-02 | ในฐานะ Admin ฉันต้องการจัดการ Module (เพิ่ม/แก้ไข/ลบ/จัดลำดับ) และอัปโหลดเนื้อหา (วิดีโอ/เอกสาร/URL) | Must |
 | A-03 | ในฐานะ Admin ฉันต้องการจัดการแบบทดสอบ (สร้างคำถาม/ตัวเลือก/เฉลย) และกำหนดโหมดการตรวจ (auto/manual/mixed) | Must |
-| A-04 | ในฐานะ Admin ฉันต้องการสร้างกลุ่มผู้เรียน และกำหนดว่ากลุ่มไหนเข้าเรียนหลักสูตร/Module ใดได้ | Must |
+| A-04 | ในฐานะ Admin ฉันต้องการสร้างกลุ่มผู้เรียน และกำหนดว่ากลุ่มไหนเห็น content item ใดได้ | Must |
 | A-05 | ในฐานะ Admin ฉันต้องการจัดการบัญชีผู้ใช้ (เพิ่ม/แก้ไข role/รีเซ็ตรหัสผ่าน) | Must |
 | A-06 | ในฐานะ Admin ฉันต้องการกำหนดเงื่อนไขก่อนเรียน Module (prerequisite) ว่าต้องผ่านอะไรก่อน | Must |
 | A-07 | ในฐานะ Admin ฉันต้องการจัดการเทมเพลตเกียรติบัตร (อัปโหลดภาพ/กำหนดตำแหน่งชื่อ-วันที่) | Must |
@@ -103,9 +103,9 @@ ME-Learning เป็นระบบ e-Learning สำหรับพัฒน�
 |----|------------|----------|
 | FR-GROUP-01 | Admin สร้าง/แก้ไข/ลบกลุ่มผู้เรียนได้ไม่จำกัด (เช่น ผู้เรียนทั่วไป, ผู้เรียน สตผ., ผู้บริหาร...) | Must |
 | FR-GROUP-02 | ผู้ใช้ 1 คนสังกัดได้หลายกลุ่ม (Many-to-Many) | Must |
-| FR-GROUP-03 | Admin กำหนดว่ากลุ่มใดมีสิทธิ์เข้าเรียนหลักสูตรใด (course_group_access) | Must |
-| FR-GROUP-04 | Admin กำหนดว่ากลุ่มใดเห็น Module ใด (module_group_access) — ถ้าไม่กำหนด = ทุกกลุ่มเห็น | Must |
-| FR-GROUP-05 | ผู้เรียนเห็นเฉพาะหลักสูตร/Module ที่กลุ่มตนเองมีสิทธิ์ | Must |
+| FR-GROUP-03 | Admin กำหนดว่ากลุ่มใดเห็น content item ใด (content_group_access) — ถ้าไม่กำหนด = ทุกกลุ่มเห็น | Must |
+| FR-GROUP-04 | หลักสูตรและ Module มองเห็นได้ทุกกลุ่ม — สิทธิ์เข้าถึงควบคุมที่ระดับ content item | Must |
+| FR-GROUP-05 | ผู้เรียนเห็นเฉพาะ content item ที่กลุ่มตนเองมีสิทธิ์ เมื่อเปลี่ยนกลุ่ม content ใหม่ปรากฏทันทีใน enrollment เดิม | Must |
 
 ### 3.3 ระบบหลักสูตรและเนื้อหา
 
@@ -287,12 +287,12 @@ Admin:
 
 ## 5. Database Design
 
-### 5.1 สรุปตาราง (23 ตาราง)
+### 5.1 สรุปตาราง (22 ตาราง)
 
 | กลุ่ม | ตาราง | จำนวน |
 |-------|-------|-------|
 | Users & Groups | `users`, `positions`, `affiliations`, `learner_groups` 🆕, `user_group_memberships` 🆕, `login_logs` | 6 |
-| Courses & Modules | `courses`, `course_instructors`, `course_group_access` 🆕, `modules`, `module_group_access` 🆕, `module_contents`, `module_prerequisites` 🆕 | 7 |
+| Courses & Modules | `courses`, `course_instructors`, `modules`, `module_contents`, `content_group_access` 🆕, `module_prerequisites` 🆕 | 6 |
 | Assessments | `assessments`, `questions`, `question_choices` | 3 |
 | Learning Progress | `enrollments`, `module_progress`, `content_views` | 3 |
 | Test Results & Expert Review | `test_attempts`, `test_answers`, `expert_reviews` | 3 |
@@ -305,9 +305,8 @@ Admin:
 
 ```
 users ←M:N→ learner_groups      (ผ่าน user_group_memberships)
-courses ←M:N→ learner_groups    (ผ่าน course_group_access)
-modules ←M:N→ learner_groups    (ผ่าน module_group_access)
 courses ←1:N→ modules ←1:N→ module_contents
+module_contents ←M:N→ learner_groups  (ผ่าน content_group_access)
 modules ←1:N→ assessments ←1:N→ questions ←1:N→ question_choices
 modules ←prereq→ modules/assessments  (ผ่าน module_prerequisites)
 users ←1:N→ enrollments ←N:1→ courses
@@ -515,6 +514,6 @@ users ←1:1→ certificates ←N:1→ courses
 
 | เอกสาร | คำอธิบาย |
 |--------|----------|
-| ME-Learning-Database-Design-v2.md | รายละเอียดฐานข้อมูล 23 ตาราง + FK + Business Rules |
+| ME-Learning-Database-Design-v2.md | รายละเอียดฐานข้อมูล 22 ตาราง + FK + Business Rules |
 | ME-Learning-Frontend-Routes.md | รายการ Route 35 เส้นทาง + คำอธิบาย + Route Guard Logic |
 | โครงสร้าง_ME-Learning.pdf | เอกสารโครงสร้างระบบต้นฉบับ (Wireframe + Flow) |

@@ -37,12 +37,12 @@
 
 > Prefix: `/learn`  
 > ต้อง Login + role = `learner` + มี group membership ที่เหมาะสม  
-> ผู้เรียน สตผ. ใช้ route เดียวกัน แต่เห็นเนื้อหาครบทุก Module (ตาม `module_group_access`)
+> ผู้เรียน สตผ. ใช้ route เดียวกัน แต่เห็น content item ครบทุกชิ้น (ตาม `content_group_access`)
 
 | # | Route | Page | คำอธิบาย |
 |---|-------|------|----------|
 | 1 | `/learn` | หน้าหลักผู้เรียน | แสดงหลักสูตรที่ลงทะเบียน, สถานะความคืบหน้า, ปุ่ม "เข้าสู่บทเรียน" |
-| 2 | `/learn/courses/:courseId` | บทเรียน (Learning Path) | แสดง Learning Path: Pre-Test → Module 1-9 → Post-Test เรียงลำดับ, แสดงสถานะแต่ละ Module (ล็อค / กำลังเรียน / เรียนจบ), ระยะเวลาชม, ✓ เครื่องหมายถูกเมื่อจบ, Module ที่ล็อคจะ disable (ตาม prerequisite + group access) |
+| 2 | `/learn/courses/:courseId` | บทเรียน (Learning Path) | แสดง Learning Path: Pre-Test → Module 1-9 → Post-Test เรียงลำดับ, แสดงสถานะแต่ละ Module (ล็อค / กำลังเรียน / เรียนจบ), ระยะเวลาชม, ✓ เครื่องหมายถูกเมื่อจบ, Module ที่ล็อคจะ disable (ตาม prerequisite); content item ที่ไม่มีสิทธิ์จะซ่อนตาม content_group_access |
 | 3 | `/learn/courses/:courseId/modules/:moduleId` | เนื้อหา Module | แสดงเนื้อหาราย Module: คลิปวิดีโอ (เก็บชั่วโมงรับชม, ตำแหน่งล่าสุด), ไฟล์เอกสาร/ใบความรู้ (ดาวน์โหลดได้), ลิงก์เพิ่มเติม, เรียงตาม sort_order เช่น 1.1, 1.2, 1.3 |
 | 4 | `/learn/courses/:courseId/assessments/:assessmentId` | ทำแบบทดสอบ | หน้าทำแบบทดสอบ (Pre-test / Post-test / Module test): แสดงคำถามทีละข้อ/ทั้งหมด, เลือกตอบ (multiple_choice) → เฉลยทันที (auto), เขียนบรรยาย (essay) → พิมพ์ในระบบ, อัปโหลดใบงาน (file_upload) → เลือกไฟล์, แสดงครั้งที่ทำ (1/3, 2/3, 3/3), ปุ่ม "ส่งคำตอบ" |
 | 5 | `/learn/courses/:courseId/assessments/:assessmentId/result` | ผลแบบทดสอบ | แสดงผลหลังส่ง: คะแนนที่ได้ / คะแนนเต็ม / ร้อยละ / ดาว, สถานะ ผ่าน/ไม่ผ่าน, ข้อที่ auto-grade → เห็นผลทันที, ข้อที่ manual → แสดง "รอผู้เชี่ยวชาญตรวจ", ข้อเสนอแนะจาก ผชช. (ถ้าตรวจแล้ว), ปุ่ม "ทำใหม่" (ถ้ายังไม่ครบ 3 ครั้ง) |
@@ -81,10 +81,10 @@
 |---|-------|------|----------|
 | 1 | `/admin` | Dashboard | สถิติภาพรวม: จำนวนผู้เรียน, จำนวนผู้ผ่าน, คะแนนรีวิวเฉลี่ย, กราฟจำนวนผู้เรียนรายเดือน, รายงานการเข้าใช้ระบบ |
 | 2 | `/admin/courses` | จัดการหลักสูตร | รายการหลักสูตรทั้งหมด, สร้างหลักสูตรใหม่, แก้ไข/เพิ่มเติมข้อมูลหลักสูตร (คำอธิบาย, ระยะเวลา, เกณฑ์ผ่าน, วิทยากร) |
-| 3 | `/admin/courses/:courseId/modules` | จัดการ Module | CRUD Module: ชื่อ, รายละเอียด, ลำดับ, `is_required`, `requires_expert_review`, จัดการ prerequisite (ต้องผ่านอะไรก่อน), จัดการ group access (กลุ่มไหนเห็น) |
+| 3 | `/admin/courses/:courseId/modules` | จัดการ Module | CRUD Module: ชื่อ, รายละเอียด, ลำดับ, `is_required`, `requires_expert_review`, จัดการ prerequisite (ต้องผ่านอะไรก่อน), จัดการ content access (กลุ่มไหนเห็น content item ไหน ผ่าน content_group_access) |
 | 4 | `/admin/courses/:courseId/modules/:moduleId/contents` | จัดการเนื้อหา | อัปโหลดไฟล์/URL: คลิปวิดีโอ, ไฟล์เอกสาร (ใบความรู้/ใบงาน), ลิงก์, จัดลำดับเนื้อหา |
 | 5 | `/admin/courses/:courseId/assessments` | จัดการแบบทดสอบ | สร้าง/แก้ไข: Pre-test, Post-test, Module test, ใบงาน, ตั้งค่า: `grading_mode` (auto/manual/mixed), `is_required_for_cert`, `max_attempts`, เพิ่มคำถาม + ตัวเลือก + เฉลย |
-| 6 | `/admin/courses/:courseId/groups` | กำหนดกลุ่ม↔หลักสูตร | เลือกกลุ่มผู้เรียนที่มีสิทธิ์เข้าเรียนหลักสูตรนี้ (course_group_access) |
+| 6 | `/admin/courses/:courseId/content-access` | กำหนดสิทธิ์ content | เลือกกลุ่มผู้เรียนที่มีสิทธิ์เห็น content item แต่ละชิ้น (content_group_access) |
 | 7 | `/admin/groups` | จัดการกลุ่มผู้เรียน | CRUD กลุ่ม: สร้าง/แก้ไข/ลบกลุ่ม, เพิ่ม/ลบสมาชิก, ดูรายชื่อสมาชิกในกลุ่ม |
 | 8 | `/admin/users` | จัดการบัญชีและสิทธิ์ | ตารางผู้ใช้ทั้งหมด: ชื่อ, ตำแหน่ง, สังกัด, เบอร์, สถานะ, แก้ไข role / กลุ่ม / รีเซ็ตรหัสผ่าน, Export ข้อมูลรายชื่อ |
 | 9 | `/admin/learners` | ข้อมูลผู้เรียน | ตารางข้อมูลผู้เรียนทุกคน: ชื่อ-นามสกุล / ตำแหน่ง / ประสบการณ์ / สังกัด / สถานศึกษา / เบอร์, filter ตามหลักสูตร/กลุ่ม, Export ข้อมูลตามตารางที่แสดง |
@@ -119,10 +119,9 @@
   ├─ /login, /register, /forgot-password, /, /courses/* → อนุญาตทุกคน
   │
   ├─ /learn/* → ต้อง login + role='learner'
-  │    └─ เช็ค course_group_access → ผู้เรียนอยู่ในกลุ่มที่มีสิทธิ์เข้าหลักสูตรนี้?
-  │         └─ เช็ค module_group_access → ผู้เรียนอยู่ในกลุ่มที่เห็น Module นี้?
-  │              └─ เช็ค module_prerequisites → ผ่าน prerequisite แล้ว?
-  │                   └─ อนุญาต / แสดงข้อความ "ต้องผ่าน ... ก่อน"
+  │    └─ เช็ค module_prerequisites → ผ่าน prerequisite แล้ว?
+  │         └─ เช็ค content_group_access → ผู้เรียนอยู่ในกลุ่มที่เห็น content item นี้?
+  │              └─ อนุญาต / ซ่อน content item ที่ไม่มีสิทธิ์
   │
   ├─ /expert/* → ต้อง login + role='expert'
   │    └─ เห็นเฉพาะ Module ที่ requires_expert_review=TRUE
