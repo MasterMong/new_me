@@ -22,6 +22,7 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'experience' => fake()->randomElement(\App\Enums\UserExperience::cases())->value,
             'role' => UserRole::Learner->value,
             'is_active' => true,
         ];

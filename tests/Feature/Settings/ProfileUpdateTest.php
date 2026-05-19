@@ -11,31 +11,48 @@ test('profile page is displayed', function () {
 
 test('profile information can be updated', function () {
     $user = User::factory()->create();
+    $position = \App\Models\Position::factory()->create();
+    $affiliation = \App\Models\Affiliation::factory()->create();
 
     $this->actingAs($user);
 
     $response = Livewire::test('pages::settings.profile')
-        ->set('name', 'Test User')
+        ->set('prefix', 'นาง')
+        ->set('first_name', 'สมศรี')
+        ->set('last_name', 'มีนา')
         ->set('email', 'test@example.com')
+        ->set('position_id', $position->id)
+        ->set('affiliation_id', $affiliation->id)
+        ->set('experience', '2-5y')
         ->call('updateProfileInformation');
 
     $response->assertHasNoErrors();
 
     $user->refresh();
 
-    expect($user->name)->toEqual('Test User');
+    expect($user->prefix->value)->toEqual('นาง');
+    expect($user->first_name)->toEqual('สมศรี');
+    expect($user->last_name)->toEqual('มีนา');
     expect($user->email)->toEqual('test@example.com');
     expect($user->email_verified_at)->toBeNull();
 });
 
 test('email verification status is unchanged when email address is unchanged', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create([
+        'position_id' => \App\Models\Position::factory()->create()->id,
+        'affiliation_id' => \App\Models\Affiliation::factory()->create()->id,
+    ]);
 
     $this->actingAs($user);
 
     $response = Livewire::test('pages::settings.profile')
-        ->set('name', 'Test User')
+        ->set('prefix', $user->prefix->value)
+        ->set('first_name', $user->first_name)
+        ->set('last_name', $user->last_name)
         ->set('email', $user->email)
+        ->set('position_id', $user->position_id)
+        ->set('affiliation_id', $user->affiliation_id)
+        ->set('experience', $user->experience->value)
         ->call('updateProfileInformation');
 
     $response->assertHasNoErrors();

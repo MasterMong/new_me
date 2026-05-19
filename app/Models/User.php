@@ -41,7 +41,7 @@ class User extends Authenticatable
 
     public function fullName(): string
     {
-        return $this->prefix->value.' '.$this->first_name.' '.$this->last_name;
+        return ($this->prefix?->value ?? '').' '.$this->first_name.' '.$this->last_name;
     }
 
     public function initials(): string
