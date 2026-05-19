@@ -7,7 +7,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class EnsureUserIsLearner
+class EnsureUserIsExpert
 {
     /**
      * Handle an incoming request.
@@ -16,10 +16,10 @@ class EnsureUserIsLearner
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (! $request->user() || ! in_array($request->user()->role, [UserRole::Learner, UserRole::Expert, UserRole::Admin])) {
-            abort(403);
+        if ($request->user() && $request->user()->role === UserRole::Expert) {
+            return $next($request);
         }
 
-        return $next($request);
+        return redirect('/');
     }
 }

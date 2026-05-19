@@ -21,77 +21,105 @@
             {{-- Main Navigation --}}
             <flux:sidebar.nav class="mt-2">
                 <flux:sidebar.group class="grid gap-0.5">
-                    <flux:sidebar.item
-                        wire:navigate
-                        :href="route('dashboard')"
-                        :current="request()->routeIs('dashboard')"
-                        class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
-                    >
-                        <x-slot name="icon">
-                            <span class="material-symbols-outlined text-[20px]">home</span>
-                        </x-slot>
-                        หน้าแรก
-                    </flux:sidebar.item>
+                    @if(auth()->user()->role === \App\Enums\UserRole::Learner || auth()->user()->role === \App\Enums\UserRole::Admin)
+                        <flux:sidebar.item
+                            wire:navigate
+                            :href="route('dashboard')"
+                            :current="request()->routeIs('dashboard')"
+                            class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
+                        >
+                            <x-slot name="icon">
+                                <span class="material-symbols-outlined text-[20px]">home</span>
+                            </x-slot>
+                            หน้าแรก
+                        </flux:sidebar.item>
 
-                    <flux:sidebar.item
-                        wire:navigate
-                        :href="route('learn.dashboard')"
-                        :current="request()->routeIs('learn.dashboard')"
-                        class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
-                    >
-                        <x-slot name="icon">
-                            <span class="material-symbols-outlined text-[20px]">school</span>
-                        </x-slot>
-                        คอร์สเรียนของฉัน
-                    </flux:sidebar.item>
+                        <flux:sidebar.item
+                            wire:navigate
+                            :href="route('learn.dashboard')"
+                            :current="request()->routeIs('learn.dashboard')"
+                            class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
+                        >
+                            <x-slot name="icon">
+                                <span class="material-symbols-outlined text-[20px]">school</span>
+                            </x-slot>
+                            คอร์สเรียนของฉัน
+                        </flux:sidebar.item>
 
-                    <flux:sidebar.item
-                        wire:navigate
-                        :href="route('courses.index')"
-                        :current="request()->routeIs('courses.index')"
-                        class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
-                    >
-                        <x-slot name="icon">
-                            <span class="material-symbols-outlined text-[20px]">search</span>
-                        </x-slot>
-                        ค้นหาคอร์ส
-                    </flux:sidebar.item>
+                        <flux:sidebar.item
+                            wire:navigate
+                            :href="route('courses.index')"
+                            :current="request()->routeIs('courses.index')"
+                            class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
+                        >
+                            <x-slot name="icon">
+                                <span class="material-symbols-outlined text-[20px]">search</span>
+                            </x-slot>
+                            ค้นหาคอร์ส
+                        </flux:sidebar.item>
 
-                    <flux:sidebar.item
-                        wire:navigate
-                        :href="route('learn.results.index')"
-                        :current="request()->routeIs('learn.results.index')"
-                        class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
-                    >
-                        <x-slot name="icon">
-                            <span class="material-symbols-outlined text-[20px]">analytics</span>
-                        </x-slot>
-                        ผลการเรียนรู้
-                    </flux:sidebar.item>
+                        <flux:sidebar.item
+                            wire:navigate
+                            :href="route('learn.results.index')"
+                            :current="request()->routeIs('learn.results.index')"
+                            class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
+                        >
+                            <x-slot name="icon">
+                                <span class="material-symbols-outlined text-[20px]">analytics</span>
+                            </x-slot>
+                            ผลการเรียนรู้
+                        </flux:sidebar.item>
 
-                    <flux:sidebar.item
-                        wire:navigate
-                        :href="route('learn.certificates.index')"
-                        :current="request()->routeIs('learn.certificates.*')"
-                        class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
-                    >
-                        <x-slot name="icon">
-                            <span class="material-symbols-outlined text-[20px]">workspace_premium</span>
-                        </x-slot>
-                        ใบประกาศนียบัตร
-                    </flux:sidebar.item>
+                        <flux:sidebar.item
+                            wire:navigate
+                            :href="route('learn.certificates.index')"
+                            :current="request()->routeIs('learn.certificates.*')"
+                            class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
+                        >
+                            <x-slot name="icon">
+                                <span class="material-symbols-outlined text-[20px]">workspace_premium</span>
+                            </x-slot>
+                            ใบประกาศนียบัตร
+                        </flux:sidebar.item>
 
-                    <flux:sidebar.item
-                        wire:navigate
-                        :href="route('learn.notifications.index')"
-                        :current="request()->routeIs('learn.notifications.*')"
-                        class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
-                    >
-                        <x-slot name="icon">
-                            <span class="material-symbols-outlined text-[20px]">notifications</span>
-                        </x-slot>
-                        การแจ้งเตือน
-                    </flux:sidebar.item>
+                        <flux:sidebar.item
+                            wire:navigate
+                            :href="route('learn.notifications.index')"
+                            :current="request()->routeIs('learn.notifications.*')"
+                            class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
+                        >
+                            <x-slot name="icon">
+                                <span class="material-symbols-outlined text-[20px]">notifications</span>
+                            </x-slot>
+                            การแจ้งเตือน
+                        </flux:sidebar.item>
+                    @endif
+
+                    @if(auth()->user()->role === \App\Enums\UserRole::Expert)
+                        <flux:sidebar.item
+                            wire:navigate
+                            :href="route('expert.dashboard')"
+                            :current="request()->routeIs('expert.dashboard')"
+                            class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
+                        >
+                            <x-slot name="icon">
+                                <span class="material-symbols-outlined text-[20px]">dashboard</span>
+                            </x-slot>
+                            แดชบอร์ด
+                        </flux:sidebar.item>
+
+                        <flux:sidebar.item
+                            wire:navigate
+                            :href="route('expert.reports.index')"
+                            :current="request()->routeIs('expert.reports.*')"
+                            class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
+                        >
+                            <x-slot name="icon">
+                                <span class="material-symbols-outlined text-[20px]">assessment</span>
+                            </x-slot>
+                            รายงานผล
+                        </flux:sidebar.item>
+                    @endif
                 </flux:sidebar.group>
 
                 @if(auth()->user()->role === \App\Enums\UserRole::Admin || auth()->user()->role === \App\Enums\UserRole::Expert)

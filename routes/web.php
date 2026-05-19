@@ -10,6 +10,10 @@ use App\Livewire\Admin\Groups\Index as AdminGroupsIndex;
 use App\Livewire\Admin\Groups\Members as AdminGroupMembers;
 use App\Livewire\Admin\Reports\Index as AdminReportsIndex;
 use App\Livewire\Admin\Users\Index as AdminUsersIndex;
+use App\Livewire\Expert\IndividualReport;
+use App\Livewire\Expert\Reports;
+use App\Livewire\Expert\ReviewSubmission;
+use App\Livewire\Expert\SubmissionsList;
 use App\Livewire\Learner\AssessmentPlayer;
 use App\Livewire\Learner\Certificates;
 use App\Livewire\Learner\CoursePath;
@@ -41,6 +45,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             return redirect()->route('admin.dashboard');
         }
 
+        if (auth()->user()->role === UserRole::Expert) {
+            return redirect()->route('expert.dashboard');
+        }
+
         return redirect()->route('learn.dashboard');
     })->name('dashboard');
 });
@@ -55,6 +63,15 @@ Route::middleware(['auth', 'verified', 'learner'])->prefix('learn')->name('learn
     Route::get('/settings', Settings::class)->name('settings.index');
     Route::get('/results', Results::class)->name('results.index');
     Route::get('/courses/{course}/review', CourseReview::class)->name('courses.review');
+});
+
+Route::middleware(['auth', 'verified', 'expert'])->prefix('expert')->name('expert.')->group(function () {
+    Route::get('/', App\Livewire\Expert\Dashboard::class)->name('dashboard');
+    Route::get('/modules/{module}/submissions', SubmissionsList::class)->name('submissions.index');
+    Route::get('/submissions/{attempt}/review', ReviewSubmission::class)->name('submissions.review');
+    Route::get('/reports', Reports::class)->name('reports.index');
+    Route::get('/reports/{user}', IndividualReport::class)->name('reports.show');
+    Route::get('/settings', App\Livewire\Expert\Settings::class)->name('settings.index');
 });
 
 Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureUserIsAdmin;
+use App\Http\Middleware\EnsureUserIsExpert;
 use App\Http\Middleware\EnsureUserIsLearner;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -16,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => EnsureUserIsAdmin::class,
             'learner' => EnsureUserIsLearner::class,
+            'expert' => EnsureUserIsExpert::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
