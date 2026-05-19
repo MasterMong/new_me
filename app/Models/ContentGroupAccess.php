@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ContentGroupAccess extends Model
 {
+    protected $table = 'content_group_access';
+
     protected $fillable = ['content_id', 'group_id'];
 
     public function content(): BelongsTo

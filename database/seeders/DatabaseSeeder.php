@@ -14,6 +14,12 @@ class DatabaseSeeder extends Seeder
             LearnerGroupSeeder::class,
             UserSeeder::class,
             CourseSeeder::class,
+            QuestionSeeder::class,
+            UserGroupMembershipSeeder::class,
+            ContentGroupAccessSeeder::class,
+            EnrollmentSeeder::class,
+            LearnerProgressSeeder::class,
+            CourseReviewAndCertificateSeeder::class,
         ]);
     }
 }
