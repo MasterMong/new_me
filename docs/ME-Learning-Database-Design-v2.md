@@ -1,7 +1,7 @@
 # ME-Learning Database Design (Updated v2)
 
 > หลักสูตรพัฒนาศักยภาพนักติดตาม ประเมินผลการบริหารและการจัดการศึกษาขั้นพื้นฐาน  
-> **23 ตาราง | 29+ Foreign Keys | 4 User Roles**
+> **22 ตาราง | 29+ Foreign Keys | 4 User Roles**
 
 ---
 
@@ -16,6 +16,8 @@
 | เงื่อนไขก่อนเรียน | ไม่มี (ใช้แค่ลำดับ) | `module_prerequisites` (ต้องผ่าน assessment/module ก่อน) |
 | การตรวจแบบทดสอบ | `requires_expert_review` (boolean) | `grading_mode` ระดับ assessment + question |
 | เงื่อนไขเกียรติบัตร | ผ่าน ≥ 60% + รีวิว | + `is_required` (module) + `is_required_for_cert` (assessment) |
+| ระดับการควบคุมสิทธิ์ | `course_group_access` + `module_group_access` | **`content_group_access`** (ระดับ content item เท่านั้น) |
+| เมื่อผู้ใช้เปลี่ยนกลุ่ม | จำกัดที่หลักสูตร/module | content ใหม่ปรากฏใน enrollment เดิมทันที ไม่ต้องเริ่มใหม่ |
 
 ---
 
@@ -137,16 +139,10 @@
 | `photo_url` | VARCHAR(500) NULL | รูปภาพ |
 | `sort_order` | INT DEFAULT 0 | |
 
-### 2.3 `course_group_access` 🆕
+### 2.3 ~~`course_group_access`~~ ❌ ลบแล้ว
 
-หลักสูตร ↔ กลุ่ม (กำหนดว่ากลุ่มไหนเรียนหลักสูตรไหนได้)
-
-| Column | Type | Note |
-|--------|------|------|
-| `id` | INT PK AUTO_INCREMENT | |
-| `course_id` | INT FK → `courses.id` | |
-| `group_id` | INT FK → `learner_groups.id` | |
-| | UNIQUE(`course_id`, `group_id`) | |
+> ❌ ลบ `course_group_access` — สิทธิ์เข้าถึงย้ายไปที่ระดับ content item (`content_group_access`)  
+> หลักสูตรและ Module มองเห็นได้ทุกกลุ่ม; content item ถูกกำหนดสิทธิ์เป็น item-by-item
 
 ### 2.4 `modules` ✏️
 
@@ -165,21 +161,11 @@ Module บทเรียน (9 Modules/หลักสูตร)
 | `sort_order` | INT | |
 | `created_at` | TIMESTAMP | |
 
-> ❌ ลบ `is_locked_for_general` → แทนด้วย `module_group_access`
+> ❌ ลบ `is_locked_for_general` — สิทธิ์เข้าถึงย้ายไปที่ระดับ content item (`content_group_access`)
 
-### 2.5 `module_group_access` 🆕
+### 2.5 ~~`module_group_access`~~ ❌ ลบแล้ว
 
-Module ↔ กลุ่ม (กำหนดว่ากลุ่มไหนเห็น Module ไหน)
-
-| Column | Type | Note |
-|--------|------|------|
-| `id` | INT PK AUTO_INCREMENT | |
-| `module_id` | INT FK → `modules.id` | |
-| `group_id` | INT FK → `learner_groups.id` | |
-| | UNIQUE(`module_id`, `group_id`) | |
-
-> ถ้าไม่มี record ใน module_group_access = ทุกกลุ่มเห็น (public)  
-> ถ้ามี record = เฉพาะกลุ่มที่ระบุเท่านั้นเห็น
+> ❌ ลบ `module_group_access` — สิทธิ์เข้าถึงระดับ Module ถูกแทนที่ด้วย `content_group_access` ดูหัวข้อ 2.7
 
 ### 2.6 `module_contents`
 
@@ -195,7 +181,22 @@ Module ↔ กลุ่ม (กำหนดว่ากลุ่มไหนเ�
 | `duration_minutes` | DECIMAL(8,2) NULL | ความยาววิดีโอ (นาที) |
 | `sort_order` | INT DEFAULT 0 | |
 
-### 2.7 `module_prerequisites` 🆕
+### 2.7 `content_group_access` 🆕
+
+สิทธิ์เข้าถึง content item ระดับ content (กำหนดกลุ่มที่มองเห็นแต่ละ content item)
+
+| Column | Type | Note |
+|--------|------|------|
+| `id` | INT PK AUTO_INCREMENT | |
+| `content_id` | INT FK → `module_contents.id` | content item ที่ถูกจำกัดสิทธิ์ |
+| `group_id` | INT FK → `learner_groups.id` | กลุ่มที่มีสิทธิ์ดู content นี้ |
+| | UNIQUE(`content_id`, `group_id`) | |
+
+> ถ้าไม่มี record ใน `content_group_access` = ทุกกลุ่มเห็น content นั้น (public)  
+> ถ้ามี record = เฉพาะกลุ่มที่ระบุเท่านั้นเห็น  
+> **สิทธิ์ประเมิน ณ เวลา request** ต่อ `user_group_memberships` ปัจจุบัน — เมื่อผู้ใช้เข้ากลุ่มใหม่ content ใหม่ปรากฏทันที
+
+### 2.8 `module_prerequisites` 🆕
 
 เงื่อนไขก่อนเรียน Module (ต้องผ่าน Module หรือ Assessment ใดก่อน)
 
@@ -282,6 +283,9 @@ Module ↔ กลุ่ม (กำหนดว่ากลุ่มไหนเ�
 | `completed_at` | TIMESTAMP NULL | |
 | | UNIQUE(`user_id`, `course_id`) | ลงทะเบียน 1 ครั้ง/หลักสูตร |
 
+> enrollment ไม่ผูกกับกลุ่ม — ผู้ใช้ลงทะเบียนได้ทันทีโดยไม่ต้องผ่าน course-level group gate  
+> ความคืบหน้าไม่รีเซ็ตเมื่อกลุ่มเปลี่ยน; content ที่เห็นจะอัปเดตตาม `content_group_access` อัตโนมัติ
+
 ### 4.2 `module_progress`
 
 ความคืบหน้าราย Module (ต้องจบก่อนเรียนถัดไป)
@@ -295,6 +299,9 @@ Module ↔ กลุ่ม (กำหนดว่ากลุ่มไหนเ�
 | `started_at` | TIMESTAMP NULL | |
 | `completed_at` | TIMESTAMP NULL | |
 | | UNIQUE(`user_id`, `module_id`) | |
+
+> Module ถือว่า `completed` เมื่อ content item ทั้งหมดที่ผู้ใช้มีสิทธิ์เข้าถึง (ตาม `content_group_access`) ถูก complete ครบ  
+> เมื่อกลุ่มเปลี่ยนและ content ใหม่ปรากฏ → module status อาจต้องตรวจสอบใหม่ว่ายังครบเงื่อนไขหรือไม่
 
 ### 4.3 `content_views`
 
@@ -444,12 +451,10 @@ user_group_memberships.assigned_by → users.id
 login_logs.user_id             → users.id
 courses.created_by             → users.id
 course_instructors.course_id   → courses.id
-course_group_access.course_id  → courses.id
-course_group_access.group_id   → learner_groups.id
 modules.course_id              → courses.id
-module_group_access.module_id  → modules.id
-module_group_access.group_id   → learner_groups.id
 module_contents.module_id      → modules.id
+content_group_access.content_id→ module_contents.id
+content_group_access.group_id  → learner_groups.id
 module_prerequisites.module_id → modules.id
 module_prerequisites.prerequisite_module_id     → modules.id
 module_prerequisites.prerequisite_assessment_id → assessments.id
@@ -485,7 +490,7 @@ notifications.user_id          → users.id
 
 1. **Sequential Learning** — ต้องเรียนจบ 1 Module ก่อนจะเรียน Module ถัดไป (ใช้ `module_prerequisites`)
 2. **Prerequisite** — บาง Module ต้องผ่านแบบทดสอบก่อนหน้าก่อน (ใช้ `module_prerequisites.min_score_pct`)
-3. **Group-based Access** — กำหนดกลุ่มผู้เรียน↔หลักสูตร↔Module (ใช้ `course_group_access` + `module_group_access`)
+3. **Content-level Access** — สิทธิ์เข้าถึงกำหนดที่ระดับ content item (`content_group_access`); หลักสูตรและ Module มองเห็นได้ทุกคน; ประเมิน ณ request time ต่อกลุ่มปัจจุบัน → เมื่อผู้ใช้เข้ากลุ่มใหม่ content ใหม่ปรากฏทันที; content ที่เคย complete แล้วไม่รีเซ็ต
 4. **Test Retry** — แบบทดสอบทำซ้ำได้ 3 ครั้ง ดาวลดตามลำดับ ข้อมูลเก็บทุกครั้ง
 5. **Auto + Manual Grading** — เลือกตอบเฉลยทันที / เขียน-อัปโหลดรอตรวจ (ใช้ `grading_mode`)
 6. **Expert Review** — ผชช. ตรวจใบงาน 3 Modules (รอตรวจ / ผ่าน / รอแก้ไข)
@@ -493,6 +498,7 @@ notifications.user_id          → users.id
 8. **Certificate Conditions** — ออกอัตโนมัติเมื่อ: ผ่านทุก module ที่ `is_required=TRUE` + ผ่านทุก assessment ที่ `is_required_for_cert=TRUE` + รีวิวแล้ว + คะแนนรวม ≥ 60%
 9. **Notifications** — แจ้งเตือนเมื่อส่งใบงาน / ตรวจเสร็จ / ออกเกียรติบัตร + ส่ง email
 10. **Admin Power** — สร้างหลักสูตรใหม่ / จัดการทุกอย่าง / Dashboard สถิติ
+11. **Dynamic Content Visibility** — content item ที่ผู้ใช้มองเห็นคำนวณจาก: (1) ไม่มี record ใน `content_group_access` → ทุกคนเห็น (2) มี record → ตรวจ `user_group_memberships` ปัจจุบัน (3) Module prerequisite ยังมีผลปกติ — ต้องผ่าน prerequisite ก่อน content จึง access ได้จริง
 
 ---
 
