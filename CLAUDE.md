@@ -172,3 +172,142 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - Do NOT delete tests without approval.
 
 </laravel-boost-guidelines>
+
+# ME-Learning Project Context
+
+## What This App Is
+
+ME-Learning is a Thai e-Learning platform for สตผ. (Office of Basic Education Monitoring & Evaluation). It trains education personnel to become professional monitoring & evaluation practitioners. Full specs are in `docs/`.
+
+Key documents:
+- `docs/ME-Learning-PRD.md` — full requirements, user stories, functional requirements
+- `docs/ME-Learning-Database-Design-v2.md` — 22-table schema with business rules
+- `docs/ME-Learning-Frontend-Routes.md` — 35 routes across 4 roles
+- `docs/Expert-Review-Workflow-Specification.md` — expert grading workflow
+- `docs/ME-Learning QA Checklist.md` — 24 test cases
+
+## User Roles
+
+| Role | Prefix | Description |
+|------|--------|-------------|
+| `learner` | `/learn` | Self-paced learners; content visibility controlled by group membership |
+| `expert` | `/expert` | Reviews essay/file submissions for 3 modules; SLA 3 business days |
+| `admin` | `/admin` | Full system management, course/module/user/report management |
+| Guest | `/`, `/courses`, etc. | Public pages, no login required |
+
+Role is stored on `users.role` as `App\Enums\UserRole` enum.
+
+## Design System
+
+**Colors (Material Design 3 tokens — defined in `resources/css/app.css`):**
+- `primary` = #003e74 (navy blue) — main brand color
+- `primary-container` = #1a5694
+- `on-primary` = #ffffff
+- `secondary` = #745b00, `secondary-container` = #fdd355 (gold accent)
+- Surface scale: `surface`, `surface-container-low`, `surface-container-lowest`, `surface-container-high`, `surface-container-highest`
+- Error: `error` = #ba1a1a
+
+**Typography:**
+- Headlines: `font-headline` → Manrope (bold, tracking-tight)
+- Body: `font-body` → Inter
+- Labels: `font-label` → Inter
+
+**Icons:** Material Symbols Outlined — load via Google Fonts. Usage: `<span class="material-symbols-outlined">icon_name</span>`. Filled variant: add `style="font-variation-settings: 'FILL' 1;"`.
+
+**Custom utilities (defined in `app.css`):**
+- `.glass-nav` — frosted glass navbar (rgba + backdrop-filter)
+- `.hero-gradient` — linear-gradient(135deg, #003e74 → #1a5694)
+
+**Flux UI components** are used throughout: `<flux:sidebar>`, `<flux:sidebar.item>`, `<flux:input>`, `<flux:button>`, `<flux:dropdown>`, `<flux:menu>`, `<flux:toast>`, etc.
+
+## Layouts
+
+Two app layouts exist:
+- `x-layouts::app` (`layouts/app.blade.php`) → uses `layouts/app/sidebar.blade.php` — **use this for all authenticated pages**. Has the custom ME-Learning sidebar with Thai labels and role-based nav sections.
+- `x-layouts::auth` (`layouts/auth.blade.php`) → for login/register/forgot-password pages.
+
+The `layouts/app/header.blade.php` is the old Livewire starter-kit header (unused — the sidebar layout is active).
+
+Sidebar nav items use `href="#"` placeholders. Wire them up as routes are built.
+
+## What Is Already Built
+
+**Database layer (complete):**
+- All 22+ migrations in `database/migrations/`
+- All 22 Eloquent models in `app/Models/`
+- All Enums in `app/Enums/`: `UserRole`, `UserPrefix`, `UserExperience`, `AffiliationType`, `AssessmentType`, `ContentType`, `EnrollmentStatus`, `ExpertReviewStatus`, `GradingMode`, `ModuleProgressStatus`, `NotificationType`, `PrerequisiteType`, `QuestionType`, `TestAttemptStatus`
+
+**Auth (Fortify — partially complete):**
+- Routes: login, register, logout, forgot-password, reset-password, confirm-password, profile settings
+- Views: `pages/auth/` — all auth pages exist
+- ⚠️ Register form (`pages/auth/register.blade.php`) only has basic `name`/`email`/`password` fields. PRD requires: `prefix` (dropdown), `first_name`, `last_name`, `position_id`, `position_other`, `experience`, `affiliation_id`, `school_name`, `phone`.
+- `CreateNewUser.php` action needs updating to match extended registration fields.
+
+**Public landing page (complete):**
+- `welcome.blade.php` — full landing page: glassmorphism navbar, hero, stats (static), 3 course cards (static placeholder), CTA section, footer.
+
+**Authenticated dashboard (stub):**
+- `dashboard.blade.php` — placeholder grid pattern only, not implemented.
+
+## What Is NOT Built Yet
+
+All 35 routes from the frontend spec are not yet registered. Priority order based on PRD:
+
+1. **Learner area** (`/learn/*`) — 10 routes:
+   - `/learn` — enrolled courses + progress
+   - `/learn/courses/:courseId` — learning path (module list with lock/progress status)
+   - `/learn/courses/:courseId/modules/:moduleId` — module content (video + documents)
+   - `/learn/courses/:courseId/assessments/:assessmentId` — take assessment
+   - `/learn/courses/:courseId/assessments/:assessmentId/result` — results page
+   - `/learn/courses/:courseId/review` — course review (1–5 stars)
+   - `/learn/results` — overall learning results
+   - `/learn/certificates` — certificates list + PDF download
+   - `/learn/profile` — edit profile
+   - `/learn/change-password`
+
+2. **Expert area** (`/expert/*`) — 6 routes:
+   - `/expert` — dashboard (pending/completed counts)
+   - `/expert/modules/:moduleId/submissions` — submission list with status filter
+   - `/expert/submissions/:attemptId/review` — review interface
+   - `/expert/reports`, `/expert/reports/:userId`, `/expert/change-password`
+
+3. **Admin area** (`/admin/*`) — 12 routes:
+   - `/admin` — stats dashboard
+   - Course, module, content, assessment management
+   - Group and user management
+   - Reports + export
+
+4. **Public pages** — `/courses`, `/courses/:courseId`, `/directory`, `/contact`
+
+## Key Business Rules to Enforce in Code
+
+- **Sequential modules**: A learner cannot access module N until module N-1 is `completed`. Check `module_prerequisites` table.
+- **Content group access**: `content_group_access` table controls per-item visibility. If no record exists for a content item → visible to everyone. If records exist → only matching `user_group_memberships`.
+- **Test attempts**: Max 3 per assessment. Stars: attempt 1 = 3 stars, attempt 2 = 2 stars, attempt 3 = 1 star.
+- **Auto vs manual grading**: `grading_mode = 'auto'` on `questions` → grade immediately on submit. `grading_mode = 'manual'` → create `expert_reviews` record with `status = 'pending'`.
+- **Certificate conditions** (all must be true):
+  1. All `modules.is_required = TRUE` have `module_progress.status = 'completed'`
+  2. All `assessments.is_required_for_cert = TRUE` have a `test_attempts.status = 'passed'`
+  3. All `expert_reviews` for required assessments have `status = 'passed'`
+  4. `course_reviews` record exists for this user+course
+  5. Post-test `score_pct >= courses.passing_score_pct`
+
+## Route Naming Convention
+
+Follow this pattern when registering routes:
+- Learner: `learn.dashboard`, `learn.courses.show`, `learn.modules.show`, `learn.assessments.show`, `learn.assessments.result`, `learn.results`, `learn.certificates`, `learn.profile`, `learn.review`
+- Expert: `expert.dashboard`, `expert.submissions.index`, `expert.submissions.review`
+- Admin: `admin.dashboard`, `admin.courses.index`, etc.
+
+## Livewire Component Convention
+
+Pages are Livewire full-page components stored in `app/Livewire/`. Follow the role-based directory structure:
+- `app/Livewire/Learn/` — learner pages
+- `app/Livewire/Expert/` — expert pages
+- `app/Livewire/Admin/` — admin pages
+- Views: `resources/views/livewire/learn/`, `resources/views/livewire/expert/`, `resources/views/livewire/admin/`
+
+## User Model Helpers
+
+`User` model has: `fullName()` (returns `"{prefix} {first_name} {last_name}"`), `initials()`. Use these in views.
+

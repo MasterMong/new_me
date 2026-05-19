@@ -25,7 +25,7 @@
                         wire:navigate
                         :href="route('dashboard')"
                         :current="request()->routeIs('dashboard')"
-                        class="text-on-primary/80 hover:text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
+                        class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
                     >
                         <x-slot name="icon">
                             <span class="material-symbols-outlined text-[20px]">home</span>
@@ -36,7 +36,7 @@
                     <flux:sidebar.item
                         wire:navigate
                         href="#"
-                        class="text-on-primary/80 hover:text-on-primary hover:!bg-white/10 font-medium"
+                        class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 font-medium"
                     >
                         <x-slot name="icon">
                             <span class="material-symbols-outlined text-[20px]">school</span>
@@ -47,7 +47,7 @@
                     <flux:sidebar.item
                         wire:navigate
                         href="#"
-                        class="text-on-primary/80 hover:text-on-primary hover:!bg-white/10 font-medium"
+                        class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 font-medium"
                     >
                         <x-slot name="icon">
                             <span class="material-symbols-outlined text-[20px]">search</span>
@@ -58,7 +58,7 @@
                     <flux:sidebar.item
                         wire:navigate
                         href="#"
-                        class="text-on-primary/80 hover:text-on-primary hover:!bg-white/10 font-medium"
+                        class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 font-medium"
                     >
                         <x-slot name="icon">
                             <span class="material-symbols-outlined text-[20px]">workspace_premium</span>
@@ -69,7 +69,7 @@
                     <flux:sidebar.item
                         wire:navigate
                         href="#"
-                        class="text-on-primary/80 hover:text-on-primary hover:!bg-white/10 font-medium"
+                        class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 font-medium"
                     >
                         <x-slot name="icon">
                             <span class="material-symbols-outlined text-[20px]">notifications</span>
@@ -86,8 +86,21 @@
                         </div>
                         @if(auth()->user()->role === \App\Enums\UserRole::Admin)
                             <flux:sidebar.item
-                                href="#"
-                                class="text-on-primary/80 hover:text-on-primary hover:!bg-white/10 font-medium"
+                                wire:navigate
+                                :href="route('admin.dashboard')"
+                                :current="request()->routeIs('admin.dashboard')"
+                                class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
+                            >
+                                <x-slot name="icon">
+                                    <span class="material-symbols-outlined text-[20px]">admin_panel_settings</span>
+                                </x-slot>
+                                แดชบอร์ดแอดมิน
+                            </flux:sidebar.item>
+                            <flux:sidebar.item
+                                wire:navigate
+                                :href="route('admin.courses.index')"
+                                :current="request()->routeIs('admin.courses.*')"
+                                class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
                             >
                                 <x-slot name="icon">
                                     <span class="material-symbols-outlined text-[20px]">book</span>
@@ -95,19 +108,43 @@
                                 จัดการคอร์ส
                             </flux:sidebar.item>
                             <flux:sidebar.item
-                                href="#"
-                                class="text-on-primary/80 hover:text-on-primary hover:!bg-white/10 font-medium"
+                                wire:navigate
+                                :href="route('admin.users.index')"
+                                :current="request()->routeIs('admin.users.*')"
+                                class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
                             >
                                 <x-slot name="icon">
                                     <span class="material-symbols-outlined text-[20px]">group</span>
                                 </x-slot>
                                 จัดการผู้ใช้
                             </flux:sidebar.item>
+                            <flux:sidebar.item
+                                wire:navigate
+                                :href="route('admin.groups.index')"
+                                :current="request()->routeIs('admin.groups.*')"
+                                class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
+                            >
+                                <x-slot name="icon">
+                                    <span class="material-symbols-outlined text-[20px]">group_work</span>
+                                </x-slot>
+                                จัดการกลุ่ม
+                            </flux:sidebar.item>
+                            <flux:sidebar.item
+                                wire:navigate
+                                :href="route('admin.reports.index')"
+                                :current="request()->routeIs('admin.reports.*')"
+                                class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
+                            >
+                                <x-slot name="icon">
+                                    <span class="material-symbols-outlined text-[20px]">bar_chart</span>
+                                </x-slot>
+                                รายงาน
+                            </flux:sidebar.item>
                         @endif
                         @if(auth()->user()->role === \App\Enums\UserRole::Expert)
                             <flux:sidebar.item
                                 href="#"
-                                class="text-on-primary/80 hover:text-on-primary hover:!bg-white/10 font-medium"
+                                class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 font-medium"
                             >
                                 <x-slot name="icon">
                                     <span class="material-symbols-outlined text-[20px]">rate_review</span>
@@ -126,7 +163,7 @@
                 <flux:sidebar.item
                     :href="route('profile.edit')"
                     wire:navigate
-                    class="text-on-primary/80 hover:text-on-primary hover:!bg-white/10 font-medium"
+                    class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 font-medium"
                 >
                     <x-slot name="icon">
                         <span class="material-symbols-outlined text-[20px]">settings</span>
@@ -243,5 +280,11 @@
         @endpersist
 
         @fluxScripts
+
+        <script>
+            // Dark mode not yet designed — force light after Alpine and on each Livewire navigation
+            window.Flux?.applyAppearance('light');
+            document.addEventListener('livewire:navigated', () => window.Flux?.applyAppearance('light'));
+        </script>
     </body>
 </html>
