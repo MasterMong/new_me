@@ -1,50 +1,4 @@
-<!DOCTYPE html>
-<html lang="th" class="light">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ME-Learning | สำนักติดตามและประเมินผลการจัดการศึกษาขั้นพื้นฐาน</title>
-    <link rel="icon" href="/favicon.ico" sizes="any">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
-<body class="bg-surface font-body text-on-surface antialiased">
-
-    {{-- Top Navigation Bar --}}
-    <nav class="fixed top-0 w-full z-50 glass-nav shadow-[0px_20px_40px_rgba(25,28,29,0.06)]">
-        <div class="flex justify-between items-center px-8 h-20 max-w-7xl mx-auto">
-            <div class="flex items-center gap-12">
-                <a class="text-2xl font-bold tracking-tighter text-primary font-headline" href="{{ route('home') }}">
-                    ME-Learning
-                </a>
-                <div class="hidden md:flex gap-8 items-center">
-                    <a class="text-primary font-bold border-b-2 border-primary pb-1 font-headline tracking-tight" href="{{ route('home') }}">
-                        หน้าแรก
-                    </a>
-                    <a class="text-on-surface-variant hover:text-primary transition-all duration-300 font-headline tracking-tight" href="#">
-                        หลักสูตร
-                    </a>
-                    <a class="text-on-surface-variant hover:text-primary transition-all duration-300 font-headline tracking-tight" href="#">
-                        รายงาน
-                    </a>
-                    <a class="text-on-surface-variant hover:text-primary transition-all duration-300 font-headline tracking-tight" href="#">
-                        คลังความรู้
-                    </a>
-                </div>
-            </div>
-            <div class="flex items-center gap-4">
-                <a href="{{ route('login') }}" class="px-6 py-2.5 text-primary font-semibold hover:bg-surface-container-low rounded-xl transition-all">
-                    เข้าสู่ระบบ
-                </a>
-                <a href="{{ route('register') }}" class="px-6 py-2.5 bg-secondary-container text-on-secondary-container font-bold rounded-xl shadow-sm hover:translate-y-[-1px] active:scale-95 transition-all">
-                    สมัครสมาชิก
-                </a>
-            </div>
-        </div>
-    </nav>
+<x-layouts::public>
 
     {{-- Hero Section --}}
     <header class="pt-32 pb-24 px-8 overflow-hidden">
@@ -120,7 +74,7 @@
                         ยกระดับทักษะของคุณด้วยเนื้อหาที่คัดสรรมาเพื่อตอบโจทย์การทำงานจริงในระบบการศึกษา
                     </p>
                 </div>
-                <a href="#" class="text-primary font-bold flex items-center gap-2 group">
+                <a href="{{ route('courses.index') }}" class="text-primary font-bold flex items-center gap-2 group">
                     ดูทั้งหมด
                     <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_right_alt</span>
                 </a>
@@ -155,9 +109,9 @@
                             เทคนิคการวิเคราะห์ข้อมูลและสรุปผลเพื่อการพัฒนาสถานศึกษาอย่างยั่งยืน
                         </p>
                         <div class="pt-4 mt-auto">
-                            <button class="w-full py-3 bg-surface-container-low text-primary font-bold rounded-xl hover:bg-primary hover:text-on-primary transition-all">
+                            <a href="{{ route('courses.index') }}" class="block w-full py-3 bg-surface-container-low text-primary font-bold rounded-xl hover:bg-primary hover:text-on-primary transition-all text-center">
                                 ดูรายละเอียด
-                            </button>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -187,9 +141,9 @@
                             การนำผลการติดตามประเมินผลไปใช้ในการวางแผนและขับเคลื่อนนโยบายระดับเขต
                         </p>
                         <div class="pt-4 mt-auto">
-                            <button class="w-full py-3 bg-surface-container-low text-primary font-bold rounded-xl hover:bg-primary hover:text-on-primary transition-all">
+                            <a href="{{ route('courses.index') }}" class="block w-full py-3 bg-surface-container-low text-primary font-bold rounded-xl hover:bg-primary hover:text-on-primary transition-all text-center">
                                 ดูรายละเอียด
-                            </button>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -199,7 +153,7 @@
                     <div class="relative h-56 overflow-hidden">
                         <img
                             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJwe0FQWSiRFvDKss970cYMM8Moi21EYXkCRbjZ4Krn5srZBUYLkNCvzoWQ-2lHMXXAkWLP00I3_ZvSiMSrk3hy1LnLpZ9xk6Mjf5oWTUeapKTzMaWzjk0U0qXVZTvpPECf9mcJUk4dqb35HlBB4OWdr9MNDH7694wYnMDuuYbaiNPDmm6unSfLgpVcyx6Mx7WZZ2J42bS80dH-vsHggUjbrMmeLjEfw-HErhFJecdv7O4eWp4RwNOZx0yf7KSSmwsFWsA9RMOSKFV"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJwe0FQWSiRFvDKss970cYMM8Moi21EYXKCRbjZ4Krn5srZBUYLkNCvzoWQ-2lHMXXAkWLP00I3_ZvSiMSrk3hy1LnLpZ9xk6Mjf5oWTUeapKTzMaWzjk0U0qXVZTvpPECf9mcJUk4dqb35HlBB4OWdr9MNDH7694wYnMDuuYbaiNPDmm6unSfLgpVcyx6Mx7WZZ2J42bS80dH-vsHggUjbrMmeLjEfw-HErhFJecdv7O4eWp4RwNOZx0yf7KSSmwsFWsA9RMOSKFV"
                             alt="ครูสอนในห้องเรียน"
                         >
                     </div>
@@ -219,9 +173,9 @@
                             สร้างมาตรฐานการสอนด้วยเครื่องมือประเมินผลที่แม่นยำและตอบโจทย์ผู้เรียน
                         </p>
                         <div class="pt-4 mt-auto">
-                            <button class="w-full py-3 bg-surface-container-low text-primary font-bold rounded-xl hover:bg-primary hover:text-on-primary transition-all">
+                            <a href="{{ route('courses.index') }}" class="block w-full py-3 bg-surface-container-low text-primary font-bold rounded-xl hover:bg-primary hover:text-on-primary transition-all text-center">
                                 ดูรายละเอียด
-                            </button>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -245,7 +199,7 @@
                     <a href="{{ route('register') }}" class="px-10 py-4 bg-secondary-container text-on-secondary-container font-bold rounded-xl text-lg shadow-xl hover:scale-105 transition-all">
                         สมัครเรียนเลยวันนี้
                     </a>
-                    <a href="#" class="px-10 py-4 bg-white/10 text-on-primary backdrop-blur-md font-bold rounded-xl text-lg hover:bg-white/20 transition-all">
+                    <a href="{{ route('contact') }}" class="px-10 py-4 bg-white/10 text-on-primary backdrop-blur-md font-bold rounded-xl text-lg hover:bg-white/20 transition-all">
                         ติดต่อเรา
                     </a>
                 </div>
@@ -254,67 +208,4 @@
         </div>
     </section>
 
-    {{-- Footer --}}
-    <footer class="bg-surface-container-low pt-20 border-t border-outline-variant/10">
-        <div class="max-w-7xl mx-auto px-12">
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-12 pb-16">
-                <div class="md:col-span-4 space-y-6">
-                    <a class="text-2xl font-bold font-headline text-primary tracking-tighter" href="{{ route('home') }}">
-                        ME-Learning
-                    </a>
-                    <p class="text-on-surface-variant text-sm leading-relaxed">
-                        ศูนย์กลางการเรียนรู้ออนไลน์เพื่อพัฒนาทักษะการติดตามและประเมินผล สังกัดสำนักติดตามและประเมินผลการจัดการศึกษาขั้นพื้นฐาน (สตผ.) สพฐ.
-                    </p>
-                    <div class="flex gap-4">
-                        <a class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-primary hover:bg-primary hover:text-on-primary transition-all" href="#">
-                            <span class="material-symbols-outlined text-lg">public</span>
-                        </a>
-                        <a class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-primary hover:bg-primary hover:text-on-primary transition-all" href="#">
-                            <span class="material-symbols-outlined text-lg">mail</span>
-                        </a>
-                    </div>
-                </div>
-                <div class="md:col-span-3 space-y-6">
-                    <h4 class="font-bold text-primary">การใช้งาน</h4>
-                    <ul class="space-y-4 text-sm text-on-surface-variant">
-                        <li><a class="hover:text-primary transition-colors" href="#">หลักสูตรทั้งหมด</a></li>
-                        <li><a class="hover:text-primary transition-colors" href="#">วิธีการสมัครเรียน</a></li>
-                        <li><a class="hover:text-primary transition-colors" href="#">คำถามที่พบบ่อย</a></li>
-                        <li><a class="hover:text-primary transition-colors" href="#">คู่มือการใช้งาน</a></li>
-                    </ul>
-                </div>
-                <div class="md:col-span-3 space-y-6">
-                    <h4 class="font-bold text-primary">นโยบาย</h4>
-                    <ul class="space-y-4 text-sm text-on-surface-variant">
-                        <li><a class="hover:text-primary transition-colors" href="#">นโยบายความเป็นส่วนตัว</a></li>
-                        <li><a class="hover:text-primary transition-colors" href="#">เงื่อนไขการใช้งาน</a></li>
-                        <li><a class="hover:text-primary transition-colors" href="#">การเข้าถึง</a></li>
-                    </ul>
-                </div>
-                <div class="md:col-span-2 space-y-6">
-                    <h4 class="font-bold text-primary">ติดต่อเรา</h4>
-                    <p class="text-sm text-on-surface-variant leading-relaxed">
-                        อาคาร สพฐ. 5 <br>
-                        กระทรวงศึกษาธิการ <br>
-                        กทม. 10300
-                    </p>
-                </div>
-            </div>
-            <div class="flex flex-col md:flex-row justify-between items-center py-10 border-t border-outline-variant/10 text-xs text-on-surface-variant tracking-wide">
-                <p>© {{ date('Y') }} สำนักติดตามและประเมินผลการจัดการศึกษาขั้นพื้นฐาน (สตผ.) สพฐ. สงวนลิขสิทธิ์</p>
-                <div class="flex gap-8 mt-4 md:mt-0">
-                    <span class="flex items-center gap-1">
-                        <span class="material-symbols-outlined text-[14px]">shield</span>
-                        Secure Education Platform
-                    </span>
-                    <span class="flex items-center gap-1">
-                        <span class="material-symbols-outlined text-[14px]">language</span>
-                        ภาษาไทย
-                    </span>
-                </div>
-            </div>
-        </div>
-    </footer>
-
-</body>
-</html>
+</x-layouts::public>

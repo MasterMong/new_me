@@ -9,12 +9,21 @@ use App\Livewire\Admin\Groups\Index as AdminGroupsIndex;
 use App\Livewire\Admin\Groups\Members as AdminGroupMembers;
 use App\Livewire\Admin\Reports\Index as AdminReportsIndex;
 use App\Livewire\Admin\Users\Index as AdminUsersIndex;
+use App\Livewire\Public\Courses\Index as PublicCoursesIndex;
+use App\Livewire\Public\Courses\Show as PublicCoursesShow;
+use App\Livewire\Public\Directory as PublicDirectory;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
+
+// Public pages
+Route::get('/courses', PublicCoursesIndex::class)->name('courses.index');
+Route::get('/courses/{course}', PublicCoursesShow::class)->name('courses.show');
+Route::get('/directory', PublicDirectory::class)->name('directory');
+Route::view('/contact', 'contact')->name('contact');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('dashboard', 'dashboard')->name('dashboard');
