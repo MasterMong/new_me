@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Expert;
 
+use App\Models\Enrollment;
 use App\Models\ExpertReview;
 use App\Models\TestAttempt;
 use App\Notifications\ExpertReviewCompleted;
@@ -68,6 +69,13 @@ class ReviewSubmission extends Component
 
         // Send Notification to User
         $this->attempt->user->notify(new ExpertReviewCompleted($review));
+
+        if ($this->status === 'passed') {
+            Enrollment::where('user_id', $this->attempt->user_id)
+                ->where('course_id', $this->attempt->assessment->course_id)
+                ->first()
+                ?->issueCertificateIfEligible();
+        }
 
         session()->flash('toast', [
             'type' => 'success',

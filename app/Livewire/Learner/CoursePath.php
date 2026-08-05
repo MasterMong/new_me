@@ -56,8 +56,8 @@ class CoursePath extends Component
                 return $module;
             });
 
-        $preTest = $this->course->assessments()->where('type', 'pre_test')->first();
-        $postTest = $this->course->assessments()->where('type', 'post_test')->first();
+        $preTest = $this->course->assessments()->where('type', 'pre_test')->whereNull('module_id')->first();
+        $postTest = $this->course->assessments()->where('type', 'post_test')->whereNull('module_id')->first();
 
         return view('livewire.learner.course-path', [
             'modules' => $modules,
@@ -69,7 +69,7 @@ class CoursePath extends Component
     protected function checkModuleAccessibility($module, ?Module $previousModule): bool
     {
         // Course-wide pre-test must be completed if it exists
-        $preTest = $this->course->assessments()->where('type', 'pre_test')->first();
+        $preTest = $this->course->assessments()->where('type', 'pre_test')->whereNull('module_id')->first();
         if ($preTest && ! $preTest->attempts()->where('user_id', Auth::id())->exists()) {
             return false;
         }

@@ -205,6 +205,37 @@ test('module is still locked by an unpassed assignment even after a revision_nee
         });
 });
 
+test('course-wide post-test section ignores a module-scoped post-test of the same type', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    $module = Module::factory()->create(['course_id' => $course->id, 'sort_order' => 1]);
+
+    // A module-scoped post-test created first (lower id) must not be picked up
+    // as the course-wide post-test shown at the bottom of the timeline.
+    Assessment::factory()->create([
+        'course_id' => $course->id,
+        'module_id' => $module->id,
+        'type' => AssessmentType::PostTest->value,
+        'title' => 'Module mini post-test',
+    ]);
+
+    $coursePostTest = Assessment::factory()->create([
+        'course_id' => $course->id,
+        'module_id' => null,
+        'type' => AssessmentType::PostTest->value,
+        'title' => 'Final course post-test',
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(CoursePath::class, ['course' => $course])
+        ->assertViewHas('postTest', function ($postTest) use ($coursePostTest) {
+            return $postTest->id === $coursePostTest->id;
+        });
+});
+
 test('a module with its own pre-test is locked until that pre-test is attempted', function () {
     $user = User::factory()->create(['role' => UserRole::Learner->value]);
     $course = Course::factory()->create();

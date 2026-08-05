@@ -2,7 +2,9 @@
 
 namespace App\Notifications;
 
+use App\Enums\NotificationType;
 use App\Models\TestAttempt;
+use App\Notifications\Channels\LearnerDatabaseChannel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -28,7 +30,7 @@ class AssignmentSubmitted extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        return ['mail', LearnerDatabaseChannel::class];
     }
 
     /**
@@ -56,6 +58,21 @@ class AssignmentSubmitted extends Notification
             'module_title' => $this->attempt->assessment->module->title,
             'user_name' => $this->attempt->user->fullName(),
             'message' => 'ผู้เรียน '.$this->attempt->user->fullName().' ได้ส่งใบงานใหม่',
+        ];
+    }
+
+    /**
+     * Shape written to the notifications table via LearnerDatabaseChannel.
+     *
+     * @return array<string, mixed>
+     */
+    public function toLearnerDatabase(object $notifiable): array
+    {
+        return [
+            'type' => NotificationType::AssignmentSubmitted,
+            'title' => 'มีใบงานใหม่รอตรวจ',
+            'message' => 'ผู้เรียน '.$this->attempt->user->fullName().' ได้ส่งใบงานใหม่สำหรับโมดูล: '.$this->attempt->assessment->module->title,
+            'reference_id' => $this->attempt->id,
         ];
     }
 }

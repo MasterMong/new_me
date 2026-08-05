@@ -4,6 +4,7 @@ namespace App\Livewire\Learner;
 
 use App\Models\Course;
 use App\Models\CourseReview as ReviewModel;
+use App\Models\Enrollment;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -42,6 +43,11 @@ class CourseReview extends Component
             'rating' => $this->rating,
             'comment' => $this->comment,
         ]);
+
+        Enrollment::where('user_id', Auth::id())
+            ->where('course_id', $this->course->id)
+            ->first()
+            ?->issueCertificateIfEligible();
 
         $this->dispatch('toast', message: 'บันทึกแบบประเมินเรียบร้อยแล้ว ขอบคุณสำหรับความคิดเห็น', type: 'success');
 

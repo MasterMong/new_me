@@ -2,7 +2,9 @@
 
 namespace App\Notifications;
 
+use App\Enums\NotificationType;
 use App\Models\ExpertReview;
+use App\Notifications\Channels\LearnerDatabaseChannel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -28,7 +30,7 @@ class ExpertReviewCompleted extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        return ['mail', LearnerDatabaseChannel::class];
     }
 
     /**
@@ -59,6 +61,26 @@ class ExpertReviewCompleted extends Notification
             'module_title' => $this->review->attempt->assessment->module->title,
             'status' => $this->review->status,
             'message' => 'ผู้เชี่ยวชาญได้ทำการตรวจใบงานสำหรับโมดูล: '.$this->review->attempt->assessment->module->title,
+        ];
+    }
+
+    /**
+     * Shape written to the notifications table via LearnerDatabaseChannel.
+     *
+     * @return array<string, mixed>
+     */
+    public function toLearnerDatabase(object $notifiable): array
+    {
+        $moduleTitle = $this->review->attempt->assessment->module->title;
+        $type = $this->review->status->value === 'passed'
+            ? NotificationType::ReviewCompleted
+            : NotificationType::RevisionNeeded;
+
+        return [
+            'type' => $type,
+            'title' => 'ผลการตรวจใบงาน: '.$moduleTitle,
+            'message' => 'ผู้เชี่ยวชาญได้ทำการตรวจใบงานสำหรับโมดูล: '.$moduleTitle.' เรียบร้อยแล้ว',
+            'reference_id' => $this->review->attempt_id,
         ];
     }
 }

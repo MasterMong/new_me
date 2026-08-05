@@ -6,6 +6,7 @@ use App\Enums\GradingMode;
 use App\Enums\QuestionType;
 use App\Enums\TestAttemptStatus;
 use App\Models\Assessment;
+use App\Models\Enrollment;
 use App\Models\TestAnswer;
 use App\Models\TestAttempt;
 use Illuminate\Support\Facades\Auth;
@@ -326,6 +327,13 @@ class AssessmentPlayer extends Component
 
         $this->score = $scorePct;
         $this->isFinished = true;
+
+        if ($status === TestAttemptStatus::Passed) {
+            Enrollment::where('user_id', Auth::id())
+                ->where('course_id', $this->assessment->course_id)
+                ->first()
+                ?->issueCertificateIfEligible();
+        }
     }
 
     public function render()

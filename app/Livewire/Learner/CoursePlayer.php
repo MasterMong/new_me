@@ -76,6 +76,7 @@ class CoursePlayer extends Component
 
         if ($isCompleted) {
             $this->dispatch('contentCompleted');
+            $this->enrollment->issueCertificateIfEligible();
         }
     }
 
