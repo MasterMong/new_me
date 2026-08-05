@@ -2,17 +2,23 @@
 
 namespace App\Livewire\Learner;
 
+use App\Enums\GradingMode;
+use App\Enums\QuestionType;
 use App\Enums\TestAttemptStatus;
 use App\Models\Assessment;
 use App\Models\TestAnswer;
 use App\Models\TestAttempt;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 #[Layout('layouts.app')]
 class AssessmentPlayer extends Component
 {
+    use WithFileUploads;
+
     public Assessment $assessment;
 
     public $questions;
@@ -20,6 +26,12 @@ class AssessmentPlayer extends Component
     public $currentIndex = 0;
 
     public $answers = [];
+
+    public array $essayAnswers = [];
+
+    public array $uploadedFiles = [];
+
+    public array $existingFileUrls = [];
 
     public ?TestAttempt $currentAttempt = null;
 
@@ -74,10 +86,12 @@ class AssessmentPlayer extends Component
                 'started_at' => now(),
             ]);
         } else {
-            // Load existing answers
+            // Load existing answers (including previously saved drafts)
             $existingAnswers = TestAnswer::where('attempt_id', $this->currentAttempt->id)->get();
             foreach ($existingAnswers as $answer) {
                 $this->answers[$answer->question_id] = $answer->selected_choice_id;
+                $this->essayAnswers[$answer->question_id] = $answer->essay_text;
+                $this->existingFileUrls[$answer->question_id] = $answer->uploaded_file_url;
             }
         }
     }
@@ -99,6 +113,66 @@ class AssessmentPlayer extends Component
                 'score' => $this->questions[$this->currentIndex]->choices->firstWhere('id', $choiceId)->is_correct ? $this->questions[$this->currentIndex]->points : 0,
             ]
         );
+    }
+
+    public function saveDraft()
+    {
+        $this->persistAllAnswers();
+
+        $this->dispatch('notify', 'บันทึกคำตอบเรียบร้อยแล้ว คุณสามารถกลับมาทำต่อได้ภายหลัง');
+    }
+
+    protected function persistAllAnswers(): void
+    {
+        foreach ($this->questions as $question) {
+            $this->persistAnswer($question);
+        }
+    }
+
+    protected function persistAnswer($question): void
+    {
+        match ($question->question_type) {
+            QuestionType::MultipleChoice => null, // saved instantly by selectChoice()
+            QuestionType::Essay, QuestionType::ShortAnswer => $this->persistTextAnswer($question),
+            QuestionType::FileUpload => $this->persistFileAnswer($question),
+        };
+    }
+
+    protected function persistTextAnswer($question): void
+    {
+        $text = $this->essayAnswers[$question->id] ?? null;
+
+        if ($text === null || $text === '') {
+            return;
+        }
+
+        TestAnswer::updateOrCreate(
+            ['attempt_id' => $this->currentAttempt->id, 'question_id' => $question->id],
+            ['essay_text' => $text]
+        );
+    }
+
+    protected function persistFileAnswer($question): void
+    {
+        $file = $this->uploadedFiles[$question->id] ?? null;
+
+        if (! $file) {
+            return;
+        }
+
+        $this->validate([
+            'uploadedFiles.'.$question->id => 'file|max:10240',
+        ]);
+
+        $path = $file->store('worksheets/'.$this->currentAttempt->id, 'public');
+
+        TestAnswer::updateOrCreate(
+            ['attempt_id' => $this->currentAttempt->id, 'question_id' => $question->id],
+            ['uploaded_file_url' => Storage::disk('public')->url($path)]
+        );
+
+        $this->existingFileUrls[$question->id] = Storage::disk('public')->url($path);
+        unset($this->uploadedFiles[$question->id]);
     }
 
     public function nextQuestion()
@@ -124,7 +198,24 @@ class AssessmentPlayer extends Component
 
     public function finish()
     {
+        $this->persistAllAnswers();
+
         $totalPoints = $this->questions->sum('points');
+        $requiresExpertReview = $this->questions->contains(fn ($q) => $q->grading_mode === GradingMode::Manual);
+
+        if ($requiresExpertReview) {
+            $this->currentAttempt->update([
+                'max_score' => $totalPoints,
+                'status' => TestAttemptStatus::PendingReview,
+                'submitted_at' => now(),
+            ]);
+
+            $this->score = null;
+            $this->isFinished = true;
+
+            return;
+        }
+
         $earnedPoints = TestAnswer::where('attempt_id', $this->currentAttempt->id)->sum('score');
         $scorePct = $totalPoints > 0 ? ($earnedPoints / $totalPoints) * 100 : 0;
 

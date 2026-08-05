@@ -40,35 +40,68 @@
                         {{ $currentIndex + 1 }}. {{ $questions[$currentIndex]->question_text }}
                     </flux:heading>
 
-                    <div class="space-y-4">
-                        @foreach($questions[$currentIndex]->choices as $choice)
-                            <button 
-                                wire:click="selectChoice({{ $choice->id }})"
-                                @class([
-                                    'w-full p-6 rounded-2xl border-2 text-left transition-all flex items-center gap-4 group',
-                                    'border-primary bg-primary/5 ring-1 ring-primary/20' => ($answers[$questions[$currentIndex]->id] ?? null) == $choice->id,
-                                    'border-zinc-100 dark:border-zinc-800 hover:border-primary/50 hover:bg-zinc-50 dark:hover:bg-zinc-800/50' => ($answers[$questions[$currentIndex]->id] ?? null) != $choice->id,
-                                ])
-                            >
-                                <div @class([
-                                    'size-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors',
-                                    'border-primary bg-primary text-white' => ($answers[$questions[$currentIndex]->id] ?? null) == $choice->id,
-                                    'border-zinc-300 dark:border-zinc-700 group-hover:border-primary/50' => ($answers[$questions[$currentIndex]->id] ?? null) != $choice->id,
-                                ])>
-                                    @if(($answers[$questions[$currentIndex]->id] ?? null) == $choice->id)
-                                        <div class="size-2 bg-white rounded-full"></div>
-                                    @endif
+                    @if($questions[$currentIndex]->question_type === \App\Enums\QuestionType::MultipleChoice)
+                        <div class="space-y-4">
+                            @foreach($questions[$currentIndex]->choices as $choice)
+                                <button
+                                    wire:click="selectChoice({{ $choice->id }})"
+                                    @class([
+                                        'w-full p-6 rounded-2xl border-2 text-left transition-all flex items-center gap-4 group',
+                                        'border-primary bg-primary/5 ring-1 ring-primary/20' => ($answers[$questions[$currentIndex]->id] ?? null) == $choice->id,
+                                        'border-zinc-100 dark:border-zinc-800 hover:border-primary/50 hover:bg-zinc-50 dark:hover:bg-zinc-800/50' => ($answers[$questions[$currentIndex]->id] ?? null) != $choice->id,
+                                    ])
+                                >
+                                    <div @class([
+                                        'size-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors',
+                                        'border-primary bg-primary text-white' => ($answers[$questions[$currentIndex]->id] ?? null) == $choice->id,
+                                        'border-zinc-300 dark:border-zinc-700 group-hover:border-primary/50' => ($answers[$questions[$currentIndex]->id] ?? null) != $choice->id,
+                                    ])>
+                                        @if(($answers[$questions[$currentIndex]->id] ?? null) == $choice->id)
+                                            <div class="size-2 bg-white rounded-full"></div>
+                                        @endif
+                                    </div>
+                                    <span @class([
+                                        'text-lg font-medium',
+                                        'text-primary' => ($answers[$questions[$currentIndex]->id] ?? null) == $choice->id,
+                                        'text-zinc-700 dark:text-zinc-300' => ($answers[$questions[$currentIndex]->id] ?? null) != $choice->id,
+                                    ])>
+                                        {{ $choice->choice_text }}
+                                    </span>
+                                </button>
+                            @endforeach
+                        </div>
+                    @elseif($questions[$currentIndex]->question_type === \App\Enums\QuestionType::ShortAnswer)
+                        <flux:input
+                            wire:model="essayAnswers.{{ $questions[$currentIndex]->id }}"
+                            placeholder="พิมพ์คำตอบของคุณ..."
+                        />
+                    @elseif($questions[$currentIndex]->question_type === \App\Enums\QuestionType::Essay)
+                        <flux:textarea
+                            wire:model="essayAnswers.{{ $questions[$currentIndex]->id }}"
+                            placeholder="พิมพ์คำตอบของคุณ..."
+                            rows="8"
+                        />
+                    @elseif($questions[$currentIndex]->question_type === \App\Enums\QuestionType::FileUpload)
+                        <div class="space-y-4">
+                            @if($existingFileUrls[$questions[$currentIndex]->id] ?? null)
+                                <div class="flex items-center gap-3 p-4 rounded-2xl bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 text-sm">
+                                    <flux:icon.document-check variant="micro" class="text-green-600" />
+                                    <span class="text-green-700 dark:text-green-400">มีไฟล์ที่บันทึกไว้แล้ว —</span>
+                                    <a href="{{ $existingFileUrls[$questions[$currentIndex]->id] }}" target="_blank" class="font-medium text-primary underline">ดูไฟล์</a>
                                 </div>
-                                <span @class([
-                                    'text-lg font-medium',
-                                    'text-primary' => ($answers[$questions[$currentIndex]->id] ?? null) == $choice->id,
-                                    'text-zinc-700 dark:text-zinc-300' => ($answers[$questions[$currentIndex]->id] ?? null) != $choice->id,
-                                ])>
-                                    {{ $choice->choice_text }}
-                                </span>
-                            </button>
-                        @endforeach
-                    </div>
+                            @endif
+                            <flux:input
+                                type="file"
+                                wire:model="uploadedFiles.{{ $questions[$currentIndex]->id }}"
+                            />
+                            @if($uploadedFiles[$questions[$currentIndex]->id] ?? null)
+                                <p class="text-sm text-zinc-500">ไฟล์ใหม่: {{ $uploadedFiles[$questions[$currentIndex]->id]->getClientOriginalName() }} — กด "บันทึกร่าง" หรือ "ส่งคำตอบ" เพื่ออัปโหลด</p>
+                            @endif
+                            @error('uploadedFiles.'.$questions[$currentIndex]->id)
+                                <p class="text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    @endif
                 </div>
 
                 {{-- Navigation Footer --}}
@@ -76,8 +109,13 @@
                     <flux:button variant="ghost" icon="arrow-left" wire:click="prevQuestion" :disabled="$currentIndex === 0">
                         ข้อก่อนหน้า
                     </flux:button>
-                    
+
                     <div class="flex items-center gap-3">
+                        @if($questions[$currentIndex]->question_type !== \App\Enums\QuestionType::MultipleChoice)
+                            <flux:button variant="ghost" icon="bookmark" wire:click="saveDraft">
+                                บันทึกร่าง
+                            </flux:button>
+                        @endif
                         @if($currentIndex < $totalQuestions - 1)
                             <flux:button variant="primary" icon-trailing="arrow-right" wire:click="nextQuestion">
                                 ข้อถัดไป
@@ -94,13 +132,20 @@
             {{-- Question Grid (Mobile/Quick Jump) --}}
             <div class="flex flex-wrap justify-center gap-2">
                 @foreach($questions as $index => $q)
-                    <button 
+                    @php
+                        $isAnswered = match ($q->question_type) {
+                            \App\Enums\QuestionType::MultipleChoice => isset($answers[$q->id]),
+                            \App\Enums\QuestionType::Essay, \App\Enums\QuestionType::ShortAnswer => filled($essayAnswers[$q->id] ?? null),
+                            \App\Enums\QuestionType::FileUpload => filled($existingFileUrls[$q->id] ?? null) || filled($uploadedFiles[$q->id] ?? null),
+                        };
+                    @endphp
+                    <button
                         wire:click="goToQuestion({{ $index }})"
                         @class([
                             'size-10 rounded-xl border flex items-center justify-center text-xs font-bold transition-all',
                             'bg-primary border-primary text-white shadow-lg shadow-primary/20 scale-110' => $currentIndex === $index,
-                            'bg-green-100 border-green-200 text-green-700' => isset($answers[$q->id]) && $currentIndex !== $index,
-                            'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:border-primary' => !isset($answers[$q->id]) && $currentIndex !== $index,
+                            'bg-green-100 border-green-200 text-green-700' => $isAnswered && $currentIndex !== $index,
+                            'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:border-primary' => !$isAnswered && $currentIndex !== $index,
                         ])
                     >
                         {{ $index + 1 }}
@@ -111,47 +156,59 @@
             {{-- Results Summary --}}
             <div class="bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-xl overflow-hidden animate-in fade-in zoom-in duration-700">
                 <div class="p-12 text-center">
-                    @if($currentAttempt->status === \App\Enums\TestAttemptStatus::Passed)
-                        <div class="size-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-8 animate-bounce">
-                            <flux:icon.check-circle variant="micro" class="size-16" />
+                    @if($currentAttempt->status === \App\Enums\TestAttemptStatus::PendingReview)
+                        <div class="size-24 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-8">
+                            <flux:icon.clock variant="micro" class="size-16" />
                         </div>
-                        <flux:heading size="xl" class="text-green-600 mb-2">ยินดีด้วย! คุณสอบผ่าน</flux:heading>
-                    @else
-                        <div class="size-24 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-8">
-                            <flux:icon.x-circle variant="micro" class="size-16" />
-                        </div>
-                        <flux:heading size="xl" class="text-red-600 mb-2">พยายามใหม่อีกครั้ง</flux:heading>
-                    @endif
-                    
-                    <flux:subheading class="mb-10 text-lg">คะแนนที่ได้ในการทดสอบครั้งนี้</flux:subheading>
+                        <flux:heading size="xl" class="text-amber-600 mb-2">ส่งใบงานเรียบร้อยแล้ว</flux:heading>
+                        <flux:subheading class="mb-10 text-lg">รอผู้เชี่ยวชาญตรวจ คุณจะได้รับแจ้งเตือนเมื่อผลการตรวจออก</flux:subheading>
 
-                    <div class="grid grid-cols-2 gap-8 mb-12">
-                        <div class="bg-zinc-50 dark:bg-zinc-800/50 p-8 rounded-3xl border border-zinc-100 dark:border-zinc-800">
-                            <p class="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-2">คะแนนรวม</p>
-                            <p class="text-5xl font-black text-zinc-900 dark:text-white">{{ round($score) }}%</p>
-                        </div>
-                        <div class="bg-zinc-50 dark:bg-zinc-800/50 p-8 rounded-3xl border border-zinc-100 dark:border-zinc-800">
-                            <p class="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-2">สถานะ</p>
-                            <p @class([
-                                'text-2xl font-bold',
-                                'text-green-600' => $currentAttempt->status === \App\Enums\TestAttemptStatus::Passed,
-                                'text-red-600' => $currentAttempt->status !== \App\Enums\TestAttemptStatus::Passed,
-                            ])>
-                                {{ $currentAttempt->status === \App\Enums\TestAttemptStatus::Passed ? 'ผ่านเกณฑ์' : 'ไม่ผ่านเกณฑ์' }}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="flex flex-col md:flex-row items-center justify-center gap-4">
                         <flux:button variant="primary" class="w-full md:w-auto px-10 h-12 text-lg" href="{{ route('learn.courses.show', $assessment->course_id) }}" wire:navigate>
                             กลับไปยังบทเรียน
                         </flux:button>
-                        @if($currentAttempt->status !== \App\Enums\TestAttemptStatus::Passed)
-                            <flux:button variant="ghost" class="w-full md:w-auto px-10 h-12 text-lg" wire:click="$refresh">
-                                ทำแบบทดสอบใหม่
-                            </flux:button>
+                    @else
+                        @if($currentAttempt->status === \App\Enums\TestAttemptStatus::Passed)
+                            <div class="size-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-8 animate-bounce">
+                                <flux:icon.check-circle variant="micro" class="size-16" />
+                            </div>
+                            <flux:heading size="xl" class="text-green-600 mb-2">ยินดีด้วย! คุณสอบผ่าน</flux:heading>
+                        @else
+                            <div class="size-24 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-8">
+                                <flux:icon.x-circle variant="micro" class="size-16" />
+                            </div>
+                            <flux:heading size="xl" class="text-red-600 mb-2">พยายามใหม่อีกครั้ง</flux:heading>
                         @endif
-                    </div>
+
+                        <flux:subheading class="mb-10 text-lg">คะแนนที่ได้ในการทดสอบครั้งนี้</flux:subheading>
+
+                        <div class="grid grid-cols-2 gap-8 mb-12">
+                            <div class="bg-zinc-50 dark:bg-zinc-800/50 p-8 rounded-3xl border border-zinc-100 dark:border-zinc-800">
+                                <p class="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-2">คะแนนรวม</p>
+                                <p class="text-5xl font-black text-zinc-900 dark:text-white">{{ round($score) }}%</p>
+                            </div>
+                            <div class="bg-zinc-50 dark:bg-zinc-800/50 p-8 rounded-3xl border border-zinc-100 dark:border-zinc-800">
+                                <p class="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-2">สถานะ</p>
+                                <p @class([
+                                    'text-2xl font-bold',
+                                    'text-green-600' => $currentAttempt->status === \App\Enums\TestAttemptStatus::Passed,
+                                    'text-red-600' => $currentAttempt->status !== \App\Enums\TestAttemptStatus::Passed,
+                                ])>
+                                    {{ $currentAttempt->status === \App\Enums\TestAttemptStatus::Passed ? 'ผ่านเกณฑ์' : 'ไม่ผ่านเกณฑ์' }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col md:flex-row items-center justify-center gap-4">
+                            <flux:button variant="primary" class="w-full md:w-auto px-10 h-12 text-lg" href="{{ route('learn.courses.show', $assessment->course_id) }}" wire:navigate>
+                                กลับไปยังบทเรียน
+                            </flux:button>
+                            @if($currentAttempt->status !== \App\Enums\TestAttemptStatus::Passed)
+                                <flux:button variant="ghost" class="w-full md:w-auto px-10 h-12 text-lg" wire:click="$refresh">
+                                    ทำแบบทดสอบใหม่
+                                </flux:button>
+                            @endif
+                        </div>
+                    @endif
                 </div>
             </div>
         @endif
