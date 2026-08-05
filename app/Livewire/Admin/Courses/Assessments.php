@@ -55,6 +55,8 @@ class Assessments extends Component
 
     public string $questionType = 'multiple_choice';
 
+    public string $questionCorrectAnswer = '';
+
     public int $questionPoints = 1;
 
     public array $choices = []; // [['text' => '', 'is_correct' => false]]
@@ -163,6 +165,7 @@ class Assessments extends Component
         $this->editingQuestionId = $question->id;
         $this->questionText = $question->question_text;
         $this->questionType = $question->question_type->value;
+        $this->questionCorrectAnswer = $question->correct_answer ?? '';
         $this->questionPoints = $question->points;
 
         $this->choices = $question->choices->map(fn ($c) => [
@@ -180,14 +183,20 @@ class Assessments extends Component
             'questionText' => 'required|min:3',
             'questionPoints' => 'required|integer|min:1',
             'choices.*.text' => 'required_if:questionType,multiple_choice',
+            'questionCorrectAnswer' => 'required_if:questionType,short_answer|nullable|string|max:255',
         ]);
+
+        // Short answer is auto-graded by comparing the learner's text against
+        // correct_answer; essay and file upload always need a human to grade.
+        $gradingMode = in_array($this->questionType, ['multiple_choice', 'short_answer'], true) ? 'auto' : 'manual';
 
         $questionData = [
             'assessment_id' => $this->selectedAssessmentId,
             'question_text' => $this->questionText,
             'question_type' => $this->questionType,
+            'correct_answer' => $this->questionType === 'short_answer' ? $this->questionCorrectAnswer : null,
             'points' => $this->questionPoints,
-            'grading_mode' => $this->questionType === 'multiple_choice' ? 'auto' : 'manual',
+            'grading_mode' => $gradingMode,
             'sort_order' => $this->editingQuestionId ? Question::find($this->editingQuestionId)->sort_order : (Question::where('assessment_id', $this->selectedAssessmentId)->max('sort_order') + 10),
         ];
 
@@ -277,6 +286,7 @@ class Assessments extends Component
         $this->editingQuestionId = null;
         $this->questionText = '';
         $this->questionType = 'multiple_choice';
+        $this->questionCorrectAnswer = '';
         $this->questionPoints = 1;
         $this->choices = [
             ['text' => '', 'is_correct' => false],

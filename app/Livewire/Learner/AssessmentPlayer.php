@@ -215,10 +215,36 @@ class AssessmentPlayer extends Component
             return;
         }
 
+        $data = ['essay_text' => $text];
+
+        // Short-answer questions with grading_mode "auto" are graded immediately by
+        // comparing against the admin-configured correct_answer. Essay questions
+        // (and short-answer questions an admin chose to grade manually) are left
+        // unscored here for an expert to review.
+        if ($question->question_type === QuestionType::ShortAnswer && $question->grading_mode === GradingMode::Auto) {
+            $isCorrect = $this->isShortAnswerCorrect($text, $question->correct_answer);
+            $data['is_correct'] = $isCorrect;
+            $data['score'] = $isCorrect ? $question->points : 0;
+        }
+
         TestAnswer::updateOrCreate(
             ['attempt_id' => $this->currentAttempt->id, 'question_id' => $question->id],
-            ['essay_text' => $text]
+            $data
         );
+    }
+
+    protected function isShortAnswerCorrect(string $answer, ?string $correctAnswer): bool
+    {
+        if ($correctAnswer === null || $correctAnswer === '') {
+            return false;
+        }
+
+        return $this->normalizeShortAnswer($answer) === $this->normalizeShortAnswer($correctAnswer);
+    }
+
+    protected function normalizeShortAnswer(string $value): string
+    {
+        return mb_strtolower(trim(preg_replace('/\s+/', ' ', $value)));
     }
 
     protected function persistFileAnswer($question): void

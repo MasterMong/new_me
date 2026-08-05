@@ -14,7 +14,7 @@ class Question extends Model
     use HasFactory;
 
     protected $fillable = [
-        'assessment_id', 'question_type', 'question_text', 'points', 'grading_mode', 'sort_order',
+        'assessment_id', 'question_type', 'question_text', 'correct_answer', 'points', 'grading_mode', 'sort_order',
     ];
 
     protected $casts = [

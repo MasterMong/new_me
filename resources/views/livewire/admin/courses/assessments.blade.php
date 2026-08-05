@@ -228,6 +228,11 @@
                                             </div>
                                         @endforeach
                                     </div>
+                                @elseif ($question->question_type->value === 'short_answer')
+                                    <div class="mt-3 flex items-center gap-2 px-3 py-1.5 rounded-xl text-[11px] bg-green-50 border border-green-100 text-green-700 w-fit">
+                                        <span class="material-symbols-outlined text-[14px]">check_circle</span>
+                                        <span>{{ $question->correct_answer }}</span>
+                                    </div>
                                 @endif
                             </div>
                         </div>
@@ -304,11 +309,10 @@
                         @foreach ($choices as $index => $choice)
                             <div class="flex items-center gap-3 bg-surface p-3 rounded-2xl border border-outline-variant/20">
                                 <flux:checkbox wire:model="choices.{{ $index }}.is_correct" class="shrink-0" />
-                                <flux:input 
-                                    wire:model="choices.{{ $index }}.text" 
-                                    placeholder="ตัวเลือกที่ {{ $index + 1 }}" 
+                                <flux:input
+                                    wire:model="choices.{{ $index }}.text"
+                                    placeholder="ตัวเลือกที่ {{ $index + 1 }}"
                                     class="flex-1 !bg-transparent border-0 focus:ring-0 px-0"
-                                    variant="ghost"
                                 />
                                 <flux:button 
                                     size="xs" 
@@ -323,6 +327,13 @@
                     </div>
                     <flux:error name="choices.*.text" />
                 </div>
+            @elseif ($questionType === 'short_answer')
+                <flux:field>
+                    <flux:label>คำตอบที่ถูกต้อง <span class="text-error">*</span></flux:label>
+                    <flux:input wire:model="questionCorrectAnswer" placeholder="ระบุคำตอบที่ถูกต้อง..." />
+                    <flux:description>ระบบจะตรวจให้คะแนนอัตโนมัติโดยเทียบกับคำตอบนี้ (ไม่สนใจตัวพิมพ์เล็ก/ใหญ่และช่องว่างส่วนเกิน)</flux:description>
+                    <flux:error name="questionCorrectAnswer" />
+                </flux:field>
             @else
                 <div class="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex gap-3">
                     <span class="material-symbols-outlined text-amber-500">info</span>
