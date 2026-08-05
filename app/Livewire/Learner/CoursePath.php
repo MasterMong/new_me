@@ -49,7 +49,9 @@ class CoursePath extends Component
                 $previousModule = $index > 0 ? $courseModules[$index - 1] : null;
                 $module->is_accessible = $this->checkModuleAccessibility($module, $previousModule);
                 $module->progress_percent = $this->calculateModuleProgress($module);
-                $module->is_completed = $module->progress_percent === 100;
+                $module->is_completed = $this->isModuleCompleted($module);
+                $module->pre_test = $module->assessments->firstWhere('type', AssessmentType::PreTest);
+                $module->post_test = $module->assessments->firstWhere('type', AssessmentType::PostTest);
 
                 return $module;
             });
@@ -66,9 +68,14 @@ class CoursePath extends Component
 
     protected function checkModuleAccessibility($module, ?Module $previousModule): bool
     {
-        // Pre-test must be completed if it exists
+        // Course-wide pre-test must be completed if it exists
         $preTest = $this->course->assessments()->where('type', 'pre_test')->first();
         if ($preTest && ! $preTest->attempts()->where('user_id', Auth::id())->exists()) {
+            return false;
+        }
+
+        // This module's own pre-test must be attempted before its content unlocks
+        if (! $this->moduleOwnPreTestAttempted($module)) {
             return false;
         }
 
@@ -93,7 +100,40 @@ class CoursePath extends Component
             return false;
         }
 
+        // Same for the previous module's own post-test, if it has one.
+        if (! $this->modulePostTestPassed($previousModule)) {
+            return false;
+        }
+
         return true;
+    }
+
+    protected function moduleOwnPreTestAttempted($module): bool
+    {
+        $preTest = $module->assessments->firstWhere('type', AssessmentType::PreTest);
+
+        if (! $preTest) {
+            return true;
+        }
+
+        return $preTest->attempts->isNotEmpty();
+    }
+
+    protected function modulePostTestPassed(?Module $module): bool
+    {
+        if (! $module) {
+            return true;
+        }
+
+        $postTest = $module->assessments->firstWhere('type', AssessmentType::PostTest);
+
+        if (! $postTest) {
+            return true;
+        }
+
+        return $postTest->attempts->contains(
+            fn ($attempt) => $attempt->status === TestAttemptStatus::Passed
+        );
     }
 
     protected function previousModuleAssignmentsPassed(?Module $previousModule): bool
@@ -137,7 +177,7 @@ class CoursePath extends Component
 
     protected function isModuleCompleted($module): bool
     {
-        return $this->calculateModuleProgress($module) === 100;
+        return $this->calculateModuleProgress($module) === 100 && $this->modulePostTestPassed($module);
     }
 
     protected function isAssessmentPassed($assessment, $minScore): bool

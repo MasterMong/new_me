@@ -2,9 +2,11 @@
 
 namespace App\Livewire\Admin\Courses;
 
+use App\Enums\AssessmentType;
 use App\Models\Assessment;
 use App\Models\Course;
 use App\Models\Question;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -23,7 +25,9 @@ class Assessments extends Component
 
     public string $assessmentTitle = '';
 
-    public string $assessmentType = 'quiz';
+    public string $assessmentType = 'module_test';
+
+    public ?int $assessmentModuleId = null;
 
     public int $assessmentPassingScore = 60;
 
@@ -63,7 +67,7 @@ class Assessments extends Component
 
     public function loadAssessments()
     {
-        $this->assessments = $this->course->assessments()->withCount('questions')->get();
+        $this->assessments = $this->course->assessments()->with('module')->withCount('questions')->get();
     }
 
     public function openCreateAssessment()
@@ -78,6 +82,7 @@ class Assessments extends Component
         $this->editingAssessmentId = $assessment->id;
         $this->assessmentTitle = $assessment->title;
         $this->assessmentType = $assessment->type->value;
+        $this->assessmentModuleId = $assessment->module_id;
         $this->assessmentPassingScore = $assessment->passing_score_pct;
         $this->assessmentMaxAttempts = $assessment->max_attempts;
         $this->assessmentGradingMode = $assessment->grading_mode->value;
@@ -90,12 +95,18 @@ class Assessments extends Component
     {
         $this->validate([
             'assessmentTitle' => 'required|min:3',
+            'assessmentType' => ['required', Rule::in(array_column(AssessmentType::cases(), 'value'))],
+            'assessmentModuleId' => [
+                'nullable',
+                Rule::exists('modules', 'id')->where('course_id', $this->course->id),
+            ],
             'assessmentPassingScore' => 'required|integer|min:0|max:100',
             'assessmentTimeLimitMinutes' => 'nullable|required_if:assessmentIsTimed,true|integer|min:1|max:600',
         ]);
 
         $data = [
             'course_id' => $this->course->id,
+            'module_id' => $this->assessmentModuleId,
             'title' => $this->assessmentTitle,
             'type' => $this->assessmentType,
             'passing_score_pct' => $this->assessmentPassingScore,
@@ -255,8 +266,10 @@ class Assessments extends Component
 
     public function render()
     {
-        return view('livewire.admin.courses.assessments')
-            ->layout('layouts.app', ['title' => 'จัดการแบบทดสอบ - '.$this->course->title]);
+        return view('livewire.admin.courses.assessments', [
+            'assessmentTypes' => AssessmentType::cases(),
+            'courseModules' => $this->course->modules()->orderBy('sort_order')->get(),
+        ])->layout('layouts.app', ['title' => 'จัดการแบบทดสอบ - '.$this->course->title]);
     }
 
     protected function resetQuestionForm()
@@ -275,7 +288,8 @@ class Assessments extends Component
     {
         $this->editingAssessmentId = null;
         $this->assessmentTitle = '';
-        $this->assessmentType = 'quiz';
+        $this->assessmentType = 'module_test';
+        $this->assessmentModuleId = null;
         $this->assessmentPassingScore = 60;
         $this->assessmentMaxAttempts = 3;
         $this->assessmentGradingMode = 'auto';

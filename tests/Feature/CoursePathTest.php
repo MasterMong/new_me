@@ -204,3 +204,129 @@ test('module is still locked by an unpassed assignment even after a revision_nee
             return $modules->firstWhere('sort_order', 2)->is_accessible === false;
         });
 });
+
+test('a module with its own pre-test is locked until that pre-test is attempted', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    $module = Module::factory()->create(['course_id' => $course->id, 'sort_order' => 1]);
+    Assessment::factory()->create([
+        'course_id' => $course->id,
+        'module_id' => $module->id,
+        'type' => AssessmentType::PreTest->value,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(CoursePath::class, ['course' => $course])
+        ->assertViewHas('modules', function ($modules) {
+            return $modules->first()->is_accessible === false;
+        });
+});
+
+test('a module unlocks once its own pre-test has been attempted', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    $module = Module::factory()->create(['course_id' => $course->id, 'sort_order' => 1]);
+    $preTest = Assessment::factory()->create([
+        'course_id' => $course->id,
+        'module_id' => $module->id,
+        'type' => AssessmentType::PreTest->value,
+    ]);
+
+    TestAttempt::factory()->create([
+        'user_id' => $user->id,
+        'assessment_id' => $preTest->id,
+        'status' => TestAttemptStatus::Failed->value,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(CoursePath::class, ['course' => $course])
+        ->assertViewHas('modules', function ($modules) {
+            return $modules->first()->is_accessible === true;
+        });
+});
+
+test('next module stays locked until the previous module post-test is passed', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    $module1 = Module::factory()->create(['course_id' => $course->id, 'sort_order' => 1]);
+    Module::factory()->create(['course_id' => $course->id, 'sort_order' => 2]);
+
+    Assessment::factory()->create([
+        'course_id' => $course->id,
+        'module_id' => $module1->id,
+        'type' => AssessmentType::PostTest->value,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(CoursePath::class, ['course' => $course])
+        ->assertViewHas('modules', function ($modules) {
+            return $modules->firstWhere('sort_order', 2)->is_accessible === false;
+        });
+});
+
+test('next module unlocks once the previous module post-test is passed', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    $module1 = Module::factory()->create(['course_id' => $course->id, 'sort_order' => 1]);
+    Module::factory()->create(['course_id' => $course->id, 'sort_order' => 2]);
+
+    $postTest = Assessment::factory()->create([
+        'course_id' => $course->id,
+        'module_id' => $module1->id,
+        'type' => AssessmentType::PostTest->value,
+    ]);
+
+    TestAttempt::factory()->create([
+        'user_id' => $user->id,
+        'assessment_id' => $postTest->id,
+        'status' => TestAttemptStatus::Passed->value,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(CoursePath::class, ['course' => $course])
+        ->assertViewHas('modules', function ($modules) {
+            return $modules->firstWhere('sort_order', 2)->is_accessible === true;
+        });
+});
+
+test('a module with a post-test is not considered completed until the post-test is passed', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    $module = Module::factory()->create(['course_id' => $course->id, 'sort_order' => 1]);
+    $content = ModuleContent::factory()->create(['module_id' => $module->id]);
+    $content->views()->create([
+        'user_id' => $user->id,
+        'is_completed' => true,
+        'viewed_at' => now(),
+    ]);
+
+    Assessment::factory()->create([
+        'course_id' => $course->id,
+        'module_id' => $module->id,
+        'type' => AssessmentType::PostTest->value,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(CoursePath::class, ['course' => $course])
+        ->assertViewHas('modules', function ($modules) {
+            $module = $modules->first();
+
+            // All content is watched (100%), but the module isn't "completed" without a passed post-test.
+            return $module->progress_percent === 100 && $module->is_completed === false;
+        });
+});

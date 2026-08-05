@@ -104,6 +104,37 @@
                                     <span class="text-xs font-bold text-zinc-500">{{ $module->progress_percent }}%</span>
                                 </div>
                             @endif
+
+                            @if($module->pre_test || $module->post_test)
+                                <div class="mt-4 flex flex-wrap gap-2">
+                                    @if($module->pre_test)
+                                        @php $preTestAttempted = $module->pre_test->attempts->isNotEmpty(); @endphp
+                                        <flux:button
+                                            size="sm"
+                                            :variant="$preTestAttempted ? 'ghost' : 'primary'"
+                                            href="{{ route('learn.assessments.show', $module->pre_test) }}"
+                                        >
+                                            <flux:icon.document-text variant="micro" class="me-1" />
+                                            {{ $preTestAttempted ? 'ดูผลก่อนเรียน' : 'ทำแบบทดสอบก่อนเรียน' }}
+                                        </flux:button>
+                                    @endif
+                                    @if($module->post_test)
+                                        @php
+                                            $postTestPassed = $module->post_test->attempts->contains(fn($a) => $a->status === \App\Enums\TestAttemptStatus::Passed);
+                                            $postTestUnlocked = $module->progress_percent === 100;
+                                        @endphp
+                                        <flux:button
+                                            size="sm"
+                                            :variant="$postTestPassed ? 'ghost' : 'primary'"
+                                            :disabled="!$postTestUnlocked"
+                                            href="{{ $postTestUnlocked ? route('learn.assessments.show', $module->post_test) : '#' }}"
+                                        >
+                                            <flux:icon.trophy variant="micro" class="me-1" />
+                                            {{ $postTestPassed ? 'ดูผลหลังเรียน' : 'ทำแบบทดสอบหลังเรียน' }}
+                                        </flux:button>
+                                    @endif
+                                </div>
+                            @endif
                         </div>
 
                         <div class="flex flex-col gap-2 min-w-[140px]">

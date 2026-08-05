@@ -18,15 +18,22 @@
         @forelse ($assessments as $assessment)
             <div wire:key="assessment-{{ $assessment->id }}" class="bg-white rounded-3xl border border-outline-variant/30 overflow-hidden shadow-sm hover:shadow-md transition-all group">
                 <div class="p-6 space-y-4">
+                    @php
+                        [$typeColor, $typeLabel, $typeIcon] = match ($assessment->type) {
+                            \App\Enums\AssessmentType::PreTest => ['blue', 'ก่อนเรียน (Pre-test)', 'quiz'],
+                            \App\Enums\AssessmentType::PostTest => ['purple', 'หลังเรียน (Post-test)', 'workspace_premium'],
+                            \App\Enums\AssessmentType::ModuleTest => ['teal', 'ท้ายโมดูล', 'fact_check'],
+                            \App\Enums\AssessmentType::Assignment => ['amber', 'ใบงาน (Assignment)', 'assignment'],
+                        };
+                    @endphp
                     <div class="flex items-start justify-between">
                         <div class="size-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-                            <span class="material-symbols-outlined text-[28px]">
-                                {{ $assessment->type->value === 'exam' ? 'history_edu' : 'quiz' }}
-                            </span>
+                            <span class="material-symbols-outlined text-[28px]">{{ $typeIcon }}</span>
                         </div>
-                        <div class="flex gap-2">
-                            <flux:badge size="sm" :color="$assessment->type->value === 'exam' ? 'purple' : 'blue'">
-                                {{ $assessment->type->value === 'exam' ? 'ข้อสอบปลายภาค' : 'แบบทดสอบ' }}
+                        <div class="flex flex-col items-end gap-1.5">
+                            <flux:badge size="sm" :color="$typeColor">{{ $typeLabel }}</flux:badge>
+                            <flux:badge size="sm" color="zinc">
+                                {{ $assessment->module?->title ?? 'ทั้งคอร์ส' }}
                             </flux:badge>
                         </div>
                     </div>
@@ -110,9 +117,12 @@
                 <flux:field>
                     <flux:label>ประเภท</flux:label>
                     <flux:select wire:model="assessmentType">
-                        <flux:select.option value="quiz">แบบทดสอบทั่วไป</flux:select.option>
-                        <flux:select.option value="exam">ข้อสอบปลายภาค</flux:select.option>
+                        <flux:select.option value="pre_test">ก่อนเรียน (Pre-test)</flux:select.option>
+                        <flux:select.option value="post_test">หลังเรียน (Post-test)</flux:select.option>
+                        <flux:select.option value="module_test">แบบทดสอบท้ายโมดูล</flux:select.option>
+                        <flux:select.option value="assignment">ใบงาน (Assignment)</flux:select.option>
                     </flux:select>
+                    <flux:error name="assessmentType" />
                 </flux:field>
 
                 <flux:field>
@@ -120,6 +130,20 @@
                     <flux:input type="number" wire:model="assessmentPassingScore" min="0" max="100" />
                 </flux:field>
             </div>
+
+            <flux:field>
+                <flux:label>ขอบเขต</flux:label>
+                <flux:select wire:model="assessmentModuleId" placeholder="ทั้งคอร์ส (Course-wide)">
+                    <flux:select.option value="">ทั้งคอร์ส (Course-wide)</flux:select.option>
+                    @foreach ($courseModules as $module)
+                        <flux:select.option :value="$module->id">
+                            โมดูล {{ $module->module_number }}: {{ $module->title }}
+                        </flux:select.option>
+                    @endforeach
+                </flux:select>
+                <flux:description>เลือกโมดูลเพื่อให้แบบทดสอบนี้ผูกกับโมดูลนั้นโดยเฉพาะ</flux:description>
+                <flux:error name="assessmentModuleId" />
+            </flux:field>
 
             <div class="grid grid-cols-2 gap-4">
                 <flux:field>
