@@ -122,7 +122,7 @@
                                 @endif
                             </flux:button>
 
-                            @if(!$module->is_accessible && $module->prerequisites->isNotEmpty())
+                            @if(!$module->is_accessible)
                                 <flux:tooltip position="bottom" align="center">
                                     <x-slot name="content">
                                         {{ __('กรุณาเรียนผ่านโมดูลก่อนหน้าเพื่อปลดล็อค') }}

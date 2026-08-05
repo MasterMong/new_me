@@ -2,8 +2,11 @@
 
 namespace App\Livewire\Learner;
 
+use App\Enums\AssessmentType;
+use App\Enums\TestAttemptStatus;
 use App\Models\Course;
 use App\Models\Enrollment;
+use App\Models\Module;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -34,13 +37,17 @@ class CoursePath extends Component
 
     public function render()
     {
-        $modules = $this->course->modules()
+        $courseModules = $this->course->modules()
             ->with(['prerequisites', 'contents.views', 'contents.groupAccess', 'assessments.attempts' => function ($query) {
                 $query->where('user_id', Auth::id());
             }])
-            ->get()
-            ->map(function ($module) {
-                $module->is_accessible = $this->checkModuleAccessibility($module);
+            ->get();
+
+        $modules = $courseModules
+            ->values()
+            ->map(function ($module, $index) use ($courseModules) {
+                $previousModule = $index > 0 ? $courseModules[$index - 1] : null;
+                $module->is_accessible = $this->checkModuleAccessibility($module, $previousModule);
                 $module->progress_percent = $this->calculateModuleProgress($module);
                 $module->is_completed = $module->progress_percent === 100;
 
@@ -57,7 +64,7 @@ class CoursePath extends Component
         ])->title($this->course->title);
     }
 
-    protected function checkModuleAccessibility($module): bool
+    protected function checkModuleAccessibility($module, ?Module $previousModule): bool
     {
         // Pre-test must be completed if it exists
         $preTest = $this->course->assessments()->where('type', 'pre_test')->first();
@@ -77,6 +84,35 @@ class CoursePath extends Component
                 if (! $this->isAssessmentPassed($prereqAssessment, $prerequisite->min_score_pct)) {
                     return false;
                 }
+            }
+        }
+
+        // If the previous module has an assignment/worksheet, it must be passed
+        // before this module unlocks — even without an explicit prerequisite record.
+        if (! $this->previousModuleAssignmentsPassed($previousModule)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function previousModuleAssignmentsPassed(?Module $previousModule): bool
+    {
+        if (! $previousModule) {
+            return true;
+        }
+
+        $assignments = $previousModule->assessments->filter(
+            fn ($assessment) => $assessment->type === AssessmentType::Assignment
+        );
+
+        foreach ($assignments as $assignment) {
+            $passed = $assignment->attempts->contains(
+                fn ($attempt) => $attempt->status === TestAttemptStatus::Passed
+            );
+
+            if (! $passed) {
+                return false;
             }
         }
 

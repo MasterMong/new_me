@@ -110,3 +110,97 @@ test('module progress ignores content restricted to another group', function () 
             return $modules->first()->progress_percent === 100;
         });
 });
+
+test('next module is locked until the previous module assignment is passed', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    $module1 = Module::factory()->create(['course_id' => $course->id, 'sort_order' => 1]);
+    Module::factory()->create(['course_id' => $course->id, 'sort_order' => 2]);
+
+    Assessment::factory()->create([
+        'course_id' => $course->id,
+        'module_id' => $module1->id,
+        'type' => AssessmentType::Assignment->value,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(CoursePath::class, ['course' => $course])
+        ->assertViewHas('modules', function ($modules) {
+            return $modules->firstWhere('sort_order', 2)->is_accessible === false;
+        });
+});
+
+test('next module unlocks once the previous module assignment is passed', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    $module1 = Module::factory()->create(['course_id' => $course->id, 'sort_order' => 1]);
+    Module::factory()->create(['course_id' => $course->id, 'sort_order' => 2]);
+
+    $assignment = Assessment::factory()->create([
+        'course_id' => $course->id,
+        'module_id' => $module1->id,
+        'type' => AssessmentType::Assignment->value,
+    ]);
+
+    TestAttempt::factory()->create([
+        'user_id' => $user->id,
+        'assessment_id' => $assignment->id,
+        'status' => TestAttemptStatus::Passed->value,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(CoursePath::class, ['course' => $course])
+        ->assertViewHas('modules', function ($modules) {
+            return $modules->firstWhere('sort_order', 2)->is_accessible === true;
+        });
+});
+
+test('next module unlocks even without a passed attempt when the previous module has no assignment', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    Module::factory()->create(['course_id' => $course->id, 'sort_order' => 1]);
+    Module::factory()->create(['course_id' => $course->id, 'sort_order' => 2]);
+
+    $this->actingAs($user);
+
+    Livewire::test(CoursePath::class, ['course' => $course])
+        ->assertViewHas('modules', function ($modules) {
+            return $modules->firstWhere('sort_order', 2)->is_accessible === true;
+        });
+});
+
+test('module is still locked by an unpassed assignment even after a revision_needed review', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    $module1 = Module::factory()->create(['course_id' => $course->id, 'sort_order' => 1]);
+    Module::factory()->create(['course_id' => $course->id, 'sort_order' => 2]);
+
+    $assignment = Assessment::factory()->create([
+        'course_id' => $course->id,
+        'module_id' => $module1->id,
+        'type' => AssessmentType::Assignment->value,
+    ]);
+
+    TestAttempt::factory()->create([
+        'user_id' => $user->id,
+        'assessment_id' => $assignment->id,
+        'status' => TestAttemptStatus::RevisionNeeded->value,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(CoursePath::class, ['course' => $course])
+        ->assertViewHas('modules', function ($modules) {
+            return $modules->firstWhere('sort_order', 2)->is_accessible === false;
+        });
+});
