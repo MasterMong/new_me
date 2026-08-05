@@ -31,6 +31,10 @@ class Assessments extends Component
 
     public string $assessmentGradingMode = 'auto';
 
+    public bool $assessmentIsTimed = false;
+
+    public ?int $assessmentTimeLimitMinutes = null;
+
     // Question List
     public $questions = [];
 
@@ -77,6 +81,8 @@ class Assessments extends Component
         $this->assessmentPassingScore = $assessment->passing_score_pct;
         $this->assessmentMaxAttempts = $assessment->max_attempts;
         $this->assessmentGradingMode = $assessment->grading_mode->value;
+        $this->assessmentIsTimed = $assessment->is_timed;
+        $this->assessmentTimeLimitMinutes = $assessment->time_limit_minutes;
         $this->showAssessmentModal = true;
     }
 
@@ -85,6 +91,7 @@ class Assessments extends Component
         $this->validate([
             'assessmentTitle' => 'required|min:3',
             'assessmentPassingScore' => 'required|integer|min:0|max:100',
+            'assessmentTimeLimitMinutes' => 'nullable|required_if:assessmentIsTimed,true|integer|min:1|max:600',
         ]);
 
         $data = [
@@ -94,6 +101,8 @@ class Assessments extends Component
             'passing_score_pct' => $this->assessmentPassingScore,
             'max_attempts' => $this->assessmentMaxAttempts,
             'grading_mode' => $this->assessmentGradingMode,
+            'is_timed' => $this->assessmentIsTimed,
+            'time_limit_minutes' => $this->assessmentIsTimed ? $this->assessmentTimeLimitMinutes : null,
         ];
 
         if ($this->editingAssessmentId) {
@@ -270,5 +279,7 @@ class Assessments extends Component
         $this->assessmentPassingScore = 60;
         $this->assessmentMaxAttempts = 3;
         $this->assessmentGradingMode = 'auto';
+        $this->assessmentIsTimed = false;
+        $this->assessmentTimeLimitMinutes = null;
     }
 }

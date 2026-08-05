@@ -51,6 +51,13 @@
                         </div>
                     </div>
 
+                    @if ($assessment->is_timed)
+                        <div class="flex items-center gap-1.5 text-xs font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-100 w-fit">
+                            <flux:icon name="clock" variant="micro" />
+                            จับเวลา {{ $assessment->time_limit_minutes }} นาที
+                        </div>
+                    @endif
+
                     <div class="flex items-center gap-2 pt-2">
                         <flux:button variant="ghost" size="sm" class="flex-1" wire:click="editAssessment({{ $assessment->id }})">
                             <flux:icon name="pencil" variant="micro" class="me-1" />
@@ -127,6 +134,24 @@
                         <flux:select.option value="manual">ตรวจด้วยมือ (Manual)</flux:select.option>
                     </flux:select>
                 </flux:field>
+            </div>
+
+            <div class="rounded-xl bg-surface p-4 space-y-3">
+                <flux:field variant="inline">
+                    <flux:switch wire:model.live="assessmentIsTimed" />
+                    <flux:label>จับเวลาทำข้อสอบ</flux:label>
+                    <flux:description>ระบบจะส่งคำตอบอัตโนมัติเมื่อหมดเวลา</flux:description>
+                </flux:field>
+
+                @if ($assessmentIsTimed)
+                    <div class="mt-3">
+                        <flux:field>
+                            <flux:label>เวลาที่กำหนด (นาที) <span class="text-error">*</span></flux:label>
+                            <flux:input type="number" wire:model="assessmentTimeLimitMinutes" min="1" max="600" placeholder="เช่น 60" />
+                            <flux:error name="assessmentTimeLimitMinutes" />
+                        </flux:field>
+                    </div>
+                @endif
             </div>
         </div>
 

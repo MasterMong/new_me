@@ -243,6 +243,33 @@ class AssessmentPlayer extends Component
         unset($this->uploadedFiles[$question->id]);
     }
 
+    public function remainingSeconds(): ?int
+    {
+        if (! $this->assessment->is_timed || ! $this->assessment->time_limit_minutes) {
+            return null;
+        }
+
+        if (! $this->currentAttempt || $this->currentAttempt->status !== TestAttemptStatus::InProgress) {
+            return null;
+        }
+
+        $limitSeconds = $this->assessment->time_limit_minutes * 60;
+        $elapsed = $this->currentAttempt->started_at->diffInSeconds(now());
+
+        return max(0, $limitSeconds - $elapsed);
+    }
+
+    public function checkTimeExpired(): void
+    {
+        if ($this->isFinished) {
+            return;
+        }
+
+        if ($this->remainingSeconds() === 0) {
+            $this->finish();
+        }
+    }
+
     public function nextQuestion()
     {
         if ($this->currentIndex < $this->totalQuestions - 1) {

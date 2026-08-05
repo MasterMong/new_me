@@ -20,10 +20,25 @@
                             <flux:icon.document-text variant="micro" />
                             {{ $totalQuestions }} ข้อ
                         </span>
-                        <span class="flex items-center gap-1">
-                            <flux:icon.clock variant="micro" />
-                            ไม่จำกัดเวลา
-                        </span>
+                        @if($assessment->is_timed)
+                            <span
+                                class="flex items-center gap-1"
+                                x-data="{ remaining: {{ $this->remainingSeconds() ?? 0 }} }"
+                                x-init="setInterval(() => { if (remaining > 0) remaining--; }, 1000)"
+                                wire:poll.10s="checkTimeExpired"
+                            >
+                                <flux:icon.clock variant="micro" x-bind:class="remaining <= 60 ? 'text-red-600' : ''" />
+                                <span
+                                    x-bind:class="remaining <= 60 ? 'text-red-600 font-bold' : ''"
+                                    x-text="`${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}`"
+                                ></span>
+                            </span>
+                        @else
+                            <span class="flex items-center gap-1">
+                                <flux:icon.clock variant="micro" />
+                                ไม่จำกัดเวลา
+                            </span>
+                        @endif
                     </div>
                 </div>
                 <div class="flex items-center gap-3">

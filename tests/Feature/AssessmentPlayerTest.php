@@ -234,6 +234,80 @@ test('learner cannot retry while a worksheet is still pending expert review', fu
     expect(TestAttempt::where('assessment_id', $assessment->id)->count())->toBe(1);
 });
 
+test('checkTimeExpired does not submit before the time limit is reached', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $assessment = Assessment::factory()->create([
+        'is_timed' => true,
+        'time_limit_minutes' => 10,
+    ]);
+    Question::factory()->create(['assessment_id' => $assessment->id, 'question_type' => QuestionType::MultipleChoice->value]);
+
+    $this->actingAs($user);
+
+    Livewire::test(AssessmentPlayer::class, ['assessment' => $assessment])
+        ->call('checkTimeExpired')
+        ->assertSet('isFinished', false);
+});
+
+test('checkTimeExpired auto-submits once the time limit has elapsed', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $assessment = Assessment::factory()->create([
+        'is_timed' => true,
+        'time_limit_minutes' => 10,
+        'passing_score_pct' => 50,
+    ]);
+    $question = Question::factory()->create([
+        'assessment_id' => $assessment->id,
+        'question_type' => QuestionType::MultipleChoice->value,
+        'points' => 10,
+    ]);
+    $correctChoice = QuestionChoice::factory()->create(['question_id' => $question->id, 'is_correct' => true]);
+
+    $this->actingAs($user);
+
+    $component = Livewire::test(AssessmentPlayer::class, ['assessment' => $assessment])
+        ->call('selectChoice', $correctChoice->id);
+
+    // Simulate the time limit having elapsed since the attempt started.
+    TestAttempt::where('user_id', $user->id)
+        ->where('assessment_id', $assessment->id)
+        ->update(['started_at' => now()->subMinutes(11)]);
+
+    $component->call('checkTimeExpired')
+        ->assertSet('isFinished', true)
+        ->assertViewHas('currentAttempt', function ($attempt) {
+            return $attempt->status === TestAttemptStatus::Passed;
+        });
+});
+
+test('an unanswered timed assessment is auto-graded as failed when time expires', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $assessment = Assessment::factory()->create([
+        'is_timed' => true,
+        'time_limit_minutes' => 5,
+        'passing_score_pct' => 50,
+    ]);
+    Question::factory()->create([
+        'assessment_id' => $assessment->id,
+        'question_type' => QuestionType::MultipleChoice->value,
+        'points' => 10,
+    ]);
+
+    $this->actingAs($user);
+
+    $component = Livewire::test(AssessmentPlayer::class, ['assessment' => $assessment]);
+
+    TestAttempt::where('user_id', $user->id)
+        ->where('assessment_id', $assessment->id)
+        ->update(['started_at' => now()->subMinutes(6)]);
+
+    $component->call('checkTimeExpired')
+        ->assertSet('isFinished', true)
+        ->assertViewHas('currentAttempt', function ($attempt) {
+            return $attempt->status === TestAttemptStatus::Failed;
+        });
+});
+
 test('revision retries are capped by the assessment max_attempts', function () {
     $user = User::factory()->create(['role' => UserRole::Learner->value]);
     $assessment = Assessment::factory()->create(['max_attempts' => 1]);
