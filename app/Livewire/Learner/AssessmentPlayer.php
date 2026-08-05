@@ -9,6 +9,7 @@ use App\Models\Assessment;
 use App\Models\Enrollment;
 use App\Models\TestAnswer;
 use App\Models\TestAttempt;
+use App\Notifications\AssignmentSubmitted;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
@@ -335,6 +336,8 @@ class AssessmentPlayer extends Component
             $this->score = null;
             $this->isFinished = true;
 
+            $this->notifyAssignedExperts();
+
             return;
         }
 
@@ -360,6 +363,26 @@ class AssessmentPlayer extends Component
                 ->first()
                 ?->issueCertificateIfEligible();
         }
+    }
+
+    /**
+     * Notify the module's assigned experts that a worksheet is waiting for
+     * review. If the module has no specific assignments (open to any expert,
+     * per Module::isAssignedTo()), there's no fixed set of reviewers to
+     * notify — it just sits in the shared queue surfaced by the admin's
+     * expert-turnaround report instead of paging every expert in the system.
+     */
+    protected function notifyAssignedExperts(): void
+    {
+        $module = $this->assessment->module;
+
+        if (! $module) {
+            return;
+        }
+
+        $module->assignedExperts->each(
+            fn ($expert) => $expert->notify(new AssignmentSubmitted($this->currentAttempt))
+        );
     }
 
     public function render()
