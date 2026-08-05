@@ -29,7 +29,7 @@
     <div>
         <div class="flex items-center justify-between mb-4 px-2">
             <h2 class="text-xl font-bold font-headline text-on-surface">อัตราการสำเร็จรายคอร์ส</h2>
-            <flux:button variant="ghost" size="sm" icon="arrow-down-tray" class="rounded-xl">Export Report</flux:button>
+            <flux:button variant="ghost" size="sm" icon="arrow-down-tray" class="rounded-xl" wire:click="exportCsv">Export Report</flux:button>
         </div>
 
         <div class="premium-table-container">

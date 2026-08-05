@@ -14,7 +14,46 @@ class Index extends Component
 {
     public function render()
     {
-        $courseStats = Course::query()
+        return view('livewire.admin.reports.index', [
+            'totalUsers' => User::count(),
+            'totalEnrollments' => Enrollment::count(),
+            'totalCertificates' => Certificate::count(),
+            'pendingReviews' => ExpertReview::where('status', 'pending')->count(),
+            'courseStats' => $this->courseStats(),
+        ])->layout('layouts.app', ['title' => 'รายงาน']);
+    }
+
+    public function exportCsv()
+    {
+        $courseStats = $this->courseStats();
+
+        return response()->streamDownload(function () use ($courseStats) {
+            $handle = fopen('php://output', 'w');
+
+            // UTF-8 BOM so Thai text displays correctly when opened in Excel
+            fwrite($handle, "\xEF\xBB\xBF");
+
+            fputcsv($handle, ['หลักสูตร', 'ลงทะเบียนแล้ว', 'สำเร็จการศึกษา', 'ได้รับเกียรติบัตร', 'อัตราสำเร็จ (%)']);
+
+            foreach ($courseStats as $row) {
+                fputcsv($handle, [
+                    $row['title'],
+                    $row['enrollments'],
+                    $row['completed'],
+                    $row['certificates'],
+                    $row['rate'],
+                ]);
+            }
+
+            fclose($handle);
+        }, 'course-completion-report-'.now()->format('Y-m-d').'.csv', [
+            'Content-Type' => 'text/csv',
+        ]);
+    }
+
+    protected function courseStats()
+    {
+        return Course::query()
             ->withCount(['enrollments', 'certificates'])
             ->with('enrollments')
             ->get()
@@ -34,13 +73,5 @@ class Index extends Component
                         : 0,
                 ];
             });
-
-        return view('livewire.admin.reports.index', [
-            'totalUsers' => User::count(),
-            'totalEnrollments' => Enrollment::count(),
-            'totalCertificates' => Certificate::count(),
-            'pendingReviews' => ExpertReview::where('status', 'pending')->count(),
-            'courseStats' => $courseStats,
-        ])->layout('layouts.app', ['title' => 'รายงาน']);
     }
 }
