@@ -15,10 +15,31 @@ class CourseProgress extends Component
 
     public string $groupId = '';
 
+    public string $enrolledFrom = '';
+
+    public string $enrolledTo = '';
+
     public ?int $selectedCourseId = null;
 
     public function updatingSearch(): void
     {
+        $this->resetPage();
+    }
+
+    public function updatingEnrolledFrom(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingEnrolledTo(): void
+    {
+        $this->resetPage();
+    }
+
+    public function clearDateFilter(): void
+    {
+        $this->enrolledFrom = '';
+        $this->enrolledTo = '';
         $this->resetPage();
     }
 
@@ -47,15 +68,24 @@ class CourseProgress extends Component
 
     protected function renderCourseDetails()
     {
-        $course = Course::with(['modules'])->findOrFail($this->selectedCourseId);
+        $course = Course::with(['modules.contents.views', 'modules.contents.groupAccess'])
+            ->findOrFail($this->selectedCourseId);
 
         $enrollments = $course->enrollments()
             ->with(['user.groupMemberships.group'])
             ->when($this->groupId, function ($q) {
                 $q->whereHas('user.groupMemberships', fn ($sq) => $sq->where('group_id', $this->groupId));
             })
+            ->when($this->enrolledFrom, fn ($q) => $q->whereDate('enrolled_at', '>=', $this->enrolledFrom))
+            ->when($this->enrolledTo, fn ($q) => $q->whereDate('enrolled_at', '<=', $this->enrolledTo))
             ->latest()
-            ->paginate(15);
+            ->paginate(15)
+            ->through(function ($enrollment) use ($course) {
+                $enrollment->setRelation('course', $course);
+                $enrollment->progress_percent = $enrollment->calculateProgressPercent();
+
+                return $enrollment;
+            });
 
         return view('livewire.admin.reporting.course-details', [
             'course' => $course,

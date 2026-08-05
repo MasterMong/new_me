@@ -7,13 +7,29 @@
         </div>
     </div>
 
-    <div class="flex flex-col sm:flex-row gap-4">
+    <div class="flex flex-col sm:flex-row gap-4 sm:items-end">
         <flux:select wire:model.live="groupId" placeholder="ทุกกลุ่มผู้เรียน" class="sm:w-64">
             <flux:select.option value="">ทุกกลุ่มผู้เรียน</flux:select.option>
             @foreach ($groups as $group)
                 <flux:select.option :value="$group->id">{{ $group->name }}</flux:select.option>
             @endforeach
         </flux:select>
+
+        <flux:field class="sm:w-48">
+            <flux:label>ลงทะเบียนตั้งแต่</flux:label>
+            <flux:input type="date" wire:model.live="enrolledFrom" />
+        </flux:field>
+
+        <flux:field class="sm:w-48">
+            <flux:label>ลงทะเบียนถึง</flux:label>
+            <flux:input type="date" wire:model.live="enrolledTo" />
+        </flux:field>
+
+        @if ($enrolledFrom || $enrolledTo)
+            <flux:button variant="ghost" size="sm" wire:click="clearDateFilter">
+                ล้างช่วงวันที่
+            </flux:button>
+        @endif
     </div>
 
     <div class="premium-table-container">
@@ -52,10 +68,10 @@
                             <div class="w-full max-w-[120px]">
                                 <div class="flex items-center justify-between mb-1">
                                     <span class="text-[10px] font-bold text-on-surface/40 uppercase">Progress</span>
-                                    <span class="text-[10px] font-bold text-primary">80%</span> {{-- Mock for now --}}
+                                    <span class="text-[10px] font-bold text-primary">{{ $enrollment->progress_percent }}%</span>
                                 </div>
                                 <div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
-                                    <div class="h-full bg-primary rounded-full" style="width: 80%"></div>
+                                    <div class="h-full bg-primary rounded-full" style="width: {{ $enrollment->progress_percent }}%"></div>
                                 </div>
                             </div>
                         </flux:table.cell>

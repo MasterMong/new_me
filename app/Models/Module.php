@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\AssessmentType;
+use App\Enums\TestAttemptStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -80,5 +82,53 @@ class Module extends Model
         }
 
         return $this->expertAssignments->contains('expert_id', $expert->id);
+    }
+
+    /**
+     * Content completion percentage for the given user, excluding content
+     * restricted to a group they don't belong to. A module with no content
+     * is trivially 100% (nothing to complete).
+     * Expects `contents.views` (and ideally `contents.groupAccess`) eager-loaded.
+     */
+    public function progressPercentFor(User $user): int
+    {
+        $visibleContents = $this->contents->filter(fn (ModuleContent $content) => $content->isVisibleTo($user));
+
+        $total = $visibleContents->count();
+        if ($total === 0) {
+            return 100;
+        }
+
+        $completed = $visibleContents->filter(function (ModuleContent $content) use ($user) {
+            return $content->views->where('user_id', $user->id)->where('is_completed', true)->isNotEmpty();
+        })->count();
+
+        return (int) round(($completed / $total) * 100);
+    }
+
+    /**
+     * Whether this module's own post-test (if any) has been passed by the given
+     * user. A module with no post-test is trivially considered passed.
+     * Expects `assessments.attempts` eager-loaded for accuracy/performance.
+     */
+    public function postTestPassedFor(User $user): bool
+    {
+        $postTest = $this->assessments->firstWhere('type', AssessmentType::PostTest);
+
+        if (! $postTest) {
+            return true;
+        }
+
+        return $postTest->attempts->where('user_id', $user->id)
+            ->contains(fn ($attempt) => $attempt->status === TestAttemptStatus::Passed);
+    }
+
+    /**
+     * A module is "completed" for a user once all its visible content is
+     * watched and its own post-test (if any) has been passed.
+     */
+    public function isCompletedFor(User $user): bool
+    {
+        return $this->progressPercentFor($user) === 100 && $this->postTestPassedFor($user);
     }
 }

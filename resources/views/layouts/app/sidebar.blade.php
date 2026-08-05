@@ -208,6 +208,17 @@
                             </flux:sidebar.item>
                             <flux:sidebar.item
                                 wire:navigate
+                                :href="route('admin.reporting.expert-turnaround')"
+                                :current="request()->routeIs('admin.reporting.expert-turnaround')"
+                                class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
+                            >
+                                <x-slot name="icon">
+                                    <span class="material-symbols-outlined text-[20px]">timer</span>
+                                </x-slot>
+                                ความเร็วผู้เชี่ยวชาญ
+                            </flux:sidebar.item>
+                            <flux:sidebar.item
+                                wire:navigate
                                 :href="route('admin.reviews.index')"
                                 :current="request()->routeIs('admin.reviews.*')"
                                 class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"

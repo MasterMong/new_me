@@ -12,6 +12,7 @@ use App\Livewire\Admin\Dashboard as AdminDashboard;
 use App\Livewire\Admin\Groups\Index as AdminGroupsIndex;
 use App\Livewire\Admin\Groups\Members as AdminGroupMembers;
 use App\Livewire\Admin\Reporting\CourseProgress;
+use App\Livewire\Admin\Reporting\ExpertTurnaround;
 use App\Livewire\Admin\Reporting\UserProgress;
 use App\Livewire\Admin\Reports\Index as AdminReportsIndex;
 use App\Livewire\Admin\Users\Index as AdminUsersIndex;
@@ -105,6 +106,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::prefix('reporting')->name('reporting.')->group(function () {
         Route::get('/course-progress', CourseProgress::class)->name('course-progress');
         Route::get('/user-progress', UserProgress::class)->name('user-progress');
+        Route::get('/expert-turnaround', ExpertTurnaround::class)->name('expert-turnaround');
     });
     Route::get('/reports', AdminReportsIndex::class)->name('reports.index');
 });

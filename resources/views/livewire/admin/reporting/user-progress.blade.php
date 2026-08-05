@@ -6,10 +6,10 @@
         </div>
     </div>
 
-    <div class="flex flex-col sm:flex-row gap-4">
-        <flux:input 
-            wire:model.live.debounce.300ms="search" 
-            placeholder="ค้นหาชื่อ, นามสกุล หรืออีเมล..." 
+    <div class="flex flex-col sm:flex-row gap-4 sm:items-end">
+        <flux:input
+            wire:model.live.debounce.300ms="search"
+            placeholder="ค้นหาชื่อ, นามสกุล หรืออีเมล..."
             icon="magnifying-glass"
             class="flex-1"
         />
@@ -19,6 +19,22 @@
                 <flux:select.option :value="$group->id">{{ $group->name }}</flux:select.option>
             @endforeach
         </flux:select>
+
+        <flux:field class="sm:w-44">
+            <flux:label>ลงทะเบียนตั้งแต่</flux:label>
+            <flux:input type="date" wire:model.live="enrolledFrom" />
+        </flux:field>
+
+        <flux:field class="sm:w-44">
+            <flux:label>ลงทะเบียนถึง</flux:label>
+            <flux:input type="date" wire:model.live="enrolledTo" />
+        </flux:field>
+
+        @if ($enrolledFrom || $enrolledTo)
+            <flux:button variant="ghost" size="sm" wire:click="clearDateFilter">
+                ล้างช่วงวันที่
+            </flux:button>
+        @endif
     </div>
 
     <div class="premium-table-container">

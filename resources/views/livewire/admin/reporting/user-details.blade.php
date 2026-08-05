@@ -13,44 +13,73 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="lg:col-span-2 space-y-6">
-            <div class="premium-table-container">
-                <div class="px-6 py-4 border-b border-outline-variant/30 flex items-center justify-between">
-                    <h3 class="font-bold text-on-surface">ประวัติการลงทะเบียนเรียน</h3>
-                </div>
-                <flux:table>
-                    <flux:table.columns>
-                        <flux:table.column class="ps-6">หลักสูตร</flux:table.column>
-                        <flux:table.column>สถานะ</flux:table.column>
-                        <flux:table.column>ความก้าวหน้า</flux:table.column>
-                        <flux:table.column class="pe-6"></flux:table.column>
-                    </flux:table.columns>
-                    <flux:table.rows>
-                        @foreach ($user->enrollments as $enrollment)
-                            <flux:table.row wire:key="enr-{{ $enrollment->id }}" class="premium-table-row">
-                                <flux:table.cell class="ps-6">
-                                    <span class="font-bold text-on-surface">{{ $enrollment->course->title }}</span>
-                                </flux:table.cell>
-                                <flux:table.cell>
+        <div class="lg:col-span-2 space-y-4">
+            <h3 class="font-bold text-on-surface px-1">ประวัติการลงทะเบียนเรียน</h3>
+
+            @forelse ($user->enrollments as $enrollment)
+                <div x-data="{ open: false }" wire:key="enr-{{ $enrollment->id }}" class="bg-white rounded-2xl border border-outline-variant/30 overflow-hidden">
+                    <button type="button" @click="open = !open" class="w-full flex items-center justify-between gap-4 p-5 text-left hover:bg-surface/50 transition-colors">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <flux:icon.chevron-right variant="micro" x-bind:class="open ? 'rotate-90' : ''" class="transition-transform shrink-0 text-on-surface/40" />
+                            <div class="min-w-0">
+                                <p class="font-bold text-on-surface truncate">{{ $enrollment->course->title }}</p>
+                                <div class="flex items-center gap-2 mt-1">
                                     @if ($enrollment->completed_at)
                                         <flux:badge color="green" size="sm">สำเร็จแล้ว</flux:badge>
                                     @else
                                         <flux:badge color="amber" size="sm">กำลังเรียน</flux:badge>
                                     @endif
-                                </flux:table.cell>
-                                <flux:table.cell>
-                                    <div class="h-1.5 w-24 bg-surface-container rounded-full overflow-hidden">
-                                        <div class="h-full bg-primary rounded-full" style="width: 50%"></div>
+                                    <span class="text-[10px] font-bold text-on-surface/40">{{ $enrollment->progress_percent }}% เสร็จสิ้น</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="w-28 h-1.5 bg-surface-container rounded-full overflow-hidden hidden sm:block shrink-0">
+                            <div class="h-full bg-primary rounded-full" style="width: {{ $enrollment->progress_percent }}%"></div>
+                        </div>
+                    </button>
+
+                    <div x-show="open" x-cloak class="border-t border-outline-variant/20 bg-surface/40 divide-y divide-outline-variant/10">
+                        @foreach ($enrollment->module_breakdown as $row)
+                            @php
+                                [$statusColor, $statusLabel, $statusIcon] = match ($row['status']) {
+                                    'completed' => ['green', 'เรียนจบแล้ว', 'check_circle'],
+                                    'in_progress' => ['blue', 'กำลังเรียน', 'autorenew'],
+                                    'locked' => ['zinc', 'ยังไม่ปลดล็อค', 'lock'],
+                                    default => ['zinc', 'ยังไม่เริ่ม', 'radio_button_unchecked'],
+                                };
+                            @endphp
+                            <div class="flex items-center justify-between gap-4 px-5 py-3">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <span class="material-symbols-outlined text-[18px] text-{{ $statusColor }}-500 shrink-0">{{ $statusIcon }}</span>
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-semibold text-on-surface truncate">
+                                            โมดูล {{ $row['module']->module_number }}: {{ $row['module']->title }}
+                                        </p>
+                                        <div class="flex flex-wrap items-center gap-2 mt-0.5">
+                                            <flux:badge size="sm" :color="$statusColor">{{ $statusLabel }}</flux:badge>
+                                            @if ($row['pre_test'])
+                                                <span class="text-[10px] font-bold text-on-surface/40">
+                                                    Pre-test: {{ $row['pre_test']->attempts->where('user_id', $user->id)->isNotEmpty() ? 'ทำแล้ว' : 'ยังไม่ทำ' }}
+                                                </span>
+                                            @endif
+                                            @if ($row['post_test'])
+                                                <span class="text-[10px] font-bold text-on-surface/40">
+                                                    Post-test: {{ $row['post_test_passed'] ? 'ผ่าน' : 'ยังไม่ผ่าน' }}
+                                                </span>
+                                            @endif
+                                        </div>
                                     </div>
-                                </flux:table.cell>
-                                <flux:table.cell class="pe-6">
-                                    <flux:button variant="ghost" size="sm" icon="eye" wire:navigate :href="route('admin.reporting.course-progress', ['selectedCourseId' => $enrollment->course_id])" />
-                                </flux:table.cell>
-                            </flux:table.row>
+                                </div>
+                                <span class="text-xs font-bold text-on-surface/50 shrink-0">{{ $row['progress_percent'] }}%</span>
+                            </div>
                         @endforeach
-                    </flux:table.rows>
-                </flux:table>
-            </div>
+                    </div>
+                </div>
+            @empty
+                <div class="bg-white rounded-2xl border border-dashed border-outline-variant/30 p-10 text-center text-on-surface/40">
+                    ยังไม่มีการลงทะเบียนเรียน
+                </div>
+            @endforelse
         </div>
 
         <div class="space-y-6">

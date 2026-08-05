@@ -121,19 +121,7 @@ class CoursePath extends Component
 
     protected function modulePostTestPassed(?Module $module): bool
     {
-        if (! $module) {
-            return true;
-        }
-
-        $postTest = $module->assessments->firstWhere('type', AssessmentType::PostTest);
-
-        if (! $postTest) {
-            return true;
-        }
-
-        return $postTest->attempts->contains(
-            fn ($attempt) => $attempt->status === TestAttemptStatus::Passed
-        );
+        return ! $module || $module->postTestPassedFor(Auth::user());
     }
 
     protected function previousModuleAssignmentsPassed(?Module $previousModule): bool
@@ -161,23 +149,12 @@ class CoursePath extends Component
 
     protected function calculateModuleProgress($module): int
     {
-        $visibleContents = $module->contents->filter(fn ($content) => $content->isVisibleTo(Auth::user()));
-
-        $totalContents = $visibleContents->count();
-        if ($totalContents === 0) {
-            return 100;
-        }
-
-        $completedContents = $visibleContents->filter(function ($content) {
-            return $content->views->where('user_id', Auth::id())->where('is_completed', true)->isNotEmpty();
-        })->count();
-
-        return round(($completedContents / $totalContents) * 100);
+        return $module->progressPercentFor(Auth::user());
     }
 
     protected function isModuleCompleted($module): bool
     {
-        return $this->calculateModuleProgress($module) === 100 && $this->modulePostTestPassed($module);
+        return $module->isCompletedFor(Auth::user());
     }
 
     protected function isAssessmentPassed($assessment, $minScore): bool

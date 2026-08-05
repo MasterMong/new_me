@@ -20,23 +20,12 @@ class Certificates extends Component
             ->orderByDesc('issued_date')
             ->get();
 
-        $ongoingCourses = Enrollment::with(['course.modules.contents.views'])
+        $ongoingCourses = Enrollment::with(['user', 'course.modules.contents.views', 'course.modules.contents.groupAccess'])
             ->where('user_id', Auth::id())
             ->whereNull('completed_at')
             ->get()
             ->map(function ($enrollment) {
-                $course = $enrollment->course;
-                $totalContents = $course->modules->sum(fn ($module) => $module->contents->count());
-
-                $completedContents = $course->modules->sum(function ($module) {
-                    return $module->contents->filter(function ($content) {
-                        return $content->views->where('user_id', Auth::id())->where('is_completed', true)->isNotEmpty();
-                    })->count();
-                });
-
-                $enrollment->progress_percent = $totalContents > 0
-                    ? round(($completedContents / $totalContents) * 100)
-                    : 0;
+                $enrollment->progress_percent = $enrollment->calculateProgressPercent();
 
                 return $enrollment;
             });

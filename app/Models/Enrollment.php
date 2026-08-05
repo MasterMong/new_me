@@ -28,4 +28,29 @@ class Enrollment extends Model
     {
         return $this->belongsTo(Course::class);
     }
+
+    /**
+     * Course-wide content completion percentage for this enrollment's user,
+     * excluding content restricted to a group the user doesn't belong to.
+     * Expects `course.modules.contents.views` (and ideally `.groupAccess`) eager-loaded.
+     */
+    public function calculateProgressPercent(): int
+    {
+        $visibleContents = $this->course->modules->flatMap(
+            fn (Module $module) => $module->contents->filter(
+                fn (ModuleContent $content) => $content->isVisibleTo($this->user)
+            )
+        );
+
+        $total = $visibleContents->count();
+        if ($total === 0) {
+            return 0;
+        }
+
+        $completed = $visibleContents->filter(function (ModuleContent $content) {
+            return $content->views->where('user_id', $this->user_id)->where('is_completed', true)->isNotEmpty();
+        })->count();
+
+        return (int) round(($completed / $total) * 100);
+    }
 }
