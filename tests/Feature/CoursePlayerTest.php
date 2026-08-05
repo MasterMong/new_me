@@ -4,9 +4,11 @@ use App\Enums\UserRole;
 use App\Livewire\Learner\CoursePlayer;
 use App\Models\Course;
 use App\Models\Enrollment;
+use App\Models\LearnerGroup;
 use App\Models\Module;
 use App\Models\ModuleContent;
 use App\Models\User;
+use App\Models\UserGroupMembership;
 use Livewire\Livewire;
 
 test('learner can access course player if enrolled', function () {
@@ -81,4 +83,80 @@ test('learner can update progress', function () {
         'is_completed' => true,
         'watch_duration_sec' => 60,
     ]);
+});
+
+test('group-restricted content is hidden from learners outside the group', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    $module = Module::factory()->create(['course_id' => $course->id]);
+
+    $openContent = ModuleContent::factory()->create([
+        'module_id' => $module->id,
+        'title' => 'Open Lesson',
+        'sort_order' => 1,
+    ]);
+
+    $restrictedContent = ModuleContent::factory()->create([
+        'module_id' => $module->id,
+        'title' => 'STOP Only Lesson',
+        'sort_order' => 2,
+    ]);
+
+    $restrictedGroup = LearnerGroup::factory()->create(['name' => 'สตผ.']);
+    $restrictedContent->groupAccess()->create(['group_id' => $restrictedGroup->id]);
+
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    $this->actingAs($user);
+
+    Livewire::test(CoursePlayer::class, ['course' => $course, 'module' => $module])
+        ->assertSee('Open Lesson')
+        ->assertDontSee('STOP Only Lesson');
+});
+
+test('group-restricted content is visible to members of that group', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    $module = Module::factory()->create(['course_id' => $course->id]);
+
+    $restrictedContent = ModuleContent::factory()->create([
+        'module_id' => $module->id,
+        'title' => 'STOP Only Lesson',
+    ]);
+
+    $restrictedGroup = LearnerGroup::factory()->create(['name' => 'สตผ.']);
+    $restrictedContent->groupAccess()->create(['group_id' => $restrictedGroup->id]);
+
+    UserGroupMembership::create([
+        'user_id' => $user->id,
+        'group_id' => $restrictedGroup->id,
+        'assigned_at' => now(),
+    ]);
+
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    $this->actingAs($user);
+
+    Livewire::test(CoursePlayer::class, ['course' => $course, 'module' => $module])
+        ->assertSee('STOP Only Lesson');
+});
+
+test('learner cannot deep-link directly to group-restricted content', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    $module = Module::factory()->create(['course_id' => $course->id]);
+
+    $restrictedContent = ModuleContent::factory()->create(['module_id' => $module->id]);
+    $restrictedGroup = LearnerGroup::factory()->create();
+    $restrictedContent->groupAccess()->create(['group_id' => $restrictedGroup->id]);
+
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    $this->actingAs($user);
+
+    Livewire::test(CoursePlayer::class, [
+        'course' => $course,
+        'module' => $module,
+        'content' => $restrictedContent,
+    ])->assertStatus(403);
 });

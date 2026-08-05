@@ -35,7 +35,7 @@ class CoursePath extends Component
     public function render()
     {
         $modules = $this->course->modules()
-            ->with(['prerequisites', 'contents.views', 'assessments.attempts' => function ($query) {
+            ->with(['prerequisites', 'contents.views', 'contents.groupAccess', 'assessments.attempts' => function ($query) {
                 $query->where('user_id', Auth::id());
             }])
             ->get()
@@ -85,12 +85,14 @@ class CoursePath extends Component
 
     protected function calculateModuleProgress($module): int
     {
-        $totalContents = $module->contents->count();
+        $visibleContents = $module->contents->filter(fn ($content) => $content->isVisibleTo(Auth::user()));
+
+        $totalContents = $visibleContents->count();
         if ($totalContents === 0) {
             return 100;
         }
 
-        $completedContents = $module->contents->filter(function ($content) {
+        $completedContents = $visibleContents->filter(function ($content) {
             return $content->views->where('user_id', Auth::id())->where('is_completed', true)->isNotEmpty();
         })->count();
 

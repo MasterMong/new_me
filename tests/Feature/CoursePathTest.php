@@ -7,7 +7,9 @@ use App\Livewire\Learner\CoursePath;
 use App\Models\Assessment;
 use App\Models\Course;
 use App\Models\Enrollment;
+use App\Models\LearnerGroup;
 use App\Models\Module;
+use App\Models\ModuleContent;
 use App\Models\TestAttempt;
 use App\Models\User;
 use Livewire\Livewire;
@@ -79,5 +81,32 @@ test('module is accessible after pre-test is completed', function () {
     Livewire::test(CoursePath::class, ['course' => $course])
         ->assertViewHas('modules', function ($modules) {
             return $modules->first()->is_accessible === true;
+        });
+});
+
+test('module progress ignores content restricted to another group', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    $module = Module::factory()->create(['course_id' => $course->id]);
+
+    $visibleContent = ModuleContent::factory()->create(['module_id' => $module->id, 'sort_order' => 1]);
+    $visibleContent->views()->create([
+        'user_id' => $user->id,
+        'is_completed' => true,
+        'viewed_at' => now(),
+    ]);
+
+    $restrictedContent = ModuleContent::factory()->create(['module_id' => $module->id, 'sort_order' => 2]);
+    $restrictedGroup = LearnerGroup::factory()->create();
+    $restrictedContent->groupAccess()->create(['group_id' => $restrictedGroup->id]);
+
+    $this->actingAs($user);
+
+    Livewire::test(CoursePath::class, ['course' => $course])
+        ->assertViewHas('modules', function ($modules) {
+            // Denominator should be the 1 visible content item, not the 2 total (which would give 50%).
+            return $modules->first()->progress_percent === 100;
         });
 });

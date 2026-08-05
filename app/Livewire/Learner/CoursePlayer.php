@@ -37,8 +37,9 @@ class CoursePlayer extends Component
 
         // Default to first content if none selected
         if (! $content) {
-            $this->activeContent = $this->module->contents()->orderBy('sort_order')->first();
+            $this->activeContent = $this->module->contents()->visibleTo(Auth::user())->orderBy('sort_order')->first();
         } else {
+            abort_unless($content->isVisibleTo(Auth::user()), 403);
             $this->activeContent = $content;
         }
 
@@ -49,7 +50,7 @@ class CoursePlayer extends Component
 
     public function selectContent(ModuleContent $content)
     {
-        if ($this->isContentAccessible($content)) {
+        if ($content->isVisibleTo(Auth::user()) && $this->isContentAccessible($content)) {
             $this->activeContent = $content;
         }
     }
@@ -84,8 +85,9 @@ class CoursePlayer extends Component
             return true;
         }
 
-        // Get all contents before this one
+        // Get all contents visible to the user that come before this one
         $previousContents = $this->module->contents()
+            ->visibleTo(Auth::user())
             ->where('sort_order', '<', $content->sort_order)
             ->get();
 
@@ -105,6 +107,7 @@ class CoursePlayer extends Component
     public function render()
     {
         $contents = $this->module->contents()
+            ->visibleTo(Auth::user())
             ->orderBy('sort_order')
             ->get()
             ->map(function ($content) {
