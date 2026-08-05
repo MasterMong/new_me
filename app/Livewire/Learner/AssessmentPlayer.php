@@ -56,44 +56,112 @@ class AssessmentPlayer extends Component
 
     protected function startAttempt()
     {
-        // Check if there's an in-progress attempt
         $this->currentAttempt = TestAttempt::where('user_id', Auth::id())
             ->where('assessment_id', $this->assessment->id)
             ->where('status', TestAttemptStatus::InProgress)
             ->first();
 
-        if (! $this->currentAttempt) {
-            // Check max attempts
-            $attemptsCount = TestAttempt::where('user_id', Auth::id())
-                ->where('assessment_id', $this->assessment->id)
-                ->count();
+        if ($this->currentAttempt) {
+            $this->loadExistingAnswers();
 
-            if ($this->assessment->max_attempts > 0 && $attemptsCount >= $this->assessment->max_attempts) {
-                $this->isFinished = true;
-                $this->currentAttempt = TestAttempt::where('user_id', Auth::id())
-                    ->where('assessment_id', $this->assessment->id)
-                    ->orderByDesc('score_pct')
-                    ->first();
-
-                return;
-            }
-
-            $this->currentAttempt = TestAttempt::create([
-                'user_id' => Auth::id(),
-                'assessment_id' => $this->assessment->id,
-                'attempt_number' => $attemptsCount + 1,
-                'status' => TestAttemptStatus::InProgress,
-                'started_at' => now(),
-            ]);
-        } else {
-            // Load existing answers (including previously saved drafts)
-            $existingAnswers = TestAnswer::where('attempt_id', $this->currentAttempt->id)->get();
-            foreach ($existingAnswers as $answer) {
-                $this->answers[$answer->question_id] = $answer->selected_choice_id;
-                $this->essayAnswers[$answer->question_id] = $answer->essay_text;
-                $this->existingFileUrls[$answer->question_id] = $answer->uploaded_file_url;
-            }
+            return;
         }
+
+        $latestAttempt = TestAttempt::where('user_id', Auth::id())
+            ->where('assessment_id', $this->assessment->id)
+            ->orderByDesc('attempt_number')
+            ->first();
+
+        if (! $latestAttempt) {
+            $this->createNewAttempt(0);
+
+            return;
+        }
+
+        // A previous attempt already exists but isn't in progress (submitted, passed,
+        // failed, pending expert review, or sent back for revision). Show its outcome
+        // instead of silently starting a new one — retrying is an explicit action.
+        $this->currentAttempt = $latestAttempt;
+        $this->score = $latestAttempt->score_pct;
+        $this->isFinished = true;
+    }
+
+    protected function loadExistingAnswers(): void
+    {
+        // Load existing answers (including previously saved drafts)
+        $existingAnswers = TestAnswer::where('attempt_id', $this->currentAttempt->id)->get();
+        foreach ($existingAnswers as $answer) {
+            $this->answers[$answer->question_id] = $answer->selected_choice_id;
+            $this->essayAnswers[$answer->question_id] = $answer->essay_text;
+            $this->existingFileUrls[$answer->question_id] = $answer->uploaded_file_url;
+        }
+    }
+
+    protected function createNewAttempt(int $attemptsCount): void
+    {
+        $this->currentAttempt = TestAttempt::create([
+            'user_id' => Auth::id(),
+            'assessment_id' => $this->assessment->id,
+            'attempt_number' => $attemptsCount + 1,
+            'status' => TestAttemptStatus::InProgress,
+            'started_at' => now(),
+        ]);
+    }
+
+    public function retryAttempt()
+    {
+        if (! $this->canRetry()) {
+            return;
+        }
+
+        $attemptsCount = TestAttempt::where('user_id', Auth::id())
+            ->where('assessment_id', $this->assessment->id)
+            ->count();
+
+        $this->reset(['answers', 'essayAnswers', 'uploadedFiles', 'existingFileUrls', 'currentIndex', 'score', 'isFinished']);
+        $this->createNewAttempt($attemptsCount);
+    }
+
+    public function canRetry(): bool
+    {
+        if (! $this->currentAttempt || $this->currentAttempt->status === TestAttemptStatus::PendingReview) {
+            return false;
+        }
+
+        if (! in_array($this->currentAttempt->status, [
+            TestAttemptStatus::Failed,
+            TestAttemptStatus::RevisionNeeded,
+            TestAttemptStatus::Passed,
+        ], true)) {
+            return false;
+        }
+
+        if ($this->assessment->max_attempts <= 0) {
+            return true;
+        }
+
+        $attemptsCount = TestAttempt::where('user_id', Auth::id())
+            ->where('assessment_id', $this->assessment->id)
+            ->count();
+
+        return $attemptsCount < $this->assessment->max_attempts;
+    }
+
+    /**
+     * Feedback from the most recent expert review that sent this assessment back
+     * for revision — shown while the learner is redoing it, not just on the
+     * results screen right after review.
+     */
+    public function activeRevisionFeedback(): ?string
+    {
+        $revisionAttempt = TestAttempt::where('user_id', Auth::id())
+            ->where('assessment_id', $this->assessment->id)
+            ->where('status', TestAttemptStatus::RevisionNeeded)
+            ->orderByDesc('attempt_number')
+            ->with('expertReview')
+            ->first();
+
+        return $revisionAttempt?->expertReview?->feedback;
     }
 
     public function selectChoice($choiceId)

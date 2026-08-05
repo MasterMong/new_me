@@ -1,6 +1,16 @@
 <div class="min-h-[calc(100vh-64px)] bg-zinc-50 dark:bg-zinc-950 p-6">
     <div class="max-w-4xl mx-auto">
         @if(!$isFinished)
+            @if($feedback = $this->activeRevisionFeedback())
+                <div class="mb-6 p-6 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 flex gap-4">
+                    <flux:icon.exclamation-triangle variant="micro" class="text-amber-600 shrink-0 mt-1" />
+                    <div>
+                        <p class="font-bold text-amber-700 dark:text-amber-400 mb-1">ผู้เชี่ยวชาญให้แก้ไขงานนี้</p>
+                        <p class="text-amber-700/80 dark:text-amber-400/80 text-sm">{{ $feedback }}</p>
+                    </div>
+                </div>
+            @endif
+
             {{-- Assessment Header --}}
             <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white dark:bg-zinc-900 p-8 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
                 <div>
@@ -166,6 +176,27 @@
                         <flux:button variant="primary" class="w-full md:w-auto px-10 h-12 text-lg" href="{{ route('learn.courses.show', $assessment->course_id) }}" wire:navigate>
                             กลับไปยังบทเรียน
                         </flux:button>
+                    @elseif($currentAttempt->status === \App\Enums\TestAttemptStatus::RevisionNeeded)
+                        <div class="size-24 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-8">
+                            <flux:icon.exclamation-triangle variant="micro" class="size-16" />
+                        </div>
+                        <flux:heading size="xl" class="text-amber-600 mb-2">ผู้เชี่ยวชาญให้แก้ไขงานนี้</flux:heading>
+                        @if($currentAttempt->expertReview?->feedback)
+                            <flux:subheading class="mb-10 text-lg max-w-xl mx-auto">{{ $currentAttempt->expertReview->feedback }}</flux:subheading>
+                        @endif
+
+                        <div class="flex flex-col md:flex-row items-center justify-center gap-4">
+                            @if($this->canRetry())
+                                <flux:button variant="primary" class="w-full md:w-auto px-10 h-12 text-lg" wire:click="retryAttempt">
+                                    แก้ไขและส่งใหม่
+                                </flux:button>
+                            @else
+                                <p class="text-sm text-zinc-500">ใช้สิทธิ์แก้ไขครบแล้ว กรุณาติดต่อผู้เชี่ยวชาญหรือผู้ดูแลระบบ</p>
+                            @endif
+                            <flux:button variant="ghost" class="w-full md:w-auto px-10 h-12 text-lg" href="{{ route('learn.courses.show', $assessment->course_id) }}" wire:navigate>
+                                กลับไปยังบทเรียน
+                            </flux:button>
+                        </div>
                     @else
                         @if($currentAttempt->status === \App\Enums\TestAttemptStatus::Passed)
                             <div class="size-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-8 animate-bounce">
@@ -203,9 +234,13 @@
                                 กลับไปยังบทเรียน
                             </flux:button>
                             @if($currentAttempt->status !== \App\Enums\TestAttemptStatus::Passed)
-                                <flux:button variant="ghost" class="w-full md:w-auto px-10 h-12 text-lg" wire:click="$refresh">
-                                    ทำแบบทดสอบใหม่
-                                </flux:button>
+                                @if($this->canRetry())
+                                    <flux:button variant="ghost" class="w-full md:w-auto px-10 h-12 text-lg" wire:click="retryAttempt">
+                                        ทำแบบทดสอบใหม่
+                                    </flux:button>
+                                @else
+                                    <p class="text-sm text-zinc-500 w-full md:w-auto">ใช้สิทธิ์ทำแบบทดสอบครบแล้ว</p>
+                                @endif
                             @endif
                         </div>
                     @endif

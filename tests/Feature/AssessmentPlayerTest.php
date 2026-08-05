@@ -6,6 +6,7 @@ use App\Enums\TestAttemptStatus;
 use App\Enums\UserRole;
 use App\Livewire\Learner\AssessmentPlayer;
 use App\Models\Assessment;
+use App\Models\ExpertReview;
 use App\Models\Question;
 use App\Models\QuestionChoice;
 use App\Models\TestAnswer;
@@ -166,4 +167,95 @@ test('learner can upload a file as a worksheet answer', function () {
 
     expect($answer)->not->toBeNull();
     expect($answer->uploaded_file_url)->not->toBeNull();
+});
+
+test('learner sees expert feedback and can retry after revision is requested', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $expert = User::factory()->create(['role' => UserRole::Expert->value]);
+    $assessment = Assessment::factory()->create(['max_attempts' => 3]);
+    Question::factory()->create([
+        'assessment_id' => $assessment->id,
+        'question_type' => QuestionType::Essay->value,
+        'grading_mode' => GradingMode::Manual->value,
+    ]);
+
+    $attempt = TestAttempt::factory()->create([
+        'user_id' => $user->id,
+        'assessment_id' => $assessment->id,
+        'attempt_number' => 1,
+        'status' => TestAttemptStatus::RevisionNeeded->value,
+    ]);
+
+    ExpertReview::create([
+        'attempt_id' => $attempt->id,
+        'expert_id' => $expert->id,
+        'status' => 'revision_needed',
+        'feedback' => 'กรุณาอธิบายเพิ่มเติมในข้อ 1',
+        'reviewed_at' => now(),
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(AssessmentPlayer::class, ['assessment' => $assessment])
+        ->assertSet('isFinished', true)
+        ->assertSee('กรุณาอธิบายเพิ่มเติมในข้อ 1')
+        ->assertSet('currentAttempt.status', TestAttemptStatus::RevisionNeeded)
+        ->call('retryAttempt')
+        ->assertSet('isFinished', false)
+        ->assertSet('currentAttempt.attempt_number', 2)
+        ->assertSet('currentAttempt.status', TestAttemptStatus::InProgress);
+
+    expect(TestAttempt::where('assessment_id', $assessment->id)->count())->toBe(2);
+});
+
+test('learner cannot retry while a worksheet is still pending expert review', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $assessment = Assessment::factory()->create(['max_attempts' => 3]);
+    Question::factory()->create([
+        'assessment_id' => $assessment->id,
+        'question_type' => QuestionType::Essay->value,
+        'grading_mode' => GradingMode::Manual->value,
+    ]);
+
+    TestAttempt::factory()->create([
+        'user_id' => $user->id,
+        'assessment_id' => $assessment->id,
+        'attempt_number' => 1,
+        'status' => TestAttemptStatus::PendingReview->value,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(AssessmentPlayer::class, ['assessment' => $assessment])
+        ->assertSet('isFinished', true)
+        ->call('retryAttempt')
+        ->assertSet('currentAttempt.attempt_number', 1);
+
+    expect(TestAttempt::where('assessment_id', $assessment->id)->count())->toBe(1);
+});
+
+test('revision retries are capped by the assessment max_attempts', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $assessment = Assessment::factory()->create(['max_attempts' => 1]);
+    Question::factory()->create([
+        'assessment_id' => $assessment->id,
+        'question_type' => QuestionType::Essay->value,
+        'grading_mode' => GradingMode::Manual->value,
+    ]);
+
+    TestAttempt::factory()->create([
+        'user_id' => $user->id,
+        'assessment_id' => $assessment->id,
+        'attempt_number' => 1,
+        'status' => TestAttemptStatus::RevisionNeeded->value,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(AssessmentPlayer::class, ['assessment' => $assessment])
+        ->assertSet('isFinished', true)
+        ->call('retryAttempt')
+        ->assertSet('currentAttempt.attempt_number', 1);
+
+    expect(TestAttempt::where('assessment_id', $assessment->id)->count())->toBe(1);
 });
