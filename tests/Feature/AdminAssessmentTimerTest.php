@@ -47,6 +47,41 @@ test('time limit is required when the timer is enabled', function () {
         ->assertHasErrors(['assessmentTimeLimitMinutes']);
 });
 
+test('max attempts rejects a negative value', function () {
+    $admin = User::factory()->create(['role' => UserRole::Admin->value]);
+    $course = Course::factory()->create();
+
+    $this->actingAs($admin);
+
+    Livewire::test(Assessments::class, ['course' => $course])
+        ->call('openCreateAssessment')
+        ->set('assessmentTitle', 'แบบทดสอบ')
+        ->set('assessmentType', 'module_test')
+        ->set('assessmentMaxAttempts', -1)
+        ->call('saveAssessment')
+        ->assertHasErrors(['assessmentMaxAttempts']);
+});
+
+test('max attempts of 0 is accepted as unlimited retries', function () {
+    $admin = User::factory()->create(['role' => UserRole::Admin->value]);
+    $course = Course::factory()->create();
+
+    $this->actingAs($admin);
+
+    Livewire::test(Assessments::class, ['course' => $course])
+        ->call('openCreateAssessment')
+        ->set('assessmentTitle', 'แบบทดสอบไม่จำกัดจำนวนครั้ง')
+        ->set('assessmentType', 'module_test')
+        ->set('assessmentMaxAttempts', 0)
+        ->call('saveAssessment')
+        ->assertSet('showAssessmentModal', false);
+
+    $this->assertDatabaseHas('assessments', [
+        'title' => 'แบบทดสอบไม่จำกัดจำนวนครั้ง',
+        'max_attempts' => 0,
+    ]);
+});
+
 test('disabling the timer clears the stored time limit', function () {
     $admin = User::factory()->create(['role' => UserRole::Admin->value]);
     $course = Course::factory()->create();

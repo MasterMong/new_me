@@ -103,6 +103,7 @@ class Assessments extends Component
                 Rule::exists('modules', 'id')->where('course_id', $this->course->id),
             ],
             'assessmentPassingScore' => 'required|integer|min:0|max:100',
+            'assessmentMaxAttempts' => 'required|integer|min:0|max:255',
             'assessmentTimeLimitMinutes' => 'nullable|required_if:assessmentIsTimed,true|integer|min:1|max:600',
         ]);
 
