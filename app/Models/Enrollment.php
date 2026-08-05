@@ -6,6 +6,7 @@ use App\Enums\AssessmentType;
 use App\Enums\EnrollmentStatus;
 use App\Enums\TestAttemptStatus;
 use App\Notifications\CertificateIssued;
+use App\Services\CertificatePdfService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -135,6 +136,8 @@ class Enrollment extends Model
             'status' => EnrollmentStatus::Certified->value,
             'completed_at' => $this->completed_at ?? now(),
         ]);
+
+        app(CertificatePdfService::class)->generate($certificate);
 
         $this->user->notify(new CertificateIssued($certificate));
 
