@@ -3,7 +3,9 @@
 namespace App\Livewire\Admin\Courses;
 
 use App\Models\Course;
+use App\Models\CourseGroupAccess;
 use App\Models\CourseImage;
+use App\Models\LearnerGroup;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -36,6 +38,8 @@ class Edit extends Component
 
     public array $existingGallery = [];
 
+    public array $selectedGroupIds = [];
+
     public function mount(Course $course): void
     {
         $this->course = $course;
@@ -48,6 +52,10 @@ class Edit extends Component
         $this->isPublished = $course->is_published;
         $this->thumbnailUrl = $course->thumbnail_url ?? '';
         $this->existingGallery = $course->images()->get()->toArray();
+        $this->selectedGroupIds = $course->groupAccess()
+            ->pluck('group_id')
+            ->map(fn ($id) => (string) $id)
+            ->toArray();
     }
 
     protected function rules(): array
@@ -62,6 +70,8 @@ class Edit extends Component
             'isPublished' => ['boolean'],
             'thumbnail' => ['nullable', 'image', 'max:2048'],
             'gallery.*' => ['image', 'max:2048'],
+            'selectedGroupIds' => ['array'],
+            'selectedGroupIds.*' => ['integer', 'exists:learner_groups,id'],
         ];
     }
 
@@ -110,6 +120,14 @@ class Edit extends Component
             }
         }
 
+        $this->course->groupAccess()->delete();
+        foreach ($this->selectedGroupIds as $groupId) {
+            CourseGroupAccess::create([
+                'course_id' => $this->course->id,
+                'group_id' => (int) $groupId,
+            ]);
+        }
+
         session()->flash('status', 'บันทึกคอร์สเรียบร้อยแล้ว');
 
         $this->redirect(route('admin.courses.index'), navigate: true);
@@ -137,6 +155,7 @@ class Edit extends Component
         return view('livewire.admin.courses.edit', [
             'enrollmentCount' => $this->course->enrollments()->count(),
             'moduleCount' => $this->course->modules()->count(),
+            'allGroups' => LearnerGroup::where('is_active', true)->orderBy('name')->get(),
         ])->layout('layouts.app', ['title' => 'แก้ไขคอร์ส']);
     }
 }

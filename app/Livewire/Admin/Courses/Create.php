@@ -3,6 +3,8 @@
 namespace App\Livewire\Admin\Courses;
 
 use App\Models\Course;
+use App\Models\CourseGroupAccess;
+use App\Models\LearnerGroup;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -33,6 +35,8 @@ class Create extends Component
 
     public ?string $thumbnailUrl = null;
 
+    public array $selectedGroupIds = [];
+
     protected function rules(): array
     {
         return [
@@ -44,6 +48,8 @@ class Create extends Component
             'requireReview' => ['boolean'],
             'isPublished' => ['boolean'],
             'thumbnail' => ['nullable', 'image', 'max:2048'],
+            'selectedGroupIds' => ['array'],
+            'selectedGroupIds.*' => ['integer', 'exists:learner_groups,id'],
         ];
     }
 
@@ -70,7 +76,7 @@ class Create extends Component
             $thumbnailUrl = Storage::disk('public')->url($path);
         }
 
-        Course::create([
+        $course = Course::create([
             'title' => $this->title,
             'description' => $this->description ?: null,
             'thumbnail_url' => $thumbnailUrl,
@@ -82,6 +88,13 @@ class Create extends Component
             'created_by' => auth()->id(),
         ]);
 
+        foreach ($this->selectedGroupIds as $groupId) {
+            CourseGroupAccess::create([
+                'course_id' => $course->id,
+                'group_id' => (int) $groupId,
+            ]);
+        }
+
         session()->flash('status', 'สร้างคอร์สใหม่เรียบร้อยแล้ว');
 
         $this->redirect(route('admin.courses.index'), navigate: true);
@@ -89,7 +102,8 @@ class Create extends Component
 
     public function render()
     {
-        return view('livewire.admin.courses.create')
-            ->layout('layouts.app', ['title' => 'เพิ่มคอร์สใหม่']);
+        return view('livewire.admin.courses.create', [
+            'allGroups' => LearnerGroup::where('is_active', true)->orderBy('name')->get(),
+        ])->layout('layouts.app', ['title' => 'เพิ่มคอร์สใหม่']);
     }
 }

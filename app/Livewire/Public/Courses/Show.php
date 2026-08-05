@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Public\Courses;
 
+use App\Enums\EnrollmentStatus;
 use App\Models\Course;
 use Illuminate\View\View;
 use Livewire\Component;
@@ -9,6 +10,13 @@ use Livewire\Component;
 class Show extends Component
 {
     public Course $course;
+
+    public function mount(Course $course): void
+    {
+        $this->course = $course;
+
+        abort_unless($course->isVisibleTo(auth()->user()), 403);
+    }
 
     public function render(): View
     {
@@ -36,11 +44,13 @@ class Show extends Component
             return redirect()->route('login');
         }
 
+        abort_unless($this->course->isVisibleTo(auth()->user()), 403);
+
         $this->course->enrollments()->firstOrCreate([
             'user_id' => auth()->id(),
         ], [
             'enrolled_at' => now(),
-            'status' => 'active',
+            'status' => EnrollmentStatus::InProgress->value,
         ]);
 
         return redirect()->route('learn.courses.show', $this->course);

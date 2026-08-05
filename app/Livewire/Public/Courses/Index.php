@@ -11,6 +11,7 @@ class Index extends Component
     public function render(): View
     {
         $courses = Course::published()
+            ->visibleTo(auth()->user())
             ->withCount('enrollments')
             ->withAvg('reviews', 'rating')
             ->with('modules')

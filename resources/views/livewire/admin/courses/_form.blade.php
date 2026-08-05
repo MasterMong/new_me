@@ -193,11 +193,48 @@
                 </div>
                 
                 <p class="text-[11px] text-on-surface/40 leading-relaxed px-1">
-                    {{ $isPublished 
-                        ? 'หลักสูตรนี้เปิดให้ผู้เรียนเข้าถึงและลงทะเบียนได้ทันที' 
+                    {{ $isPublished
+                        ? 'หลักสูตรนี้เปิดให้ผู้เรียนเข้าถึงและลงทะเบียนได้ทันที'
                         : 'หลักสูตรนี้จะยังไม่แสดงผลในหน้าแรกและหน้าค้นหา' }}
                 </p>
             </div>
+        </div>
+
+        {{-- Group access card --}}
+        <div class="rounded-3xl border border-outline-variant/30 bg-white p-6 shadow-sm overflow-hidden">
+            <div class="flex items-center gap-3 mb-5 pb-4 border-b border-outline-variant/20">
+                <div class="size-8 rounded-lg bg-primary/5 flex items-center justify-center text-primary">
+                    <span class="material-symbols-outlined text-[18px]">visibility</span>
+                </div>
+                <h3 class="text-sm font-bold font-headline text-on-surface uppercase tracking-tight">การมองเห็นหลักสูตร</h3>
+            </div>
+
+            <p class="text-[11px] text-on-surface/40 leading-relaxed mb-3">
+                ไม่เลือกกลุ่ม = ทุกคนเห็นและลงทะเบียนได้ &nbsp;·&nbsp; เลือกกลุ่ม = จำกัดเฉพาะสมาชิกกลุ่มที่เลือกเท่านั้น
+            </p>
+
+            @forelse ($allGroups as $group)
+                <div class="flex items-center gap-3 py-2 {{ ! $loop->last ? 'border-b border-outline-variant/10' : '' }}">
+                    <flux:checkbox
+                        wire:model="selectedGroupIds"
+                        :value="(string) $group->id"
+                    />
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-on-surface">{{ $group->name }}</p>
+                        @if ($group->description)
+                            <p class="text-xs text-on-surface/50 truncate">{{ $group->description }}</p>
+                        @endif
+                    </div>
+                </div>
+            @empty
+                <div class="flex items-center gap-2 text-sm text-on-surface/40">
+                    <span class="material-symbols-outlined text-[18px]">group_off</span>
+                    ยังไม่มีกลุ่มผู้เรียน —
+                    <a wire:navigate :href="route('admin.groups.index')" class="text-primary hover:underline">
+                        สร้างกลุ่มก่อน
+                    </a>
+                </div>
+            @endforelse
         </div>
 
         {{-- Thumbnail card --}}

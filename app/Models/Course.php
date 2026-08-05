@@ -69,8 +69,51 @@ class Course extends Model
         return $this->hasMany(CourseImage::class)->orderBy('sort_order');
     }
 
+    public function groupAccess(): HasMany
+    {
+        return $this->hasMany(CourseGroupAccess::class);
+    }
+
     public function scopePublished(Builder $query): Builder
     {
         return $query->where('is_published', true);
+    }
+
+    /**
+     * A course with no group_access rows is visible to everyone, including
+     * guests. Once restricted, only users belonging to one of the allowed
+     * groups may see or enroll in it — guests never qualify.
+     */
+    public function isVisibleTo(?User $user): bool
+    {
+        if (! $this->relationLoaded('groupAccess')) {
+            $this->load('groupAccess');
+        }
+
+        if ($this->groupAccess->isEmpty()) {
+            return true;
+        }
+
+        if (! $user) {
+            return false;
+        }
+
+        $userGroupIds = $user->groups()->pluck('learner_groups.id');
+
+        return $this->groupAccess->pluck('group_id')->intersect($userGroupIds)->isNotEmpty();
+    }
+
+    public function scopeVisibleTo(Builder $query, ?User $user): Builder
+    {
+        return $query->where(function (Builder $q) use ($user) {
+            $q->whereDoesntHave('groupAccess');
+
+            if ($user) {
+                $userGroupIds = $user->groups()->pluck('learner_groups.id');
+                $q->orWhereHas('groupAccess', function (Builder $q2) use ($userGroupIds) {
+                    $q2->whereIn('group_id', $userGroupIds);
+                });
+            }
+        });
     }
 }
