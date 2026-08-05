@@ -30,6 +30,9 @@ class ReviewSubmission extends Component
         // Prevent accessing attempts that are not ready for review
         abort_unless(in_array($this->attempt->status->value, ['pending_review', 'passed', 'failed', 'revision_needed']), 403);
 
+        $module = $this->attempt->assessment->module;
+        abort_unless(! $module || $module->isAssignedTo(auth()->user()), 403, 'คุณไม่ได้รับมอบหมายให้ตรวจโมดูลนี้');
+
         if ($this->attempt->expertReview) {
             $this->status = $this->attempt->expertReview->status->value;
             $this->score = $this->attempt->expertReview->score;

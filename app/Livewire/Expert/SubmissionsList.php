@@ -24,6 +24,7 @@ class SubmissionsList extends Component
         $this->module = $module;
         // Ensure module requires expert review
         abort_unless($module->requires_expert_review, 403, 'This module does not require expert review.');
+        abort_unless($module->isAssignedTo(auth()->user()), 403, 'คุณไม่ได้รับมอบหมายให้ตรวจโมดูลนี้');
     }
 
     public function updatingSearch()

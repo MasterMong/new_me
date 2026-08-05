@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Module extends Model
@@ -50,5 +51,34 @@ class Module extends Model
     public function dependentPrerequisites(): HasMany
     {
         return $this->hasMany(ModulePrerequisite::class, 'prerequisite_module_id');
+    }
+
+    public function expertAssignments(): HasMany
+    {
+        return $this->hasMany(ModuleExpertAssignment::class);
+    }
+
+    public function assignedExperts(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'module_expert_assignments', 'module_id', 'expert_id')
+            ->withPivot('assigned_at', 'assigned_by')
+            ->withTimestamps();
+    }
+
+    /**
+     * A module with no expert assignments is open to any expert.
+     * Once assigned, only the assigned experts may review it.
+     */
+    public function isAssignedTo(User $expert): bool
+    {
+        if (! $this->relationLoaded('expertAssignments')) {
+            $this->load('expertAssignments');
+        }
+
+        if ($this->expertAssignments->isEmpty()) {
+            return true;
+        }
+
+        return $this->expertAssignments->contains('expert_id', $expert->id);
     }
 }

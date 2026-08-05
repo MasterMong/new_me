@@ -77,6 +77,20 @@
                                 @if ($module->is_sequential)
                                     <flux:badge color="purple" size="sm">เรียนตามลำดับ</flux:badge>
                                 @endif
+                                @if ($module->requires_expert_review)
+                                    <flux:tooltip>
+                                        <flux:badge color="amber" size="sm" class="cursor-help">
+                                            ผู้เชี่ยวชาญ {{ $module->assignedExperts->count() ?: 'ทุกคน' }}
+                                        </flux:badge>
+                                        <flux:tooltip.content>
+                                            @if ($module->assignedExperts->isEmpty())
+                                                ผู้เชี่ยวชาญทุกคนตรวจโมดูลนี้ได้ (ยังไม่ได้มอบหมายเฉพาะเจาะจง)
+                                            @else
+                                                {{ $module->assignedExperts->map(fn($e) => $e->fullName())->join(', ') }}
+                                            @endif
+                                        </flux:tooltip.content>
+                                    </flux:tooltip>
+                                @endif
                                 <span class="text-xs text-on-surface/40">
                                     {{ $module->contents->count() }} เนื้อหา
                                     &middot;
@@ -101,6 +115,9 @@
                             <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" class="rounded-full" />
                             <flux:menu>
                                 <flux:menu.item icon="pencil" wire:click="openEditModule({{ $module->id }})">แก้ไขรายละเอียด</flux:menu.item>
+                                @if ($module->requires_expert_review)
+                                    <flux:menu.item icon="user-group" wire:click="openExpertAssignment({{ $module->id }})">มอบหมายผู้เชี่ยวชาญ</flux:menu.item>
+                                @endif
                                 <flux:menu.separator />
                                 <flux:menu.item
                                     icon="trash"
@@ -453,6 +470,55 @@
                     {{ $editingContentId ? 'บันทึกการเปลี่ยนแปลง' : 'เพิ่มเนื้อหา' }}
                 </span>
                 <span wire:loading wire:target="saveContent">กำลังบันทึก...</span>
+            </flux:button>
+        </div>
+    </flux:modal>
+
+    {{-- ═══════════════════════════════════════════════════════ --}}
+    {{-- EXPERT ASSIGNMENT MODAL                                 --}}
+    {{-- ═══════════════════════════════════════════════════════ --}}
+    <flux:modal wire:model="showExpertModal" class="w-full max-w-lg">
+        <div class="flex items-center gap-3 mb-1">
+            <div class="flex size-9 items-center justify-center rounded-xl bg-primary/10">
+                <span class="material-symbols-outlined text-[20px] text-primary">group</span>
+            </div>
+            <flux:heading size="lg">มอบหมายผู้เชี่ยวชาญ</flux:heading>
+        </div>
+        <flux:text class="mb-6 ps-12">
+            เลือกผู้เชี่ยวชาญที่จะตรวจใบงานของโมดูลนี้
+        </flux:text>
+
+        <div class="rounded-xl border border-outline-variant/30 overflow-hidden">
+            <div class="p-4">
+                <p class="text-xs text-on-surface/50 mb-3">
+                    ไม่เลือกใคร = ผู้เชี่ยวชาญทุกคนตรวจได้ &nbsp;·&nbsp; เลือกแล้ว = จำกัดเฉพาะผู้ที่เลือกเท่านั้น
+                </p>
+                @forelse ($allExperts as $expert)
+                    <div class="flex items-center gap-3 py-2 {{ ! $loop->last ? 'border-b border-outline-variant/10' : '' }}">
+                        <flux:checkbox
+                            wire:model="selectedExpertIds"
+                            :value="(string) $expert->id"
+                        />
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-on-surface">{{ $expert->fullName() }}</p>
+                            <p class="text-xs text-on-surface/50 truncate">{{ $expert->email }}</p>
+                        </div>
+                    </div>
+                @empty
+                    <div class="flex items-center gap-2 text-sm text-on-surface/40">
+                        <span class="material-symbols-outlined text-[18px]">group_off</span>
+                        ยังไม่มีผู้เชี่ยวชาญในระบบ
+                    </div>
+                @endforelse
+            </div>
+        </div>
+
+        <div class="flex gap-3 mt-6 justify-end">
+            <flux:button variant="ghost" wire:click="$set('showExpertModal', false)">ยกเลิก</flux:button>
+            <flux:button variant="primary" wire:click="saveExpertAssignments"
+                wire:loading.attr="disabled" wire:target="saveExpertAssignments">
+                <span wire:loading.remove wire:target="saveExpertAssignments">บันทึกการมอบหมาย</span>
+                <span wire:loading wire:target="saveExpertAssignments">กำลังบันทึก...</span>
             </flux:button>
         </div>
     </flux:modal>

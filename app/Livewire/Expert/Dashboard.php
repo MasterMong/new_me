@@ -13,13 +13,16 @@ class Dashboard extends Component
     public function render()
     {
         $expertModules = Module::where('requires_expert_review', true)
+            ->with('expertAssignments')
             ->withCount([
                 'assessments as pending_reviews_count' => function ($query) {
                     $query->join('test_attempts', 'test_attempts.assessment_id', '=', 'assessments.id')
                         ->where('test_attempts.status', 'pending_review');
                 },
             ])
-            ->get();
+            ->get()
+            ->filter(fn (Module $module) => $module->isAssignedTo(auth()->user()))
+            ->values();
 
         $totalPending = $expertModules->sum('pending_reviews_count');
 

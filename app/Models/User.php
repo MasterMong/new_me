@@ -121,4 +121,16 @@ class User extends Authenticatable
     {
         return $this->hasMany(Course::class, 'created_by');
     }
+
+    public function moduleExpertAssignments(): HasMany
+    {
+        return $this->hasMany(ModuleExpertAssignment::class, 'expert_id');
+    }
+
+    public function assignedModules(): BelongsToMany
+    {
+        return $this->belongsToMany(Module::class, 'module_expert_assignments', 'expert_id', 'module_id')
+            ->withPivot('assigned_at', 'assigned_by')
+            ->withTimestamps();
+    }
 }

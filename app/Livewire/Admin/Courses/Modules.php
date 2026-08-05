@@ -3,11 +3,14 @@
 namespace App\Livewire\Admin\Courses;
 
 use App\Enums\ContentType;
+use App\Enums\UserRole;
 use App\Models\ContentGroupAccess;
 use App\Models\Course;
 use App\Models\LearnerGroup;
 use App\Models\Module;
 use App\Models\ModuleContent;
+use App\Models\ModuleExpertAssignment;
+use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -59,6 +62,13 @@ class Modules extends Component
 
     public array $selectedGroupIds = [];
 
+    // ── Expert assignment ───────────────────────────────────────
+    public bool $showExpertModal = false;
+
+    public ?int $expertModalModuleId = null;
+
+    public array $selectedExpertIds = [];
+
     public function mount(Course $course): void
     {
         $this->course = $course;
@@ -75,6 +85,13 @@ class Modules extends Component
     {
         if (! $value) {
             $this->resetContentForm();
+        }
+    }
+
+    public function updatedShowExpertModal(bool $value): void
+    {
+        if (! $value) {
+            $this->resetExpertForm();
         }
     }
 
@@ -301,6 +318,41 @@ class Modules extends Component
         }
     }
 
+    // ── Expert assignment ───────────────────────────────────────
+
+    public function openExpertAssignment(int $moduleId): void
+    {
+        $module = Module::findOrFail($moduleId);
+        $this->expertModalModuleId = $moduleId;
+        $this->selectedExpertIds = $module->assignedExperts()
+            ->pluck('users.id')
+            ->map(fn ($id) => (string) $id)
+            ->toArray();
+        $this->showExpertModal = true;
+    }
+
+    public function saveExpertAssignments(): void
+    {
+        $this->validate([
+            'selectedExpertIds' => ['array'],
+            'selectedExpertIds.*' => ['integer', 'exists:users,id'],
+        ]);
+
+        $module = Module::findOrFail($this->expertModalModuleId);
+
+        $module->expertAssignments()->delete();
+        foreach ($this->selectedExpertIds as $expertId) {
+            ModuleExpertAssignment::create([
+                'module_id' => $module->id,
+                'expert_id' => (int) $expertId,
+                'assigned_at' => now(),
+                'assigned_by' => auth()->id(),
+            ]);
+        }
+
+        $this->showExpertModal = false;
+    }
+
     // ── Validation ──────────────────────────────────────────────
 
     protected function moduleRules(): array
@@ -379,10 +431,17 @@ class Modules extends Component
         $this->resetValidation();
     }
 
+    protected function resetExpertForm(): void
+    {
+        $this->expertModalModuleId = null;
+        $this->selectedExpertIds = [];
+        $this->resetValidation();
+    }
+
     public function render()
     {
         $modules = $this->course->modules()
-            ->with(['contents.groupAccess.group'])
+            ->with(['contents.groupAccess.group', 'assignedExperts'])
             ->orderBy('sort_order')
             ->get();
 
@@ -391,6 +450,7 @@ class Modules extends Component
             'contentTypes' => ContentType::cases(),
             'courseAssessments' => $this->course->assessments()->orderBy('title')->get(),
             'allGroups' => LearnerGroup::where('is_active', true)->orderBy('name')->get(),
+            'allExperts' => User::where('role', UserRole::Expert->value)->orderBy('first_name')->get(),
         ])->layout('layouts.app', ['title' => 'โมดูล: '.$this->course->title]);
     }
 }
