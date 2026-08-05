@@ -101,13 +101,41 @@ class AssessmentPlayer extends Component
 
     protected function createNewAttempt(int $attemptsCount): void
     {
+        $attemptNumber = $attemptsCount + 1;
+
         $this->currentAttempt = TestAttempt::create([
             'user_id' => Auth::id(),
             'assessment_id' => $this->assessment->id,
-            'attempt_number' => $attemptsCount + 1,
+            'attempt_number' => $attemptNumber,
+            'star_rating' => $this->starRatingForAttempt($attemptNumber),
             'status' => TestAttemptStatus::InProgress,
             'started_at' => now(),
         ]);
+    }
+
+    /**
+     * Attempt 1 is worth the full star quota (max_attempts stars); each
+     * subsequent attempt is worth one fewer, down to a floor of 1 — so
+     * passing (or being approved) on a later attempt earns fewer stars.
+     */
+    protected function starRatingForAttempt(int $attemptNumber): int
+    {
+        $maxStars = $this->assessment->max_attempts > 0 ? $this->assessment->max_attempts : 3;
+
+        return max(1, $maxStars - $attemptNumber + 1);
+    }
+
+    /**
+     * Star value the learner would earn if they retry right now — shown on
+     * the results screen so the shrinking quota is visible before they commit.
+     */
+    public function starRatingForNextAttempt(): int
+    {
+        $attemptsCount = TestAttempt::where('user_id', Auth::id())
+            ->where('assessment_id', $this->assessment->id)
+            ->count();
+
+        return $this->starRatingForAttempt($attemptsCount + 1);
     }
 
     public function retryAttempt()
@@ -269,6 +297,11 @@ class AssessmentPlayer extends Component
 
         $this->existingFileUrls[$question->id] = Storage::disk('public')->url($path);
         unset($this->uploadedFiles[$question->id]);
+    }
+
+    public function maxStars(): int
+    {
+        return $this->assessment->max_attempts > 0 ? $this->assessment->max_attempts : 3;
     }
 
     public function remainingSeconds(): ?int

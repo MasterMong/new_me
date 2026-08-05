@@ -39,6 +39,16 @@
                                 ไม่จำกัดเวลา
                             </span>
                         @endif
+                        @if($currentAttempt->star_rating)
+                            <span class="flex items-center gap-0.5" title="ครั้งนี้ทำผ่านจะได้ {{ $currentAttempt->star_rating }} ดาว">
+                                @for($i = 1; $i <= $this->maxStars(); $i++)
+                                    <flux:icon.star
+                                        variant="{{ $i <= $currentAttempt->star_rating ? 'solid' : 'outline' }}"
+                                        class="size-4 {{ $i <= $currentAttempt->star_rating ? 'text-secondary' : 'text-zinc-300 dark:text-zinc-700' }}"
+                                    />
+                                @endfor
+                            </span>
+                        @endif
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
@@ -202,9 +212,12 @@
 
                         <div class="flex flex-col md:flex-row items-center justify-center gap-4">
                             @if($this->canRetry())
-                                <flux:button variant="primary" class="w-full md:w-auto px-10 h-12 text-lg" wire:click="retryAttempt">
-                                    แก้ไขและส่งใหม่
-                                </flux:button>
+                                <div class="w-full md:w-auto flex flex-col items-center gap-2">
+                                    <flux:button variant="primary" class="w-full md:w-auto px-10 h-12 text-lg" wire:click="retryAttempt">
+                                        แก้ไขและส่งใหม่
+                                    </flux:button>
+                                    <p class="text-xs text-zinc-400">ครั้งถัดไปจะได้สูงสุด {{ $this->starRatingForNextAttempt() }} ดาว</p>
+                                </div>
                             @else
                                 <p class="text-sm text-zinc-500">ใช้สิทธิ์แก้ไขครบแล้ว กรุณาติดต่อผู้เชี่ยวชาญหรือผู้ดูแลระบบ</p>
                             @endif
@@ -223,6 +236,17 @@
                                 <flux:icon.x-circle variant="micro" class="size-16" />
                             </div>
                             <flux:heading size="xl" class="text-red-600 mb-2">พยายามใหม่อีกครั้ง</flux:heading>
+                        @endif
+
+                        @if($currentAttempt->star_rating)
+                            <div class="flex items-center justify-center gap-1 mb-6">
+                                @for($i = 1; $i <= $this->maxStars(); $i++)
+                                    <flux:icon.star
+                                        variant="{{ $i <= $currentAttempt->star_rating ? 'solid' : 'outline' }}"
+                                        class="size-6 {{ $i <= $currentAttempt->star_rating ? 'text-secondary' : 'text-zinc-300 dark:text-zinc-700' }}"
+                                    />
+                                @endfor
+                            </div>
                         @endif
 
                         <flux:subheading class="mb-10 text-lg">คะแนนที่ได้ในการทดสอบครั้งนี้</flux:subheading>
@@ -250,9 +274,12 @@
                             </flux:button>
                             @if($currentAttempt->status !== \App\Enums\TestAttemptStatus::Passed)
                                 @if($this->canRetry())
-                                    <flux:button variant="ghost" class="w-full md:w-auto px-10 h-12 text-lg" wire:click="retryAttempt">
-                                        ทำแบบทดสอบใหม่
-                                    </flux:button>
+                                    <div class="w-full md:w-auto flex flex-col items-center gap-2">
+                                        <flux:button variant="ghost" class="w-full md:w-auto px-10 h-12 text-lg" wire:click="retryAttempt">
+                                            ทำแบบทดสอบใหม่
+                                        </flux:button>
+                                        <p class="text-xs text-zinc-400">ครั้งถัดไปจะได้สูงสุด {{ $this->starRatingForNextAttempt() }} ดาว</p>
+                                    </div>
                                 @else
                                     <p class="text-sm text-zinc-500 w-full md:w-auto">ใช้สิทธิ์ทำแบบทดสอบครบแล้ว</p>
                                 @endif
