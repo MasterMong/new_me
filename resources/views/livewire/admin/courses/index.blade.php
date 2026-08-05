@@ -176,6 +176,7 @@
                                     <flux:menu class="min-w-40">
                                         <flux:menu.item icon="pencil" wire:navigate :href="route('admin.courses.edit', $course)">แก้ไขข้อมูลหลักสูตร</flux:menu.item>
                                         <flux:menu.item icon="list-bullet" wire:navigate :href="route('admin.courses.modules', $course)">จัดการบทเรียน (Modules)</flux:menu.item>
+                                        <flux:menu.item icon="academic-cap" wire:navigate :href="route('admin.courses.certificate-template', $course)">เทมเพลตเกียรติบัตร</flux:menu.item>
                                         <flux:menu.separator />
                                         <flux:menu.item
                                             wire:click="togglePublish({{ $course->id }})"

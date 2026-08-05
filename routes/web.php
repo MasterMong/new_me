@@ -4,6 +4,7 @@ use App\Enums\UserRole;
 use App\Livewire\Admin\CertificatesManager;
 use App\Livewire\Admin\CourseReviews;
 use App\Livewire\Admin\Courses\Assessments;
+use App\Livewire\Admin\Courses\CertificateTemplate as AdminCertificateTemplate;
 use App\Livewire\Admin\Courses\Create as AdminCoursesCreate;
 use App\Livewire\Admin\Courses\Edit as AdminCoursesEdit;
 use App\Livewire\Admin\Courses\Index as AdminCoursesIndex;
@@ -96,6 +97,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::get('/courses/{course}/edit', AdminCoursesEdit::class)->name('courses.edit');
     Route::get('/courses/{course}/modules', AdminCourseModules::class)->name('courses.modules');
     Route::get('/courses/{course}/assessments', Assessments::class)->name('courses.assessments');
+    Route::get('/courses/{course}/certificate-template', AdminCertificateTemplate::class)->name('courses.certificate-template');
     Route::get('/users', AdminUsersIndex::class)->name('users.index');
     Route::get('/groups', AdminGroupsIndex::class)->name('groups.index');
     Route::get('/groups/{group}/members', AdminGroupMembers::class)->name('groups.members');
