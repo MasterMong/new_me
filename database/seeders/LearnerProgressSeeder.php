@@ -28,10 +28,13 @@ class LearnerProgressSeeder extends Seeder
         $modules1 = Module::where('course_id', $course1->id)->orderBy('sort_order')->get();
         $modules2 = Module::where('course_id', $course2->id)->orderBy('sort_order')->get();
 
-        $c1Pre = Assessment::where('course_id', $course1->id)->where('type', 'pre_test')->first();
-        $c1Post = Assessment::where('course_id', $course1->id)->where('type', 'post_test')->first();
-        $c2Pre = Assessment::where('course_id', $course2->id)->where('type', 'pre_test')->first();
-        $c2Post = Assessment::where('course_id', $course2->id)->where('type', 'post_test')->first();
+        // module_id must be constrained to null: every module now also has
+        // its own pre_test/post_test (see CourseSeeder), so an unscoped
+        // ->first() would be ambiguous between those and the course-wide one.
+        $c1Pre = Assessment::where('course_id', $course1->id)->whereNull('module_id')->where('type', 'pre_test')->first();
+        $c1Post = Assessment::where('course_id', $course1->id)->whereNull('module_id')->where('type', 'post_test')->first();
+        $c2Pre = Assessment::where('course_id', $course2->id)->whereNull('module_id')->where('type', 'pre_test')->first();
+        $c2Post = Assessment::where('course_id', $course2->id)->whereNull('module_id')->where('type', 'post_test')->first();
 
         $learner1 = User::where('email', 'learner1@me-learning.go.th')->first();
         $learner2 = User::where('email', 'learner2@me-learning.go.th')->first();

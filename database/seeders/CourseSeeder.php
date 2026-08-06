@@ -15,123 +15,84 @@ use Illuminate\Database\Seeder;
 
 class CourseSeeder extends Seeder
 {
+    /**
+     * Topic pools double as the source of module titles/descriptions so
+     * content isn't hand-typed per module — each course draws a shuffled
+     * subset sized to its module count.
+     */
+    private const TOPICS_COURSE_1 = [
+        'ความรู้พื้นฐานการติดตามและประเมินผล',
+        'กระบวนการติดตามและประเมินผลการบริหาร',
+        'เครื่องมือและเทคนิคการประเมินผล',
+        'การเขียนรายงานการประเมินผล',
+        'การนำผลประเมินไปใช้พัฒนาการศึกษา',
+        'การวิเคราะห์ข้อมูลเชิงสถิติเพื่อการประเมิน',
+        'จรรยาบรรณของนักติดตามและประเมินผล',
+    ];
+
+    private const TOPICS_COURSE_2 = [
+        'หลักการและแนวคิดการนิเทศการศึกษา',
+        'กระบวนการนิเทศการสอน',
+        'การวิจัยเพื่อพัฒนาคุณภาพการศึกษา',
+        'การสร้างชุมชนแห่งการเรียนรู้ทางวิชาชีพ',
+        'การให้ข้อมูลป้อนกลับเชิงสร้างสรรค์',
+    ];
+
+    private const DESCRIPTION_FRAMES = [
+        'เนื้อหาที่ครอบคลุมเรื่อง:topic พร้อมกรณีศึกษาและแบบฝึกปฏิบัติ',
+        'ปูพื้นฐานความเข้าใจเกี่ยวกับ:topic สำหรับการนำไปประยุกต์ใช้จริง',
+        'เจาะลึกแนวคิดและแนวปฏิบัติด้าน:topic ที่ใช้ได้จริงในการทำงาน',
+        'สรุปหลักการสำคัญของ:topic พร้อมตัวอย่างประกอบ',
+    ];
+
     public function run(): void
     {
         $admin = User::where('role', 'admin')->first();
 
-        $course1 = Course::create([
+        // Course 1 — sequential, every module gated on the one before it.
+        $this->buildCourse($admin, [
             'title' => 'หลักสูตรพัฒนาศักยภาพนักติดตาม ประเมินผลการบริหารและการจัดการศึกษาขั้นพื้นฐาน',
             'description' => 'หลักสูตรสำหรับการพัฒนาศักยภาพนักติดตามและประเมินผลการบริหารและการจัดการศึกษาขั้นพื้นฐาน เพื่อให้มีความรู้ ความเข้าใจ และทักษะในการติดตาม ประเมินผลอย่างมีประสิทธิภาพ',
-            'thumbnail_url' => 'https://picsum.photos/seed/course_1/800/450',
             'duration_hours' => 6.0,
-            'passing_score_pct' => 60,
-            'has_test' => true,
-            'require_review' => true,
-            'is_published' => true,
-            'created_by' => $admin->id,
+            'gallery_count' => 4,
+            'is_sequential' => true,
+            'module_count' => 5,
+            'topics' => self::TOPICS_COURSE_1,
+            'review_module_numbers' => [4],
+            'seed_prefix' => 'course_1',
+            'post_test_grading_mode' => GradingMode::Auto,
+            'post_test_requires_expert_review' => false,
         ]);
 
-        for ($i = 1; $i <= 4; $i++) {
-            CourseImage::create([
-                'course_id' => $course1->id,
-                'image_url' => 'https://picsum.photos/seed/gallery_1_'.$i.'/800/600',
-                'sort_order' => $i * 10,
-            ]);
-        }
-
-        $modules1 = [
-            ['number' => 1, 'title' => 'ความรู้พื้นฐานการติดตามและประเมินผล', 'sort_order' => 1],
-            ['number' => 2, 'title' => 'กระบวนการติดตามและประเมินผลการบริหาร', 'sort_order' => 2],
-            ['number' => 3, 'title' => 'เครื่องมือและเทคนิคการประเมินผล', 'sort_order' => 3],
-            ['number' => 4, 'title' => 'การเขียนรายงานการประเมินผล', 'sort_order' => 4],
-            ['number' => 5, 'title' => 'การนำผลประเมินไปใช้พัฒนาการศึกษา', 'sort_order' => 5],
-        ];
-
-        foreach ($modules1 as $m) {
-            $module = Module::create([
-                'course_id' => $course1->id,
-                'module_number' => $m['number'],
-                'title' => $m['title'],
-                'description' => 'เนื้อหาของ'.$m['title'],
-                'thumbnail_url' => 'https://picsum.photos/seed/module_1_'.$m['number'].'/400/300',
-                'is_required' => true,
-                'requires_expert_review' => $m['number'] === 4,
-                'is_sequential' => true, // Enable sequential learning for course 1
-                'max_test_attempts' => 3,
-                'sort_order' => $m['sort_order'],
-            ]);
-
-            ModuleContent::create([
-                'module_id' => $module->id,
-                'content_type' => ContentType::Video->value,
-                'title' => 'วิดีโอบรรยาย: '.$m['title'],
-                'file_url' => 'https://example.com/videos/course1/module'.$m['number'].'.mp4',
-                'duration_minutes' => 30.00,
-                'sort_order' => 1,
-            ]);
-
-            ModuleContent::create([
-                'module_id' => $module->id,
-                'content_type' => ContentType::Document->value,
-                'title' => 'เอกสารประกอบ: '.$m['title'],
-                'file_url' => 'https://example.com/docs/course1/module'.$m['number'].'.pdf',
-                'duration_minutes' => null,
-                'sort_order' => 2,
-            ]);
-
-            // Add a mini-test inside module 2
-            if ($m['number'] === 2) {
-                $assessment = Assessment::create([
-                    'course_id' => $course1->id,
-                    'module_id' => $module->id,
-                    'type' => AssessmentType::PostTest->value,
-                    'title' => 'แบบทดสอบย่อย: '.$m['title'],
-                    'passing_score_pct' => 100, // Must get all correct to proceed if sequential
-                    'max_attempts' => 5,
-                    'grading_mode' => GradingMode::Auto->value,
-                    'is_required_for_cert' => false,
-                ]);
-
-                ModuleContent::create([
-                    'module_id' => $module->id,
-                    'content_type' => ContentType::Test->value,
-                    'assessment_id' => $assessment->id,
-                    'title' => 'ทดสอบความรู้: '.$m['title'],
-                    'duration_minutes' => 10.00,
-                    'sort_order' => 3,
-                ]);
-            }
-        }
-
-        Assessment::create([
-            'course_id' => $course1->id,
-            'module_id' => null,
-            'type' => AssessmentType::PreTest->value,
-            'title' => 'แบบทดสอบก่อนเรียน: '.$course1->title,
-            'passing_score_pct' => 60,
-            'max_attempts' => 3,
-            'grading_mode' => GradingMode::Auto->value,
-            'is_required_for_cert' => false,
-            'requires_expert_review' => false,
-        ]);
-
-        Assessment::create([
-            'course_id' => $course1->id,
-            'module_id' => null,
-            'type' => AssessmentType::PostTest->value,
-            'title' => 'แบบทดสอบหลังเรียน: '.$course1->title,
-            'passing_score_pct' => 60,
-            'max_attempts' => 3,
-            'grading_mode' => GradingMode::Auto->value,
-            'is_required_for_cert' => true,
-            'requires_expert_review' => false,
-        ]);
-
-        $course2 = Course::create([
+        // Course 2 — not sequential; module gating instead comes from an
+        // explicit ModulePrerequisite (see ModulePrerequisiteSeeder).
+        $this->buildCourse($admin, [
             'title' => 'หลักสูตรการพัฒนาการนิเทศการศึกษาเพื่อยกระดับคุณภาพการศึกษา',
             'description' => 'หลักสูตรพัฒนาศักยภาพศึกษานิเทศก์ให้มีความสามารถในการนิเทศการศึกษาอย่างมีประสิทธิภาพ',
-            'thumbnail_url' => 'https://picsum.photos/seed/course_2/800/450',
             'duration_hours' => 8.0,
+            'gallery_count' => 3,
+            'is_sequential' => false,
+            'module_count' => 3,
+            'topics' => self::TOPICS_COURSE_2,
+            'review_module_numbers' => [3],
+            'seed_prefix' => 'course_2',
+            'post_test_grading_mode' => GradingMode::Mixed,
+            'post_test_requires_expert_review' => true,
+        ]);
+    }
+
+    /**
+     * @param  array{title: string, description: string, duration_hours: float, gallery_count: int,
+     *     is_sequential: bool, module_count: int, topics: array<int, string>, review_module_numbers: array<int, int>,
+     *     seed_prefix: string, post_test_grading_mode: GradingMode, post_test_requires_expert_review: bool} $attrs
+     */
+    private function buildCourse(User $admin, array $attrs): Course
+    {
+        $course = Course::create([
+            'title' => $attrs['title'],
+            'description' => $attrs['description'],
+            'thumbnail_url' => 'https://picsum.photos/seed/'.$attrs['seed_prefix'].'/800/450',
+            'duration_hours' => $attrs['duration_hours'],
             'passing_score_pct' => 60,
             'has_test' => true,
             'require_review' => true,
@@ -139,57 +100,31 @@ class CourseSeeder extends Seeder
             'created_by' => $admin->id,
         ]);
 
-        for ($i = 1; $i <= 3; $i++) {
+        for ($i = 1; $i <= $attrs['gallery_count']; $i++) {
             CourseImage::create([
-                'course_id' => $course2->id,
-                'image_url' => 'https://picsum.photos/seed/gallery_2_'.$i.'/800/600',
+                'course_id' => $course->id,
+                'image_url' => 'https://picsum.photos/seed/gallery_'.$attrs['seed_prefix'].'_'.$i.'/800/600',
                 'sort_order' => $i * 10,
             ]);
         }
 
-        $modules2 = [
-            ['number' => 1, 'title' => 'หลักการและแนวคิดการนิเทศการศึกษา', 'sort_order' => 1],
-            ['number' => 2, 'title' => 'กระบวนการนิเทศการสอน', 'sort_order' => 2],
-            ['number' => 3, 'title' => 'การวิจัยเพื่อพัฒนาคุณภาพการศึกษา', 'sort_order' => 3],
-        ];
+        $topics = collect($attrs['topics'])->shuffle()->values();
 
-        foreach ($modules2 as $m) {
-            $module = Module::create([
-                'course_id' => $course2->id,
-                'module_number' => $m['number'],
-                'title' => $m['title'],
-                'description' => 'เนื้อหาของ'.$m['title'],
-                'thumbnail_url' => 'https://picsum.photos/seed/module_2_'.$m['number'].'/400/300',
-                'is_required' => true,
-                'requires_expert_review' => $m['number'] === 3,
-                'max_test_attempts' => 3,
-                'sort_order' => $m['sort_order'],
-            ]);
+        for ($number = 1; $number <= $attrs['module_count']; $number++) {
+            $topic = $topics[($number - 1) % $topics->count()];
+            $requiresExpertReview = in_array($number, $attrs['review_module_numbers'], true);
 
-            ModuleContent::create([
-                'module_id' => $module->id,
-                'content_type' => ContentType::Video->value,
-                'title' => 'วิดีโอบรรยาย: '.$m['title'],
-                'file_url' => 'https://example.com/videos/course2/module'.$m['number'].'.mp4',
-                'duration_minutes' => 45.00,
-                'sort_order' => 1,
-            ]);
-
-            ModuleContent::create([
-                'module_id' => $module->id,
-                'content_type' => ContentType::Link->value,
-                'title' => 'แหล่งเรียนรู้เพิ่มเติม',
-                'file_url' => 'https://www.obec.go.th',
-                'duration_minutes' => null,
-                'sort_order' => 2,
-            ]);
+            $this->buildModule($course, $number, $topic, $requiresExpertReview, $attrs);
         }
 
+        // Course-wide pre-test / post-test — the post-test gates certificate
+        // issuance (is_required_for_cert). Curated question banks for these
+        // four assessments live in QuestionSeeder.
         Assessment::create([
-            'course_id' => $course2->id,
+            'course_id' => $course->id,
             'module_id' => null,
             'type' => AssessmentType::PreTest->value,
-            'title' => 'แบบทดสอบก่อนเรียน: '.$course2->title,
+            'title' => 'แบบทดสอบก่อนเรียน: '.$course->title,
             'passing_score_pct' => 60,
             'max_attempts' => 3,
             'grading_mode' => GradingMode::Auto->value,
@@ -198,15 +133,142 @@ class CourseSeeder extends Seeder
         ]);
 
         Assessment::create([
-            'course_id' => $course2->id,
+            'course_id' => $course->id,
             'module_id' => null,
             'type' => AssessmentType::PostTest->value,
-            'title' => 'แบบทดสอบหลังเรียน: '.$course2->title,
+            'title' => 'แบบทดสอบหลังเรียน: '.$course->title,
             'passing_score_pct' => 60,
             'max_attempts' => 3,
-            'grading_mode' => GradingMode::Mixed->value,
+            'grading_mode' => $attrs['post_test_grading_mode']->value,
             'is_required_for_cert' => true,
-            'requires_expert_review' => true,
+            'requires_expert_review' => $attrs['post_test_requires_expert_review'],
         ]);
+
+        return $course;
+    }
+
+    /**
+     * @param  array{is_sequential: bool, seed_prefix: string}  $attrs
+     */
+    private function buildModule(Course $course, int $number, string $topic, bool $requiresExpertReview, array $attrs): void
+    {
+        $module = Module::create([
+            'course_id' => $course->id,
+            'module_number' => $number,
+            'title' => "โมดูลที่ {$number}: {$topic}",
+            'description' => $this->moduleDescription($topic),
+            'thumbnail_url' => 'https://picsum.photos/seed/module_'.$attrs['seed_prefix'].'_'.$number.'/400/300',
+            'is_required' => true,
+            'requires_expert_review' => $requiresExpertReview,
+            'is_sequential' => $attrs['is_sequential'],
+            'max_test_attempts' => fake()->randomElement([1, 3, 5]),
+            'sort_order' => $number,
+        ]);
+
+        $sortOrder = 1;
+
+        // Pre-test opens the module.
+        $preTest = $this->createModuleAssessment($course, $module, AssessmentType::PreTest, $topic, $number, isFirst: true);
+        ModuleContent::create([
+            'module_id' => $module->id,
+            'content_type' => ContentType::Test->value,
+            'assessment_id' => $preTest->id,
+            'title' => 'ทดสอบก่อนเรียน: '.$topic,
+            'duration_minutes' => $preTest->is_timed ? $preTest->time_limit_minutes : null,
+            'sort_order' => $sortOrder++,
+        ]);
+
+        ModuleContent::create([
+            'module_id' => $module->id,
+            'content_type' => ContentType::Video->value,
+            'title' => 'วิดีโอบรรยาย: '.$topic,
+            'file_url' => "https://example.com/videos/{$attrs['seed_prefix']}/module{$number}.mp4",
+            'duration_minutes' => fake()->numberBetween(15, 60),
+            'sort_order' => $sortOrder++,
+        ]);
+
+        // Alternate the supplementary content type per module so both
+        // document and link show up across every course, not one each.
+        $supplementaryType = $number % 2 === 0 ? ContentType::Link : ContentType::Document;
+        ModuleContent::create([
+            'module_id' => $module->id,
+            'content_type' => $supplementaryType->value,
+            'title' => $supplementaryType === ContentType::Link ? 'แหล่งเรียนรู้เพิ่มเติม: '.$topic : 'เอกสารประกอบ: '.$topic,
+            'file_url' => $supplementaryType === ContentType::Link
+                ? 'https://www.obec.go.th'
+                : "https://example.com/docs/{$attrs['seed_prefix']}/module{$number}.pdf",
+            'duration_minutes' => null,
+            'sort_order' => $sortOrder++,
+        ]);
+
+        // Post-test caps off the module.
+        $postTest = $this->createModuleAssessment($course, $module, AssessmentType::PostTest, $topic, $number, isFirst: false);
+        ModuleContent::create([
+            'module_id' => $module->id,
+            'content_type' => ContentType::Test->value,
+            'assessment_id' => $postTest->id,
+            'title' => 'ทดสอบหลังเรียน: '.$topic,
+            'duration_minutes' => $postTest->is_timed ? $postTest->time_limit_minutes : null,
+            'sort_order' => $sortOrder++,
+        ]);
+
+        // Modules that require expert review also carry a manually-graded
+        // assignment — the artifact the assigned expert actually reviews.
+        if ($requiresExpertReview) {
+            $assignment = Assessment::create([
+                'course_id' => $course->id,
+                'module_id' => $module->id,
+                'type' => AssessmentType::Assignment->value,
+                'title' => 'ใบงาน: '.$topic,
+                'passing_score_pct' => 60,
+                'max_attempts' => fake()->randomElement([1, 2, 3]),
+                'grading_mode' => GradingMode::Manual->value,
+                'is_required_for_cert' => false,
+                'requires_expert_review' => true,
+            ]);
+
+            ModuleContent::create([
+                'module_id' => $module->id,
+                'content_type' => ContentType::Test->value,
+                'assessment_id' => $assignment->id,
+                'title' => 'ส่งใบงาน: '.$topic,
+                'duration_minutes' => null,
+                'sort_order' => $sortOrder++,
+            ]);
+        }
+    }
+
+    private function createModuleAssessment(Course $course, Module $module, AssessmentType $type, string $topic, int $number, bool $isFirst): Assessment
+    {
+        // Pre-tests stay auto-graded (diagnostic, not evaluative); post-tests
+        // cycle through every grading mode across a course's modules so
+        // auto/manual/mixed are all exercised somewhere.
+        $gradingMode = $type === AssessmentType::PreTest
+            ? GradingMode::Auto
+            : GradingMode::cases()[$number % count(GradingMode::cases())];
+
+        $isTimed = $isFirst ? $number % 2 === 0 : $number % 2 === 1;
+
+        return Assessment::create([
+            'course_id' => $course->id,
+            'module_id' => $module->id,
+            'type' => $type->value,
+            'title' => ($type === AssessmentType::PreTest ? 'แบบทดสอบก่อนเรียน: ' : 'แบบทดสอบหลังเรียน: ').$topic,
+            'passing_score_pct' => fake()->randomElement([50, 60, 70, 80]),
+            'max_attempts' => fake()->randomElement([1, 3, 5, 0]),
+            'grading_mode' => $gradingMode->value,
+            'is_timed' => $isTimed,
+            'time_limit_minutes' => $isTimed ? fake()->randomElement([10, 15, 20, 30]) : null,
+            // Module-level tests never gate the certificate — only the two
+            // course-wide post-tests do (see buildCourse()) — so they can't
+            // drift out of sync with LearnerProgressSeeder's certified scenario.
+            'is_required_for_cert' => false,
+            'requires_expert_review' => false,
+        ]);
+    }
+
+    private function moduleDescription(string $topic): string
+    {
+        return str_replace(':topic', $topic, fake()->randomElement(self::DESCRIPTION_FRAMES));
     }
 }
