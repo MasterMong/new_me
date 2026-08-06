@@ -74,11 +74,17 @@
                                             {{ $group->is_active ? 'ปิดการใช้งาน' : 'เปิดการใช้งาน' }}
                                         </flux:menu.item>
                                         <flux:menu.separator />
+                                        @php
+                                            $restrictedCount = $group->content_access_count + $group->course_access_count;
+                                            $deleteConfirmText = $restrictedCount > 0
+                                                ? "กลุ่ม '{$group->name}' ใช้จำกัดสิทธิ์เข้าถึงคอร์ส/เนื้อหาอยู่ {$restrictedCount} รายการ การลบกลุ่มนี้จะทำให้รายการเหล่านั้นเปิดให้ทุกคนเข้าถึงได้ทันที ยืนยันการลบ?"
+                                                : "ยืนยันการลบกลุ่ม '{$group->name}'?";
+                                        @endphp
                                         <flux:menu.item
                                             icon="trash"
                                             variant="danger"
                                             wire:click="deleteGroup({{ $group->id }})"
-                                            wire:confirm="ยืนยันการลบกลุ่ม '{{ $group->name }}'?"
+                                            wire:confirm="{{ $deleteConfirmText }}"
                                         >
                                             ลบกลุ่มนี้
                                         </flux:menu.item>

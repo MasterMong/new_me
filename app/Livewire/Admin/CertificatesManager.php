@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use App\Models\Certificate;
+use App\Services\CertificatePdfService;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -15,6 +16,19 @@ class CertificatesManager extends Component
     public function updatingSearch(): void
     {
         $this->resetPage();
+    }
+
+    public function regeneratePdf(int $certificateId): void
+    {
+        $certificate = Certificate::findOrFail($certificateId);
+
+        try {
+            app(CertificatePdfService::class)->generate($certificate);
+            $this->dispatch('toast', message: 'สร้างไฟล์ PDF ใหม่เรียบร้อยแล้ว', type: 'success');
+        } catch (\Throwable $e) {
+            report($e);
+            $this->dispatch('toast', message: 'ไม่สามารถสร้างไฟล์ PDF ได้ กรุณาลองใหม่อีกครั้ง', type: 'error');
+        }
     }
 
     public function render()

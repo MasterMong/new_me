@@ -9,7 +9,7 @@ use App\Models\Affiliation;
 use App\Models\Position;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use Livewire\Attributes\Validate;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -26,29 +26,35 @@ class Index extends Component
 
     public ?User $editingUser = null;
 
-    #[Validate('required|string')]
     public $prefix = '';
 
-    #[Validate('required|string|max:100')]
     public $first_name = '';
 
-    #[Validate('required|string|max:100')]
     public $last_name = '';
 
-    #[Validate('required|email|max:255')]
     public $email = '';
 
-    #[Validate('required')]
     public $role = '';
 
-    #[Validate('nullable|exists:positions,id')]
     public $position_id = null;
 
-    #[Validate('nullable|exists:affiliations,id')]
     public $affiliation_id = null;
 
-    #[Validate('required|string')]
     public $experience = '';
+
+    protected function rules(): array
+    {
+        return [
+            'prefix' => ['required', 'string'],
+            'first_name' => ['required', 'string', 'max:100'],
+            'last_name' => ['required', 'string', 'max:100'],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($this->editingUser?->id)],
+            'role' => ['required'],
+            'position_id' => ['nullable', 'exists:positions,id'],
+            'affiliation_id' => ['nullable', 'exists:affiliations,id'],
+            'experience' => ['required', 'string'],
+        ];
+    }
 
     // Password reset state
     public bool $showingPasswordModal = false;
@@ -67,6 +73,12 @@ class Index extends Component
 
     public function toggleActive(int $userId): void
     {
+        if ($userId === auth()->id()) {
+            $this->dispatch('toast', message: 'ไม่สามารถระงับบัญชีของตัวเองได้', type: 'error');
+
+            return;
+        }
+
         $user = User::findOrFail($userId);
         $user->update(['is_active' => ! $user->is_active]);
         $this->dispatch('toast', message: 'อัปเดตสถานะผู้ใช้เรียบร้อยแล้ว', type: 'success');
@@ -90,6 +102,12 @@ class Index extends Component
     public function saveUser()
     {
         $this->validate();
+
+        if ($this->editingUser->id === auth()->id() && $this->role !== $this->editingUser->role->value) {
+            $this->addError('role', 'ไม่สามารถเปลี่ยนบทบาทของตัวเองได้');
+
+            return;
+        }
 
         $this->editingUser->update([
             'prefix' => $this->prefix,

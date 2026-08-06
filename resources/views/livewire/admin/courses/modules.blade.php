@@ -119,11 +119,16 @@
                                     <flux:menu.item icon="user-group" wire:click="openExpertAssignment({{ $module->id }})">มอบหมายผู้เชี่ยวชาญ</flux:menu.item>
                                 @endif
                                 <flux:menu.separator />
+                                @php
+                                    $moduleDeleteConfirm = $module->progress_count > 0
+                                        ? "โมดูล '{$module->title}' มีข้อมูลความก้าวหน้าของผู้เรียน {$module->progress_count} รายการอยู่ การลบจะทำลายเนื้อหาและข้อมูลเหล่านี้อย่างถาวร ยืนยันการลบ?"
+                                        : "ยืนยันการลบโมดูล '{$module->title}'? เนื้อหาทั้งหมดในโมดูลจะถูกลบ";
+                                @endphp
                                 <flux:menu.item
                                     icon="trash"
                                     variant="danger"
                                     wire:click="deleteModule({{ $module->id }})"
-                                    wire:confirm="ยืนยันการลบโมดูล '{{ $module->title }}'? เนื้อหาทั้งหมดในโมดูลจะถูกลบ"
+                                    wire:confirm="{{ $moduleDeleteConfirm }}"
                                 >
                                     ลบโมดูล
                                 </flux:menu.item>

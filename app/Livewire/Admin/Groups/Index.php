@@ -53,7 +53,7 @@ class Index extends Component
     public function render()
     {
         $groups = LearnerGroup::query()
-            ->withCount('users')
+            ->withCount(['users', 'contentAccess', 'courseAccess'])
             ->when($this->search, fn ($q) => $q->where('name', 'like', "%{$this->search}%"))
             ->latest()
             ->paginate(15);

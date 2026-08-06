@@ -3,6 +3,8 @@
 namespace App\Livewire\Admin\Courses;
 
 use App\Enums\AssessmentType;
+use App\Enums\GradingMode;
+use App\Enums\QuestionType;
 use App\Models\Assessment;
 use App\Models\Course;
 use App\Models\Question;
@@ -39,6 +41,8 @@ class Assessments extends Component
 
     public ?int $assessmentTimeLimitMinutes = null;
 
+    public bool $assessmentIsRequiredForCert = false;
+
     // Question List
     public $questions = [];
 
@@ -57,7 +61,7 @@ class Assessments extends Component
 
     public string $questionCorrectAnswer = '';
 
-    public int $questionPoints = 1;
+    public $questionPoints = 1;
 
     public array $choices = []; // [['text' => '', 'is_correct' => false]]
 
@@ -90,6 +94,7 @@ class Assessments extends Component
         $this->assessmentGradingMode = $assessment->grading_mode->value;
         $this->assessmentIsTimed = $assessment->is_timed;
         $this->assessmentTimeLimitMinutes = $assessment->time_limit_minutes;
+        $this->assessmentIsRequiredForCert = $assessment->is_required_for_cert;
         $this->showAssessmentModal = true;
     }
 
@@ -104,6 +109,7 @@ class Assessments extends Component
             ],
             'assessmentPassingScore' => 'required|integer|min:0|max:100',
             'assessmentMaxAttempts' => 'required|integer|min:0|max:255',
+            'assessmentGradingMode' => ['required', Rule::in(array_column(GradingMode::cases(), 'value'))],
             'assessmentTimeLimitMinutes' => 'nullable|required_if:assessmentIsTimed,true|integer|min:1|max:600',
         ]);
 
@@ -117,6 +123,7 @@ class Assessments extends Component
             'grading_mode' => $this->assessmentGradingMode,
             'is_timed' => $this->assessmentIsTimed,
             'time_limit_minutes' => $this->assessmentIsTimed ? $this->assessmentTimeLimitMinutes : null,
+            'is_required_for_cert' => $this->assessmentIsRequiredForCert,
         ];
 
         if ($this->editingAssessmentId) {
@@ -132,7 +139,7 @@ class Assessments extends Component
 
     public function deleteAssessment(int $id)
     {
-        Assessment::find($id)->delete();
+        Assessment::findOrFail($id)->delete();
         $this->loadAssessments();
     }
 
@@ -182,10 +189,19 @@ class Assessments extends Component
     {
         $this->validate([
             'questionText' => 'required|min:3',
-            'questionPoints' => 'required|integer|min:1',
+            'questionType' => ['required', Rule::in(array_column(QuestionType::cases(), 'value'))],
+            'questionPoints' => 'required|numeric|min:0.01|max:999.99',
             'choices.*.text' => 'required_if:questionType,multiple_choice',
             'questionCorrectAnswer' => 'required_if:questionType,short_answer|nullable|string|max:255',
         ]);
+
+        if ($this->questionType === 'multiple_choice'
+            && ! collect($this->choices)->contains(fn ($choice) => (bool) ($choice['is_correct'] ?? false))
+        ) {
+            $this->addError('choices', 'กรุณาเลือกอย่างน้อยหนึ่งตัวเลือกที่ถูกต้อง');
+
+            return;
+        }
 
         // Short answer is auto-graded by comparing the learner's text against
         // correct_answer; essay and file upload always need a human to grade.
@@ -232,7 +248,7 @@ class Assessments extends Component
 
     public function deleteQuestion(int $id)
     {
-        Question::find($id)->delete();
+        Question::findOrFail($id)->delete();
         $this->loadQuestions();
         $this->loadAssessments();
     }
@@ -306,5 +322,6 @@ class Assessments extends Component
         $this->assessmentGradingMode = 'auto';
         $this->assessmentIsTimed = false;
         $this->assessmentTimeLimitMinutes = null;
+        $this->assessmentIsRequiredForCert = false;
     }
 }

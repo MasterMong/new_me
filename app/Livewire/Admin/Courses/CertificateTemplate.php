@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Courses;
 
+use App\Livewire\Concerns\CleansUpPublicStorage;
 use App\Models\CertificateTemplate as CertificateTemplateModel;
 use App\Models\Course;
 use Illuminate\Support\Facades\Storage;
@@ -10,7 +11,7 @@ use Livewire\WithFileUploads;
 
 class CertificateTemplate extends Component
 {
-    use WithFileUploads;
+    use CleansUpPublicStorage, WithFileUploads;
 
     public Course $course;
 
@@ -72,6 +73,7 @@ class CertificateTemplate extends Component
 
         $imageUrl = $this->templateImageUrl;
         if ($this->templateImage) {
+            $this->deleteOldPublicFile($this->templateImageUrl);
             $path = $this->templateImage->store('certificates/templates', 'public');
             $imageUrl = Storage::disk('public')->url($path);
         }

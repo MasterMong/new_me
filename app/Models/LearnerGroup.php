@@ -33,4 +33,9 @@ class LearnerGroup extends Model
     {
         return $this->hasMany(ContentGroupAccess::class, 'group_id');
     }
+
+    public function courseAccess(): HasMany
+    {
+        return $this->hasMany(CourseGroupAccess::class, 'group_id');
+    }
 }

@@ -58,12 +58,21 @@
                         </div>
                     </div>
 
-                    @if ($assessment->is_timed)
-                        <div class="flex items-center gap-1.5 text-xs font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-100 w-fit">
-                            <flux:icon name="clock" variant="micro" />
-                            จับเวลา {{ $assessment->time_limit_minutes }} นาที
-                        </div>
-                    @endif
+                    <div class="flex flex-wrap items-center gap-2">
+                        @if ($assessment->is_timed)
+                            <div class="flex items-center gap-1.5 text-xs font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-100 w-fit">
+                                <flux:icon name="clock" variant="micro" />
+                                จับเวลา {{ $assessment->time_limit_minutes }} นาที
+                            </div>
+                        @endif
+
+                        @if ($assessment->is_required_for_cert)
+                            <div class="flex items-center gap-1.5 text-xs font-bold text-primary bg-primary/5 px-2.5 py-1 rounded-full border border-primary/10 w-fit">
+                                <flux:icon name="academic-cap" variant="micro" />
+                                บังคับผ่านเพื่อรับเกียรติบัตร
+                            </div>
+                        @endif
+                    </div>
 
                     <div class="flex items-center gap-2 pt-2">
                         <flux:button variant="ghost" size="sm" class="flex-1" wire:click="editAssessment({{ $assessment->id }})">
@@ -148,7 +157,7 @@
             <div class="grid grid-cols-2 gap-4">
                 <flux:field>
                     <flux:label>จำนวนครั้งที่ทำได้</flux:label>
-                    <flux:input type="number" wire:model="assessmentMaxAttempts" min="1" />
+                    <flux:input type="number" wire:model="assessmentMaxAttempts" min="0" />
                 </flux:field>
 
                 <flux:field>
@@ -156,6 +165,7 @@
                     <flux:select wire:model="assessmentGradingMode">
                         <flux:select.option value="auto">อัตโนมัติ (Auto)</flux:select.option>
                         <flux:select.option value="manual">ตรวจด้วยมือ (Manual)</flux:select.option>
+                        <flux:select.option value="mixed">ผสม (Mixed)</flux:select.option>
                     </flux:select>
                 </flux:field>
             </div>
@@ -176,6 +186,14 @@
                         </flux:field>
                     </div>
                 @endif
+            </div>
+
+            <div class="rounded-xl bg-surface p-4">
+                <flux:field variant="inline">
+                    <flux:switch wire:model="assessmentIsRequiredForCert" />
+                    <flux:label>บังคับผ่านเพื่อรับเกียรติบัตร</flux:label>
+                    <flux:description>ผู้เรียนต้องผ่านแบบทดสอบนี้จึงจะมีสิทธิ์ได้รับเกียรติบัตรของคอร์สนี้</flux:description>
+                </flux:field>
             </div>
         </div>
 
@@ -293,7 +311,7 @@
 
                 <flux:field>
                     <flux:label>คะแนน (Points)</flux:label>
-                    <flux:input type="number" wire:model="questionPoints" min="1" />
+                    <flux:input type="number" step="0.01" wire:model="questionPoints" min="0.01" />
                 </flux:field>
             </div>
 
@@ -326,6 +344,7 @@
                         @endforeach
                     </div>
                     <flux:error name="choices.*.text" />
+                    <flux:error name="choices" />
                 </div>
             @elseif ($questionType === 'short_answer')
                 <flux:field>

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Courses;
 
+use App\Livewire\Concerns\CleansUpPublicStorage;
 use App\Models\Course;
 use App\Models\CourseGroupAccess;
 use App\Models\CourseImage;
@@ -12,7 +13,7 @@ use Livewire\WithFileUploads;
 
 class Edit extends Component
 {
-    use WithFileUploads;
+    use CleansUpPublicStorage, WithFileUploads;
 
     public Course $course;
 
@@ -93,6 +94,7 @@ class Edit extends Component
         $this->validate();
 
         if ($this->thumbnail) {
+            $this->deleteOldPublicFile($this->course->thumbnail_url);
             $path = $this->thumbnail->store('courses/thumbnails', 'public');
             $thumbnailUrl = Storage::disk('public')->url($path);
         } else {
@@ -136,7 +138,7 @@ class Edit extends Component
     public function removeGalleryImage(int $imageId): void
     {
         $image = CourseImage::findOrFail($imageId);
-        // Optional: delete from storage
+        $this->deleteOldPublicFile($image->image_url);
         $image->delete();
         $this->existingGallery = $this->course->images()->get()->toArray();
     }
@@ -155,6 +157,7 @@ class Edit extends Component
         return view('livewire.admin.courses.edit', [
             'enrollmentCount' => $this->course->enrollments()->count(),
             'moduleCount' => $this->course->modules()->count(),
+            'certificateCount' => $this->course->certificates()->count(),
             'allGroups' => LearnerGroup::where('is_active', true)->orderBy('name')->get(),
         ])->layout('layouts.app', ['title' => 'แก้ไขคอร์ส']);
     }

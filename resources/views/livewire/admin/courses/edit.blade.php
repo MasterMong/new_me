@@ -21,12 +21,17 @@
             </div>
         </div>
         <div class="flex items-center gap-2 shrink-0">
+            @php
+                $editDeleteConfirm = $enrollmentCount > 0 || $certificateCount > 0
+                    ? "หลักสูตร '{$course->title}' มีผู้ลงทะเบียน {$enrollmentCount} คน และเกียรติบัตรที่ออกแล้ว {$certificateCount} ใบ การลบจะทำลายข้อมูลเหล่านี้อย่างถาวร ยืนยันการลบ?"
+                    : "ยืนยันการลบคอร์ส '{$course->title}'? การกระทำนี้ไม่สามารถย้อนกลับได้";
+            @endphp
             <flux:button
                 variant="ghost"
                 size="sm"
                 icon="trash"
                 wire:click="delete"
-                wire:confirm="ยืนยันการลบคอร์ส '{{ $course->title }}'? การกระทำนี้ไม่สามารถย้อนกลับได้"
+                wire:confirm="{{ $editDeleteConfirm }}"
             />
             <flux:button variant="ghost" wire:navigate :href="route('admin.courses.index')">ยกเลิก</flux:button>
             <flux:button variant="primary" wire:click="save" wire:loading.attr="disabled" wire:target="save">

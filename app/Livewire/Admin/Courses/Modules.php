@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\Courses;
 
 use App\Enums\ContentType;
 use App\Enums\UserRole;
+use App\Livewire\Concerns\CleansUpPublicStorage;
 use App\Models\ContentGroupAccess;
 use App\Models\Course;
 use App\Models\LearnerGroup;
@@ -12,12 +13,13 @@ use App\Models\ModuleContent;
 use App\Models\ModuleExpertAssignment;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
 class Modules extends Component
 {
-    use WithFileUploads;
+    use CleansUpPublicStorage, WithFileUploads;
 
     public Course $course;
 
@@ -122,6 +124,9 @@ class Modules extends Component
         $this->validate($this->moduleRules(), $this->moduleMessages());
 
         if ($this->moduleThumbnail) {
+            $this->deleteOldPublicFile(
+                $this->editingModuleId ? Module::findOrFail($this->editingModuleId)->thumbnail_url : null
+            );
             $path = $this->moduleThumbnail->store('modules/thumbnails', 'public');
             $thumbnailUrl = Storage::disk('public')->url($path);
         } else {
@@ -386,7 +391,11 @@ class Modules extends Component
             'contentTitle' => ['required', 'string', 'max:500'],
             'contentFileUrl' => ['nullable', 'string', 'max:1000'],
             'contentDurationMinutes' => ['nullable', 'numeric', 'min:0'],
-            'contentAssessmentId' => ['nullable', 'required_if:contentType,test', 'exists:assessments,id'],
+            'contentAssessmentId' => [
+                'nullable',
+                'required_if:contentType,test',
+                Rule::exists('assessments', 'id')->where('course_id', $this->course->id),
+            ],
             'selectedGroupIds' => ['array'],
             'selectedGroupIds.*' => ['integer', 'exists:learner_groups,id'],
         ];
@@ -442,6 +451,7 @@ class Modules extends Component
     {
         $modules = $this->course->modules()
             ->with(['contents.groupAccess.group', 'assignedExperts'])
+            ->withCount('progress')
             ->orderBy('sort_order')
             ->get();
 

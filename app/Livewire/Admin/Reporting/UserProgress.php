@@ -8,6 +8,7 @@ use App\Models\Enrollment;
 use App\Models\LearnerGroup;
 use App\Models\Module;
 use App\Models\User;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -23,6 +24,7 @@ class UserProgress extends Component
 
     public string $enrolledTo = '';
 
+    #[Url]
     public ?int $selectedUserId = null;
 
     public function updatingSearch(): void

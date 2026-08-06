@@ -58,14 +58,14 @@ class ModuleContent extends Model
             return true;
         }
 
-        $userGroupIds = $user->groups()->pluck('learner_groups.id');
+        $userGroupIds = $user->groups()->where('learner_groups.is_active', true)->pluck('learner_groups.id');
 
         return $this->groupAccess->pluck('group_id')->intersect($userGroupIds)->isNotEmpty();
     }
 
     public function scopeVisibleTo(Builder $query, User $user): Builder
     {
-        $userGroupIds = $user->groups()->pluck('learner_groups.id');
+        $userGroupIds = $user->groups()->where('learner_groups.is_active', true)->pluck('learner_groups.id');
 
         return $query->where(function (Builder $q) use ($userGroupIds) {
             $q->whereDoesntHave('groupAccess')

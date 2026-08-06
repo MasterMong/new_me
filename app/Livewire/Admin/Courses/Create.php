@@ -48,6 +48,7 @@ class Create extends Component
             'requireReview' => ['boolean'],
             'isPublished' => ['boolean'],
             'thumbnail' => ['nullable', 'image', 'max:2048'],
+            'gallery.*' => ['image', 'max:2048'],
             'selectedGroupIds' => ['array'],
             'selectedGroupIds.*' => ['integer', 'exists:learner_groups,id'],
         ];
@@ -92,6 +93,14 @@ class Create extends Component
             CourseGroupAccess::create([
                 'course_id' => $course->id,
                 'group_id' => (int) $groupId,
+            ]);
+        }
+
+        foreach ($this->gallery as $image) {
+            $path = $image->store('courses/gallery', 'public');
+            $course->images()->create([
+                'image_url' => Storage::disk('public')->url($path),
+                'sort_order' => $course->images()->max('sort_order') + 10,
             ]);
         }
 

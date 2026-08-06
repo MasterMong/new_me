@@ -39,7 +39,7 @@ class Index extends Component
     {
         $courses = Course::query()
             ->with('creator')
-            ->withCount('enrollments')
+            ->withCount(['enrollments', 'certificates'])
             ->when($this->search, fn ($q) => $q->where('title', 'like', "%{$this->search}%"))
             ->when($this->statusFilter !== '', fn ($q) => $q->where('is_published', (bool) $this->statusFilter))
             ->latest()

@@ -65,16 +65,27 @@
 
                         <flux:table.cell class="pe-6">
                             <div class="flex justify-end">
-                                <flux:button
-                                    as="a"
-                                    href="{{ $cert->pdf_url }}"
-                                    target="_blank"
-                                    variant="ghost"
-                                    size="sm"
-                                    icon="arrow-down-tray"
-                                    class="rounded-full hover:bg-surface-container"
-                                    title="Download PDF"
-                                />
+                                @if ($cert->pdf_url)
+                                    <flux:button
+                                        as="a"
+                                        href="{{ $cert->pdf_url }}"
+                                        target="_blank"
+                                        variant="ghost"
+                                        size="sm"
+                                        icon="arrow-down-tray"
+                                        class="rounded-full hover:bg-surface-container"
+                                        title="Download PDF"
+                                    />
+                                @else
+                                    <flux:button
+                                        wire:click="regeneratePdf({{ $cert->id }})"
+                                        variant="ghost"
+                                        size="sm"
+                                        icon="arrow-path"
+                                        class="rounded-full hover:bg-surface-container"
+                                        title="สร้าง PDF ใหม่ (ไฟล์ยังไม่พร้อม)"
+                                    />
+                                @endif
                             </div>
                         </flux:table.cell>
                     </flux:table.row>

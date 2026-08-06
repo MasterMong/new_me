@@ -185,11 +185,16 @@
                                             {{ $course->is_published ? 'ยกเลิกการเผยแพร่' : 'เผยแพร่สู่สาธารณะ' }}
                                         </flux:menu.item>
                                         <flux:menu.separator />
+                                        @php
+                                            $courseDeleteConfirm = $course->enrollments_count > 0 || $course->certificates_count > 0
+                                                ? "หลักสูตร '{$course->title}' มีผู้ลงทะเบียน {$course->enrollments_count} คน และเกียรติบัตรที่ออกแล้ว {$course->certificates_count} ใบ การลบจะทำลายข้อมูลเหล่านี้อย่างถาวร ยืนยันการลบ?"
+                                                : "ยืนยันการลบหลักสูตร '{$course->title}'? ข้อมูลทั้งหมดจะถูกลบอย่างถาวร";
+                                        @endphp
                                         <flux:menu.item
                                             icon="trash"
                                             variant="danger"
                                             wire:click="deleteCourse({{ $course->id }})"
-                                            wire:confirm="ยืนยันการลบหลักสูตร '{{ $course->title }}'? ข้อมูลทั้งหมดจะถูกลบอย่างถาวร"
+                                            wire:confirm="{{ $courseDeleteConfirm }}"
                                         >
                                             ลบหลักสูตรนี้
                                         </flux:menu.item>

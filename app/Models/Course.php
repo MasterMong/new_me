@@ -98,7 +98,7 @@ class Course extends Model
             return false;
         }
 
-        $userGroupIds = $user->groups()->pluck('learner_groups.id');
+        $userGroupIds = $user->groups()->where('learner_groups.is_active', true)->pluck('learner_groups.id');
 
         return $this->groupAccess->pluck('group_id')->intersect($userGroupIds)->isNotEmpty();
     }
@@ -109,7 +109,7 @@ class Course extends Model
             $q->whereDoesntHave('groupAccess');
 
             if ($user) {
-                $userGroupIds = $user->groups()->pluck('learner_groups.id');
+                $userGroupIds = $user->groups()->where('learner_groups.is_active', true)->pluck('learner_groups.id');
                 $q->orWhereHas('groupAccess', function (Builder $q2) use ($userGroupIds) {
                     $q2->whereIn('group_id', $userGroupIds);
                 });

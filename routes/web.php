@@ -48,7 +48,7 @@ Route::get('/courses/{course}', PublicCoursesShow::class)->name('courses.show');
 Route::get('/directory', PublicDirectory::class)->name('directory');
 Route::get('/contact', Contact::class)->name('contact');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'active'])->group(function () {
     Route::get('dashboard', function () {
         if (auth()->user()->role === UserRole::Admin) {
             return redirect()->route('admin.dashboard');
@@ -62,7 +62,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('dashboard');
 });
 
-Route::middleware(['auth', 'verified', 'learner'])->prefix('learn')->name('learn.')->group(function () {
+Route::middleware(['auth', 'verified', 'active', 'learner'])->prefix('learn')->name('learn.')->group(function () {
     Route::get('/', Dashboard::class)->name('dashboard');
     Route::get('/courses/{course}', CoursePath::class)->name('courses.show');
     Route::get('/courses/{course}/modules/{module}/{content?}', CoursePlayer::class)->name('courses.play');
@@ -75,7 +75,7 @@ Route::middleware(['auth', 'verified', 'learner'])->prefix('learn')->name('learn
     Route::get('/courses/{course}/review', CourseReview::class)->name('courses.review');
 });
 
-Route::middleware(['auth', 'verified', 'expert'])->prefix('expert')->name('expert.')->group(function () {
+Route::middleware(['auth', 'verified', 'active', 'expert'])->prefix('expert')->name('expert.')->group(function () {
     Route::get('/', App\Livewire\Expert\Dashboard::class)->name('dashboard');
     Route::get('/modules/{module}/submissions', SubmissionsList::class)->name('submissions.index');
     Route::get('/submissions/{attempt}/review', ReviewSubmission::class)->name('submissions.review');
@@ -90,7 +90,7 @@ Route::middleware(['auth', 'verified', 'expert'])->prefix('expert')->name('exper
     });
 });
 
-Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'verified', 'active', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', AdminDashboard::class)->name('dashboard');
     Route::get('/courses', AdminCoursesIndex::class)->name('courses.index');
     Route::get('/courses/create', AdminCoursesCreate::class)->name('courses.create');

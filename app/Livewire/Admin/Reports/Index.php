@@ -3,10 +3,11 @@
 namespace App\Livewire\Admin\Reports;
 
 use App\Enums\EnrollmentStatus;
+use App\Enums\TestAttemptStatus;
 use App\Models\Certificate;
 use App\Models\Course;
 use App\Models\Enrollment;
-use App\Models\ExpertReview;
+use App\Models\TestAttempt;
 use App\Models\User;
 use Livewire\Component;
 
@@ -18,7 +19,7 @@ class Index extends Component
             'totalUsers' => User::count(),
             'totalEnrollments' => Enrollment::count(),
             'totalCertificates' => Certificate::count(),
-            'pendingReviews' => ExpertReview::where('status', 'pending')->count(),
+            'pendingReviews' => TestAttempt::where('status', TestAttemptStatus::PendingReview)->count(),
             'courseStats' => $this->courseStats(),
         ])->layout('layouts.app', ['title' => 'รายงาน']);
     }
