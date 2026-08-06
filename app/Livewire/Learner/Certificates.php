@@ -36,7 +36,6 @@ class Certificates extends Component
             'stats' => [
                 'total_earned' => $certificates->count(),
                 'in_progress' => $ongoingCourses->count(),
-                'total_courses' => Enrollment::where('user_id', Auth::id())->count(),
             ],
         ]);
     }

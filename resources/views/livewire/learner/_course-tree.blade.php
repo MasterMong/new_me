@@ -140,7 +140,7 @@
                             </button>
                         @else
                             <a
-                                href="{{ route('learn.courses.play', [$course, $treeModule]) }}"
+                                href="{{ route('learn.courses.play', [$course, $treeModule, $treeContent]) }}"
                                 wire:navigate
                                 class="flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-surface-container-high transition-colors"
                             >

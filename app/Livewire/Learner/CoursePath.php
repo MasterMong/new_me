@@ -43,11 +43,14 @@ class CoursePath extends Component
             }])
             ->get();
 
+        $preTest = $this->course->assessments()->where('type', 'pre_test')->whereNull('module_id')->first();
+        $postTest = $this->course->assessments()->where('type', 'post_test')->whereNull('module_id')->first();
+
         $modules = $courseModules
             ->values()
-            ->map(function ($module, $index) use ($courseModules) {
+            ->map(function ($module, $index) use ($courseModules, $preTest) {
                 $previousModule = $index > 0 ? $courseModules[$index - 1] : null;
-                $module->is_accessible = $this->checkModuleAccessibility($module, $previousModule);
+                $module->is_accessible = $this->checkModuleAccessibility($module, $previousModule, $preTest);
                 $module->progress_percent = $this->calculateModuleProgress($module);
                 $module->is_completed = $this->isModuleCompleted($module);
                 $module->pre_test = $module->assessments->firstWhere('type', AssessmentType::PreTest);
@@ -56,9 +59,6 @@ class CoursePath extends Component
                 return $module;
             });
 
-        $preTest = $this->course->assessments()->where('type', 'pre_test')->whereNull('module_id')->first();
-        $postTest = $this->course->assessments()->where('type', 'post_test')->whereNull('module_id')->first();
-
         return view('livewire.learner.course-path', [
             'modules' => $modules,
             'preTest' => $preTest,
@@ -66,11 +66,10 @@ class CoursePath extends Component
         ])->title($this->course->title);
     }
 
-    protected function checkModuleAccessibility($module, ?Module $previousModule): bool
+    protected function checkModuleAccessibility($module, ?Module $previousModule, $coursePreTest): bool
     {
         // Course-wide pre-test must be completed if it exists
-        $preTest = $this->course->assessments()->where('type', 'pre_test')->whereNull('module_id')->first();
-        if ($preTest && ! $preTest->attempts()->where('user_id', Auth::id())->exists()) {
+        if ($coursePreTest && ! $coursePreTest->attempts()->where('user_id', Auth::id())->exists()) {
             return false;
         }
 

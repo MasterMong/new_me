@@ -137,7 +137,15 @@ class Enrollment extends Model
             'completed_at' => $this->completed_at ?? now(),
         ]);
 
-        app(CertificatePdfService::class)->generate($certificate);
+        // The certificate itself is the source of truth for "earned it" — a
+        // PDF rendering failure (bad template image, dompdf error, etc.)
+        // shouldn't block issuance. pdf_url stays null and the learner sees
+        // a "generating" state instead of a dead download link.
+        try {
+            app(CertificatePdfService::class)->generate($certificate);
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         $this->user->notify(new CertificateIssued($certificate));
 

@@ -90,10 +90,17 @@
                             ใบประกาศนียบัตร
                         </flux:sidebar.item>
 
+                        @php
+                            $unreadNotificationsCount = \App\Models\LearnerNotification::where('user_id', auth()->id())
+                                ->where('is_read', false)
+                                ->count();
+                        @endphp
                         <flux:sidebar.item
                             wire:navigate
                             :href="route('learn.notifications.index')"
                             :current="request()->routeIs('learn.notifications.*')"
+                            :badge="$unreadNotificationsCount > 0 ? $unreadNotificationsCount : null"
+                            badge:color="red"
                             class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
                         >
                             <x-slot name="icon">

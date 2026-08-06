@@ -47,10 +47,14 @@
                         </div>
                         
                         <div class="absolute inset-0 bg-primary/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 backdrop-blur-sm">
-                            <flux:button variant="primary" size="sm" class="bg-white text-primary hover:bg-zinc-50 border-0" href="{{ $cert->pdf_url }}" target="_blank">
-                                <flux:icon.eye variant="mini" class="mr-2" />
-                                ดูออนไลน์
-                            </flux:button>
+                            @if($cert->pdf_url)
+                                <flux:button variant="primary" size="sm" class="bg-white text-primary hover:bg-zinc-50 border-0" href="{{ $cert->pdf_url }}" target="_blank">
+                                    <flux:icon.eye variant="mini" class="mr-2" />
+                                    ดูออนไลน์
+                                </flux:button>
+                            @else
+                                <flux:badge color="zinc" size="sm">กำลังเตรียมไฟล์</flux:badge>
+                            @endif
                         </div>
                     </div>
 
@@ -61,10 +65,17 @@
                             <span class="font-bold text-primary">{{ round($cert->final_score_pct) }}%</span>
                         </div>
                         <div class="mt-6">
-                            <flux:button variant="primary" class="w-full" href="{{ $cert->pdf_url }}" download>
-                                <flux:icon.arrow-down-tray variant="mini" class="mr-2" />
-                                ดาวน์โหลด PDF
-                            </flux:button>
+                            @if($cert->pdf_url)
+                                <flux:button variant="primary" class="w-full" href="{{ $cert->pdf_url }}" download>
+                                    <flux:icon.arrow-down-tray variant="mini" class="mr-2" />
+                                    ดาวน์โหลด PDF
+                                </flux:button>
+                            @else
+                                <flux:button variant="subtle" class="w-full" disabled>
+                                    <flux:icon.arrow-path variant="mini" class="mr-2" />
+                                    ไฟล์ PDF กำลังเตรียมการ
+                                </flux:button>
+                            @endif
                         </div>
                     </div>
                 </div>

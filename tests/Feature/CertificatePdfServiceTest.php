@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\AssessmentType;
+use App\Enums\ContentType;
 use App\Enums\TestAttemptStatus;
 use App\Enums\UserRole;
 use App\Models\Assessment;
@@ -97,7 +98,7 @@ test('issuing a certificate populates pdf_url end to end', function () {
     $course = Course::factory()->create(['passing_score_pct' => 60]);
     $module = Module::factory()->create(['course_id' => $course->id, 'is_required' => true]);
 
-    $content = ModuleContent::factory()->create(['module_id' => $module->id]);
+    $content = ModuleContent::factory()->create(['module_id' => $module->id, 'content_type' => ContentType::Video]);
     $content->views()->create(['user_id' => $user->id, 'is_completed' => true, 'viewed_at' => now()]);
 
     $postTest = Assessment::factory()->create([

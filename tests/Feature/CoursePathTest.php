@@ -13,6 +13,7 @@ use App\Models\Module;
 use App\Models\ModuleContent;
 use App\Models\TestAttempt;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 
 test('learner can view course path if enrolled', function () {
@@ -361,4 +362,25 @@ test('a module with a post-test is not considered completed until the post-test 
             // All content is watched (100%), but the module isn't "completed" without a passed post-test.
             return $module->progress_percent === 100 && $module->is_completed === false;
         });
+});
+
+test('the course pre-test is not re-queried once per module', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+    Module::factory()->count(5)->create(['course_id' => $course->id]);
+
+    $this->actingAs($user);
+
+    DB::enableQueryLog();
+    Livewire::test(CoursePath::class, ['course' => $course]);
+    $preTestQueries = collect(DB::getQueryLog())->filter(
+        fn ($q) => str_contains($q['query'], 'assessments') && in_array('pre_test', $q['bindings'], true)
+    );
+    DB::disableQueryLog();
+
+    // Before the fix, checkModuleAccessibility() re-ran this exact query
+    // once per module (5 modules here) instead of reusing the value render()
+    // already computed once for the view.
+    expect($preTestQueries->count())->toBeLessThanOrEqual(1);
 });

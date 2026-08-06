@@ -102,7 +102,7 @@
                         </flux:table.cell>
 
                         <flux:table.cell class="pe-8 text-right">
-                            <flux:button variant="ghost" size="sm" icon="chevron-right" wire:navigate :href="route('courses.show', $enrollment->course)" />
+                            <flux:button variant="ghost" size="sm" icon="chevron-right" wire:navigate :href="route('learn.courses.show', $enrollment->course)" />
                         </flux:table.cell>
                     </flux:table.row>
                 @empty

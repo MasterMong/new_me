@@ -156,8 +156,9 @@
                                 ข้อถัดไป
                             </flux:button>
                         @else
-                            <flux:button variant="primary" class="bg-green-600 hover:bg-green-500 border-0 px-8" wire:click="finish">
-                                ส่งคำตอบ
+                            <flux:button variant="primary" class="bg-green-600 hover:bg-green-500 border-0 px-8" wire:click="finish" wire:loading.attr="disabled" wire:target="finish">
+                                <span wire:loading.remove wire:target="finish">ส่งคำตอบ</span>
+                                <span wire:loading wire:target="finish">กำลังส่ง...</span>
                             </flux:button>
                         @endif
                     </div>

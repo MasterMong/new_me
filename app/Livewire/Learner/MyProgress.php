@@ -18,6 +18,7 @@ class MyProgress extends Component
 
         $enrollments = Enrollment::with(['user', 'course.modules.contents.views', 'course.modules.contents.groupAccess'])
             ->where('user_id', $user->id)
+            ->latest('enrolled_at')
             ->get()
             ->map(function ($enrollment) {
                 $enrollment->progress_percent = $enrollment->calculateProgressPercent();

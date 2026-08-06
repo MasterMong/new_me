@@ -22,6 +22,7 @@ use App\Models\QuestionChoice;
 use App\Models\TestAttempt;
 use App\Models\User;
 use App\Notifications\CertificateIssued;
+use App\Services\CertificatePdfService;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 
@@ -306,4 +307,25 @@ test('submitting a course review issues a certificate via the CourseReview compo
         ->call('submitReview');
 
     $this->assertDatabaseHas('certificates', ['user_id' => $user->id, 'course_id' => $course->id]);
+});
+
+test('certificate is still issued even if pdf generation fails', function () {
+    Notification::fake();
+
+    $this->mock(CertificatePdfService::class)
+        ->shouldReceive('generate')
+        ->andThrow(new RuntimeException('dompdf blew up'));
+
+    $enrollment = makeEligibleEnrollment();
+
+    $certificate = $enrollment->issueCertificateIfEligible();
+
+    expect($certificate)->not->toBeNull();
+    expect($certificate->pdf_url)->toBeNull();
+    $this->assertDatabaseHas('certificates', [
+        'user_id' => $enrollment->user_id,
+        'course_id' => $enrollment->course_id,
+    ]);
+    expect($enrollment->fresh()->status)->toBe(EnrollmentStatus::Certified);
+    Notification::assertSentTo($enrollment->user, CertificateIssued::class);
 });

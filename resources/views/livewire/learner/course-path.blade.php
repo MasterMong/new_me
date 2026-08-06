@@ -65,7 +65,7 @@
                 <div @class([
                     'size-12 rounded-full border-4 flex items-center justify-center shrink-0 z-10 transition-all duration-500',
                     'bg-green-500 border-green-100 text-white' => $module->is_completed,
-                    'bg-primary border-primary-100 text-white shadow-lg shadow-primary/20' => !$module->is_completed && $module->is_accessible,
+                    'bg-primary border-primary/20 text-white shadow-lg shadow-primary/20' => !$module->is_completed && $module->is_accessible,
                     'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-400' => !$module->is_accessible,
                 ])>
                     @if($module->is_completed)
@@ -178,7 +178,7 @@
             <div class="relative flex gap-6 opacity-{{ $allModulesCompleted ? '100' : '50' }}">
                 <div @class([
                     'size-12 rounded-full border-4 flex items-center justify-center shrink-0 z-10',
-                    'bg-primary border-primary-100 text-white' => $allModulesCompleted,
+                    'bg-primary border-primary/20 text-white' => $allModulesCompleted,
                     'bg-zinc-100 border-zinc-200 text-zinc-400' => !$allModulesCompleted,
                 ])>
                     <span class="material-symbols-outlined text-[20px]">workspace_premium</span>

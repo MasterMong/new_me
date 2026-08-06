@@ -42,6 +42,21 @@ class CoursePlayer extends Component
             return redirect()->route('courses.show', $course);
         }
 
+        $previousModule = Module::where('course_id', $course->id)
+            ->where('sort_order', '<', $module->sort_order)
+            ->orderByDesc('sort_order')
+            ->with(['assessments.attempts' => fn ($query) => $query->where('user_id', Auth::id())])
+            ->first();
+
+        $this->module->load([
+            'prerequisites',
+            'assessments.attempts' => fn ($query) => $query->where('user_id', Auth::id()),
+        ]);
+
+        $coursePreTest = $this->course->assessments()->where('type', 'pre_test')->whereNull('module_id')->first();
+
+        abort_unless($this->isModuleAccessible($this->module, $previousModule, $coursePreTest), 403, 'โมดูลนี้ยังไม่ถูกปลดล็อค');
+
         // Default to first content if none selected
         if (! $content) {
             $this->activeContent = $this->module->contents()->visibleTo(Auth::user())->orderBy('sort_order')->first();
@@ -150,10 +165,10 @@ class CoursePlayer extends Component
             ]);
         }
 
-        $tree = $this->buildTree($user);
-
         $coursePreTest = $this->course->assessments()->where('type', 'pre_test')->whereNull('module_id')->first();
         $coursePostTest = $this->course->assessments()->where('type', 'post_test')->whereNull('module_id')->first();
+
+        $tree = $this->buildTree($user, $coursePreTest);
 
         return view('livewire.learner.course-player', [
             'contents' => $contents,
@@ -167,7 +182,7 @@ class CoursePlayer extends Component
      * Whole-course module list (with per-module and per-content-item lock/
      * completion flags) used to populate the tree navigation sidebar.
      */
-    protected function buildTree($user)
+    protected function buildTree($user, ?Assessment $coursePreTest)
     {
         $courseModules = $this->course->modules()
             ->with([
@@ -182,9 +197,9 @@ class CoursePlayer extends Component
 
         return $courseModules
             ->values()
-            ->map(function (Module $module, int $index) use ($courseModules, $user) {
+            ->map(function (Module $module, int $index) use ($courseModules, $user, $coursePreTest) {
                 $previousModule = $index > 0 ? $courseModules[$index - 1] : null;
-                $module->is_accessible = $this->isModuleAccessible($module, $previousModule);
+                $module->is_accessible = $this->isModuleAccessible($module, $previousModule, $coursePreTest);
                 $module->progress_percent = $module->progressPercentFor($user);
                 $module->is_completed = $module->isCompletedFor($user);
                 $module->pre_test = $module->assessments->firstWhere('type', AssessmentType::PreTest);
@@ -204,9 +219,8 @@ class CoursePlayer extends Component
             });
     }
 
-    protected function isModuleAccessible(Module $module, ?Module $previousModule): bool
+    protected function isModuleAccessible(Module $module, ?Module $previousModule, ?Assessment $coursePreTest): bool
     {
-        $coursePreTest = $this->course->assessments()->where('type', 'pre_test')->whereNull('module_id')->first();
         if ($coursePreTest && ! $coursePreTest->attempts()->where('user_id', Auth::id())->exists()) {
             return false;
         }

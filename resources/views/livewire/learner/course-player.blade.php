@@ -2,7 +2,8 @@
      x-data="youtubePlayer({
         videoId: '{{ $activeContent->content_type === \App\Enums\ContentType::Video ? $this->extractYoutubeId($activeContent->file_url) : '' }}',
         contentId: {{ $activeContent->id }},
-        initialPosition: {{ $activeContent->views->where('user_id', auth()->id())->first()?->last_position_sec ?? 0 }}
+        initialPosition: {{ $activeContent->views->where('user_id', auth()->id())->first()?->last_position_sec ?? 0 }},
+        isAccessible: {{ ($contents->firstWhere('id', $activeContent->id)?->is_accessible ?? true) ? 'true' : 'false' }}
      })">
 
     {{-- Main Content Area --}}
@@ -168,7 +169,7 @@
                 watchDuration: 0,
                 lastUpdate: 0,
                 isCompleted: false,
-                isAccessible: true,
+                isAccessible: config.isAccessible,
                 timer: null,
 
                 init() {

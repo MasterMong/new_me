@@ -44,3 +44,20 @@ test('empty states are shown when no achievements', function () {
         ->assertSee('ยังไม่มีเกียรติบัตร')
         ->assertSee('ไม่มีคอร์สที่กำลังเรียนอยู่ในขณะนี้');
 });
+
+test('a certificate with no pdf yet shows a preparing state instead of a dead download link', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+
+    Certificate::factory()->create([
+        'user_id' => $user->id,
+        'course_id' => $course->id,
+        'pdf_url' => null,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(Certificates::class)
+        ->assertSee('กำลังเตรียมไฟล์')
+        ->assertSee('ไฟล์ PDF กำลังเตรียมการ');
+});

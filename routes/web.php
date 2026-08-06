@@ -65,7 +65,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'verified', 'learner'])->prefix('learn')->name('learn.')->group(function () {
     Route::get('/', Dashboard::class)->name('dashboard');
     Route::get('/courses/{course}', CoursePath::class)->name('courses.show');
-    Route::get('/courses/{course}/modules/{module}', CoursePlayer::class)->name('courses.play');
+    Route::get('/courses/{course}/modules/{module}/{content?}', CoursePlayer::class)->name('courses.play');
     Route::get('/assessments/{assessment}', AssessmentPlayer::class)->name('assessments.show');
     Route::get('/progress', MyProgress::class)->name('progress');
     Route::get('/certificates', Certificates::class)->name('certificates.index');

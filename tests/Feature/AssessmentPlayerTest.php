@@ -27,6 +27,18 @@ test('learner can access assessment player', function () {
         ->assertOk();
 });
 
+test('submit button is guarded against double submission', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $assessment = Assessment::factory()->create(['passing_score_pct' => 50]);
+    Question::factory()->create(['assessment_id' => $assessment->id]);
+
+    $this->actingAs($user);
+
+    Livewire::test(AssessmentPlayer::class, ['assessment' => $assessment])
+        ->assertSeeHtml('wire:target="finish"')
+        ->assertSeeHtml('wire:loading.attr="disabled"');
+});
+
 test('learner can submit answers and see results', function () {
     $user = User::factory()->create(['role' => UserRole::Learner->value]);
     $assessment = Assessment::factory()->create(['passing_score_pct' => 50]);

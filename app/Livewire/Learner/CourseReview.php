@@ -24,6 +24,11 @@ class CourseReview extends Component
     {
         $this->course = $course;
 
+        abort_unless(
+            Enrollment::where('user_id', Auth::id())->where('course_id', $this->course->id)->exists(),
+            403
+        );
+
         // Redirect if already reviewed
         if (ReviewModel::where('user_id', Auth::id())->where('course_id', $this->course->id)->exists()) {
             $this->redirectRoute('learn.certificates.index');

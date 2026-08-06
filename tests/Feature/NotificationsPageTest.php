@@ -50,3 +50,24 @@ test('learner can mark all as read', function () {
 
     $this->assertEquals(0, LearnerNotification::where('user_id', $user->id)->where('is_read', false)->count());
 });
+
+test('sidebar shows an unread notification count badge', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    LearnerNotification::factory()->count(2)->create(['user_id' => $user->id, 'is_read' => false]);
+    LearnerNotification::factory()->create(['user_id' => $user->id, 'is_read' => true]);
+
+    $response = $this->actingAs($user)->get(route('learn.dashboard'));
+
+    $response->assertOk();
+    $response->assertSee('>2<', false);
+});
+
+test('sidebar shows no unread badge when everything is read', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    LearnerNotification::factory()->create(['user_id' => $user->id, 'is_read' => true]);
+
+    $response = $this->actingAs($user)->get(route('learn.dashboard'));
+
+    $response->assertOk();
+    $response->assertDontSee('>1<', false);
+});

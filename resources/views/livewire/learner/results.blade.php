@@ -18,8 +18,8 @@
             @foreach($enrollments as $enrollment)
                 @php
                     $course = $enrollment->course;
-                    $preTest = $course->assessments->where('type', 'pre_test')->first();
-                    $postTest = $course->assessments->where('type', 'post_test')->first();
+                    $preTest = $course->assessments->firstWhere('type', \App\Enums\AssessmentType::PreTest);
+                    $postTest = $course->assessments->firstWhere('type', \App\Enums\AssessmentType::PostTest);
                     
                     $preTestScore = $preTest ? $preTest->attempts->max('score_pct') : null;
                     $postTestScore = $postTest ? $postTest->attempts->max('score_pct') : null;
@@ -35,7 +35,7 @@
                             <flux:text class="text-sm text-zinc-500 mt-1">ลงทะเบียนเมื่อ: {{ $enrollment->enrolled_at->format('d/m/Y') }}</flux:text>
                         </div>
                         <div class="flex items-center gap-3">
-                            <flux:badge variant="{{ $isPassed ? 'success' : ($postTestScore !== null ? 'danger' : 'neutral') }}">
+                            <flux:badge color="{{ $isPassed ? 'green' : ($postTestScore !== null ? 'red' : 'zinc') }}">
                                 {{ $isPassed ? 'ผ่านเกณฑ์' : ($postTestScore !== null ? 'ไม่ผ่านเกณฑ์' : 'กำลังเรียน') }}
                             </flux:badge>
                             <flux:button wire:click="downloadPdf({{ $enrollment->id }})" variant="subtle" size="sm" icon="arrow-down-tray">
@@ -66,9 +66,9 @@
                                         <td class="px-6 py-4 text-center text-zinc-500">-</td>
                                         <td class="px-6 py-4 text-center">
                                             @if($preTestScore !== null)
-                                                <flux:badge variant="neutral" size="sm">ทดสอบแล้ว</flux:badge>
+                                                <flux:badge color="zinc" size="sm">ทดสอบแล้ว</flux:badge>
                                             @else
-                                                <flux:badge variant="neutral" size="sm" class="opacity-50">ยังไม่ทดสอบ</flux:badge>
+                                                <flux:badge color="zinc" size="sm" class="opacity-50">ยังไม่ทดสอบ</flux:badge>
                                             @endif
                                         </td>
                                     </tr>
@@ -77,7 +77,8 @@
                                 {{-- Modules --}}
                                 @foreach($course->modules as $module)
                                     @php
-                                        $moduleTest = $module->assessments->first();
+                                        $moduleTest = $module->assessments->firstWhere('type', \App\Enums\AssessmentType::PostTest)
+                                            ?? $module->assessments->firstWhere('type', \App\Enums\AssessmentType::ModuleTest);
                                         $moduleScore = $moduleTest ? $moduleTest->attempts->max('score_pct') : null;
                                         $modulePassed = $moduleTest ? ($moduleScore !== null && $moduleScore >= ($moduleTest->passing_score_pct ?? 60)) : true;
                                     @endphp
@@ -93,11 +94,11 @@
                                             <td class="px-6 py-4 text-center text-zinc-500">{{ $moduleTest->passing_score_pct ?? 60 }}%</td>
                                             <td class="px-6 py-4 text-center">
                                                 @if($moduleScore !== null)
-                                                    <flux:badge variant="{{ $modulePassed ? 'success' : 'danger' }}" size="sm">
+                                                    <flux:badge color="{{ $modulePassed ? 'green' : 'red' }}" size="sm">
                                                         {{ $modulePassed ? 'ผ่าน' : 'ไม่ผ่าน' }}
                                                     </flux:badge>
                                                 @else
-                                                    <flux:badge variant="neutral" size="sm" class="opacity-50">ยังไม่ทดสอบ</flux:badge>
+                                                    <flux:badge color="zinc" size="sm" class="opacity-50">ยังไม่ทดสอบ</flux:badge>
                                                 @endif
                                             </td>
                                         </tr>
@@ -114,11 +115,11 @@
                                         <td class="px-6 py-4 text-center font-semibold text-zinc-700">{{ $postTest->passing_score_pct ?? 60 }}%</td>
                                         <td class="px-6 py-4 text-center">
                                             @if($postTestScore !== null)
-                                                <flux:badge variant="{{ $isPassed ? 'success' : 'danger' }}" size="sm">
+                                                <flux:badge color="{{ $isPassed ? 'green' : 'red' }}" size="sm">
                                                     {{ $isPassed ? 'ผ่านเกณฑ์' : 'ไม่ผ่านเกณฑ์' }}
                                                 </flux:badge>
                                             @else
-                                                <flux:badge variant="neutral" size="sm" class="opacity-50">ยังไม่ทดสอบ</flux:badge>
+                                                <flux:badge color="zinc" size="sm" class="opacity-50">ยังไม่ทดสอบ</flux:badge>
                                             @endif
                                         </td>
                                     </tr>
