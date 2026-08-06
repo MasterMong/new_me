@@ -167,16 +167,14 @@ class CourseSeeder extends Seeder
 
         $sortOrder = 1;
 
-        // Pre-test opens the module.
-        $preTest = $this->createModuleAssessment($course, $module, AssessmentType::PreTest, $topic, $number, isFirst: true);
-        ModuleContent::create([
-            'module_id' => $module->id,
-            'content_type' => ContentType::Test->value,
-            'assessment_id' => $preTest->id,
-            'title' => 'ทดสอบก่อนเรียน: '.$topic,
-            'duration_minutes' => $preTest->is_timed ? $preTest->time_limit_minutes : null,
-            'sort_order' => $sortOrder++,
-        ]);
+        // Pre-test opens the module. It is NOT also linked as a ModuleContent
+        // item: CoursePlayer's tree navigation already renders a module's own
+        // pre_test/post_test as dedicated gating slots (see
+        // buildTree()/moduleOwnPreTestAttempted() in CoursePlayer.php), found
+        // directly via Module->assessments. Linking it into the content list
+        // too would show the same test twice and double-count it toward the
+        // module's content-completion percentage.
+        $this->createModuleAssessment($course, $module, AssessmentType::PreTest, $topic, $number, isFirst: true);
 
         ModuleContent::create([
             'module_id' => $module->id,
@@ -201,16 +199,9 @@ class CourseSeeder extends Seeder
             'sort_order' => $sortOrder++,
         ]);
 
-        // Post-test caps off the module.
-        $postTest = $this->createModuleAssessment($course, $module, AssessmentType::PostTest, $topic, $number, isFirst: false);
-        ModuleContent::create([
-            'module_id' => $module->id,
-            'content_type' => ContentType::Test->value,
-            'assessment_id' => $postTest->id,
-            'title' => 'ทดสอบหลังเรียน: '.$topic,
-            'duration_minutes' => $postTest->is_timed ? $postTest->time_limit_minutes : null,
-            'sort_order' => $sortOrder++,
-        ]);
+        // Post-test caps off the module — same dedicated-slot mechanism as
+        // the pre-test above, so it's not linked as ModuleContent either.
+        $this->createModuleAssessment($course, $module, AssessmentType::PostTest, $topic, $number, isFirst: false);
 
         // Modules that require expert review also carry a manually-graded
         // assignment — the artifact the assigned expert actually reviews.
