@@ -12,12 +12,12 @@ test('unauthenticated users cannot access learner dashboard', function () {
         ->assertRedirect(route('login'));
 });
 
-test('admins are redirected from learner dashboard', function () {
+test('admins can also access the learner dashboard', function () {
     $this->actingAs($user = User::factory()->admin()->create());
 
-    // Middleware will abort 403 because role is not Learner
+    // EnsureUserIsLearner intentionally allows Learner/Expert/Admin through.
     $this->get(route('learn.dashboard'))
-        ->assertStatus(403);
+        ->assertOk();
 });
 
 test('learners can access their dashboard', function () {
