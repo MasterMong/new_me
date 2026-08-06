@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\AssessmentType;
 use App\Enums\TestAttemptStatus;
 use App\Enums\UserRole;
 use App\Livewire\Learner\AssessmentPlayer;
@@ -12,7 +13,8 @@ use Livewire\Livewire;
 
 test('the first attempt is worth the full star quota', function () {
     $user = User::factory()->create(['role' => UserRole::Learner->value]);
-    $assessment = Assessment::factory()->create(['max_attempts' => 3]);
+    // Pinned to a non-pre-test type: star ratings don't apply to pre-tests.
+    $assessment = Assessment::factory()->create(['type' => AssessmentType::PostTest->value, 'max_attempts' => 3]);
     Question::factory()->create(['assessment_id' => $assessment->id]);
 
     $this->actingAs($user);
@@ -29,7 +31,7 @@ test('the first attempt is worth the full star quota', function () {
 
 test('each retry is worth one fewer star, down to a floor of 1', function () {
     $user = User::factory()->create(['role' => UserRole::Learner->value]);
-    $assessment = Assessment::factory()->create(['max_attempts' => 3, 'passing_score_pct' => 100]);
+    $assessment = Assessment::factory()->create(['type' => AssessmentType::PostTest->value, 'max_attempts' => 3, 'passing_score_pct' => 100]);
     $question = Question::factory()->create(['assessment_id' => $assessment->id, 'points' => 10]);
     $correctChoice = QuestionChoice::factory()->create(['question_id' => $question->id, 'is_correct' => true]);
     $wrongChoice = QuestionChoice::factory()->create(['question_id' => $question->id, 'is_correct' => false]);
@@ -57,7 +59,7 @@ test('each retry is worth one fewer star, down to a floor of 1', function () {
 
 test('the star value scales with a custom max_attempts', function () {
     $user = User::factory()->create(['role' => UserRole::Learner->value]);
-    $assessment = Assessment::factory()->create(['max_attempts' => 5]);
+    $assessment = Assessment::factory()->create(['type' => AssessmentType::PostTest->value, 'max_attempts' => 5]);
     Question::factory()->create(['assessment_id' => $assessment->id]);
 
     $this->actingAs($user);
@@ -72,7 +74,7 @@ test('the star value scales with a custom max_attempts', function () {
 
 test('starRatingForNextAttempt reflects the star value a retry would earn', function () {
     $user = User::factory()->create(['role' => UserRole::Learner->value]);
-    $assessment = Assessment::factory()->create(['max_attempts' => 3, 'passing_score_pct' => 100]);
+    $assessment = Assessment::factory()->create(['type' => AssessmentType::PostTest->value, 'max_attempts' => 3, 'passing_score_pct' => 100]);
     $question = Question::factory()->create(['assessment_id' => $assessment->id, 'points' => 10]);
     $wrongChoice = QuestionChoice::factory()->create(['question_id' => $question->id, 'is_correct' => false]);
     QuestionChoice::factory()->create(['question_id' => $question->id, 'is_correct' => true]);
@@ -87,7 +89,7 @@ test('starRatingForNextAttempt reflects the star value a retry would earn', func
 
 test('a revised worksheet attempt keeps the star value it was created with once passed', function () {
     $user = User::factory()->create(['role' => UserRole::Learner->value]);
-    $assessment = Assessment::factory()->create(['max_attempts' => 3]);
+    $assessment = Assessment::factory()->create(['type' => AssessmentType::PostTest->value, 'max_attempts' => 3]);
 
     // First attempt already used up (sent back for revision).
     TestAttempt::factory()->create([
@@ -113,4 +115,40 @@ test('a revised worksheet attempt keeps the star value it was created with once 
         'attempt_number' => 2,
         'star_rating' => 2,
     ]);
+});
+
+test('a failed attempt does not display filled stars even though star_rating is set', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $assessment = Assessment::factory()->create(['type' => AssessmentType::PostTest->value, 'max_attempts' => 3, 'passing_score_pct' => 60]);
+    $question = Question::factory()->create(['assessment_id' => $assessment->id, 'points' => 10]);
+    $wrongChoice = QuestionChoice::factory()->create(['question_id' => $question->id, 'is_correct' => false]);
+    QuestionChoice::factory()->create(['question_id' => $question->id, 'is_correct' => true]);
+
+    $this->actingAs($user);
+
+    $component = Livewire::test(AssessmentPlayer::class, ['assessment' => $assessment])
+        ->call('selectChoice', $wrongChoice->id)
+        ->call('finish');
+
+    // star_rating is still stored on the failed attempt (it's the "if you
+    // pass" quota, not an earned rating) — the results screen must not
+    // render it as filled/achieved stars next to "ไม่ผ่านเกณฑ์".
+    $this->assertDatabaseHas('test_attempts', ['attempt_number' => 1, 'star_rating' => 3, 'status' => TestAttemptStatus::Failed->value]);
+    $component->assertSee('ไม่ผ่านเกณฑ์')->assertDontSee('text-secondary', false);
+});
+
+test('a passed attempt displays its earned stars', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $assessment = Assessment::factory()->create(['type' => AssessmentType::PostTest->value, 'max_attempts' => 3, 'passing_score_pct' => 60]);
+    $question = Question::factory()->create(['assessment_id' => $assessment->id, 'points' => 10]);
+    $correctChoice = QuestionChoice::factory()->create(['question_id' => $question->id, 'is_correct' => true]);
+
+    $this->actingAs($user);
+
+    $component = Livewire::test(AssessmentPlayer::class, ['assessment' => $assessment])
+        ->call('selectChoice', $correctChoice->id)
+        ->call('finish');
+
+    $this->assertDatabaseHas('test_attempts', ['attempt_number' => 1, 'status' => TestAttemptStatus::Passed->value]);
+    $component->assertSee('ผ่านเกณฑ์')->assertSee('text-secondary', false);
 });

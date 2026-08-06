@@ -18,8 +18,12 @@
             @foreach($enrollments as $enrollment)
                 @php
                     $course = $enrollment->course;
-                    $preTest = $course->assessments->firstWhere('type', \App\Enums\AssessmentType::PreTest);
-                    $postTest = $course->assessments->firstWhere('type', \App\Enums\AssessmentType::PostTest);
+                    // Constrained to module_id = null: every module also has its own
+                    // pre_test/post_test now, so an unscoped firstWhere() would be
+                    // ambiguous between those and the course-wide one.
+                    $courseWideAssessments = $course->assessments->whereNull('module_id');
+                    $preTest = $courseWideAssessments->firstWhere('type', \App\Enums\AssessmentType::PreTest);
+                    $postTest = $courseWideAssessments->firstWhere('type', \App\Enums\AssessmentType::PostTest);
                     
                     $preTestScore = $preTest ? $preTest->attempts->max('score_pct') : null;
                     $postTestScore = $postTest ? $postTest->attempts->max('score_pct') : null;

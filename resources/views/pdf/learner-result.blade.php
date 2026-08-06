@@ -78,9 +78,13 @@
         <tbody>
             @php
                 $course = $enrollment->course;
-                $preTest = $course->assessments->where('type', 'pre_test')->first();
-                $postTest = $course->assessments->where('type', 'post_test')->first();
-                
+                // Constrained to module_id = null: every module also has its own
+                // pre_test/post_test now, so an unscoped lookup would be ambiguous
+                // between those and the course-wide one.
+                $courseWideAssessments = $course->assessments->whereNull('module_id');
+                $preTest = $courseWideAssessments->where('type', 'pre_test')->first();
+                $postTest = $courseWideAssessments->where('type', 'post_test')->first();
+
                 $preTestScore = $preTest ? $preTest->attempts->max('score_pct') : null;
                 $postTestScore = $postTest ? $postTest->attempts->max('score_pct') : null;
                 $isPassed = $postTestScore !== null && $postTestScore >= ($postTest->passing_score_pct ?? 60);
@@ -97,7 +101,8 @@
 
             @foreach($course->modules as $module)
                 @php
-                    $moduleTest = $module->assessments->first();
+                    $moduleTest = $module->assessments->firstWhere('type', 'post_test')
+                        ?? $module->assessments->firstWhere('type', 'module_test');
                     $moduleScore = $moduleTest ? $moduleTest->attempts->max('score_pct') : null;
                     $modulePassed = $moduleTest ? ($moduleScore !== null && $moduleScore >= ($moduleTest->passing_score_pct ?? 60)) : true;
                 @endphp

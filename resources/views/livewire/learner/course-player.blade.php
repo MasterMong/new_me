@@ -58,6 +58,8 @@
                             \App\Enums\TestAttemptStatus::PendingReview => ['label' => 'รอผู้เชี่ยวชาญตรวจ', 'color' => 'text-amber-400', 'cta' => 'ดูสถานะ'],
                             \App\Enums\TestAttemptStatus::RevisionNeeded => ['label' => 'ต้องแก้ไข', 'color' => 'text-amber-400', 'cta' => 'แก้ไขคำตอบ'],
                             \App\Enums\TestAttemptStatus::InProgress => ['label' => 'ทำค้างไว้', 'color' => 'text-primary', 'cta' => 'ทำต่อ'],
+                            // Pre-tests (diagnostic only) land here — completed, no pass/fail judgment.
+                            \App\Enums\TestAttemptStatus::Submitted => ['label' => 'ทำแล้ว (ไม่มีผลผ่าน/ไม่ผ่าน)', 'color' => 'text-zinc-400', 'cta' => 'ดูผลคะแนน'],
                             default => ['label' => 'ยังไม่ได้เริ่ม', 'color' => 'text-zinc-400', 'cta' => 'เริ่มทำแบบทดสอบ'],
                         };
                     @endphp

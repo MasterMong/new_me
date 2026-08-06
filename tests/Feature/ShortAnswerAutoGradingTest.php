@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\AssessmentType;
 use App\Enums\GradingMode;
 use App\Enums\QuestionType;
 use App\Enums\TestAttemptStatus;
@@ -63,7 +64,7 @@ test('admin creating a short_answer question is forced into auto grading and req
 
 test('a correct short answer is auto-graded as full points', function () {
     $user = User::factory()->create(['role' => UserRole::Learner->value]);
-    $assessment = Assessment::factory()->create(['passing_score_pct' => 50]);
+    $assessment = Assessment::factory()->create(['type' => AssessmentType::PostTest->value, 'passing_score_pct' => 50]);
     $question = Question::factory()->create([
         'assessment_id' => $assessment->id,
         'question_type' => QuestionType::ShortAnswer->value,
@@ -92,7 +93,7 @@ test('a correct short answer is auto-graded as full points', function () {
 
 test('an incorrect short answer is auto-graded as zero points', function () {
     $user = User::factory()->create(['role' => UserRole::Learner->value]);
-    $assessment = Assessment::factory()->create(['passing_score_pct' => 50]);
+    $assessment = Assessment::factory()->create(['type' => AssessmentType::PostTest->value, 'passing_score_pct' => 50]);
     $question = Question::factory()->create([
         'assessment_id' => $assessment->id,
         'question_type' => QuestionType::ShortAnswer->value,

@@ -226,6 +226,23 @@
                                 กลับไปยังบทเรียน
                             </flux:button>
                         </div>
+                    @elseif($currentAttempt->status === \App\Enums\TestAttemptStatus::Submitted)
+                        {{-- Pre-test: diagnostic only, no pass/fail judgment, no stars, no retry. --}}
+                        <div class="size-24 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-8">
+                            <flux:icon.check-circle variant="micro" class="size-16" />
+                        </div>
+                        <flux:heading size="xl" class="text-primary mb-2">ทำแบบทดสอบก่อนเรียนเสร็จสิ้น</flux:heading>
+
+                        <div class="bg-zinc-50 dark:bg-zinc-800/50 p-8 rounded-3xl border border-zinc-100 dark:border-zinc-800 max-w-xs mx-auto mb-6">
+                            <p class="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-2">คะแนนที่ได้</p>
+                            <p class="text-5xl font-black text-zinc-900 dark:text-white">{{ round($score) }}%</p>
+                        </div>
+
+                        <flux:subheading class="mb-10 text-lg">เป็นแบบทดสอบวินิจฉัยความรู้ก่อนเรียน ไม่มีผลผ่าน/ไม่ผ่าน</flux:subheading>
+
+                        <flux:button variant="primary" class="w-full md:w-auto px-10 h-12 text-lg" href="{{ route('learn.courses.show', $assessment->course_id) }}" wire:navigate>
+                            กลับไปยังบทเรียน
+                        </flux:button>
                     @else
                         @if($currentAttempt->status === \App\Enums\TestAttemptStatus::Passed)
                             <div class="size-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-8 animate-bounce">
@@ -239,7 +256,7 @@
                             <flux:heading size="xl" class="text-red-600 mb-2">พยายามใหม่อีกครั้ง</flux:heading>
                         @endif
 
-                        @if($currentAttempt->star_rating)
+                        @if($currentAttempt->star_rating && $currentAttempt->status === \App\Enums\TestAttemptStatus::Passed)
                             <div class="flex items-center justify-center gap-1 mb-6">
                                 @for($i = 1; $i <= $this->maxStars(); $i++)
                                     <flux:icon.star

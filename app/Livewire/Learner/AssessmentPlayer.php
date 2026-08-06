@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Learner;
 
+use App\Enums\AssessmentType;
 use App\Enums\GradingMode;
 use App\Enums\QuestionType;
 use App\Enums\TestAttemptStatus;
@@ -107,7 +108,10 @@ class AssessmentPlayer extends Component
             'user_id' => Auth::id(),
             'assessment_id' => $this->assessment->id,
             'attempt_number' => $attemptNumber,
-            'star_rating' => $this->starRatingForAttempt($attemptNumber),
+            // Pre-tests are diagnostic, not evaluative — no star reward applies.
+            'star_rating' => $this->assessment->type === AssessmentType::PreTest
+                ? null
+                : $this->starRatingForAttempt($attemptNumber),
             'status' => TestAttemptStatus::InProgress,
             'started_at' => now(),
         ]);
@@ -377,7 +381,11 @@ class AssessmentPlayer extends Component
         $earnedPoints = TestAnswer::where('attempt_id', $this->currentAttempt->id)->sum('score');
         $scorePct = $totalPoints > 0 ? ($earnedPoints / $totalPoints) * 100 : 0;
 
-        $status = $scorePct >= $this->assessment->passing_score_pct ? TestAttemptStatus::Passed : TestAttemptStatus::Failed;
+        // Pre-tests are diagnostic — the score is recorded for reference but never
+        // compared against passing_score_pct, so they can't be "failed."
+        $status = $this->assessment->type === AssessmentType::PreTest
+            ? TestAttemptStatus::Submitted
+            : ($scorePct >= $this->assessment->passing_score_pct ? TestAttemptStatus::Passed : TestAttemptStatus::Failed);
 
         $this->currentAttempt->update([
             'total_score' => $earnedPoints,

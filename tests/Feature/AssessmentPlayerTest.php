@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\AssessmentType;
 use App\Enums\GradingMode;
 use App\Enums\QuestionType;
 use App\Enums\TestAttemptStatus;
@@ -41,7 +42,8 @@ test('submit button is guarded against double submission', function () {
 
 test('learner can submit answers and see results', function () {
     $user = User::factory()->create(['role' => UserRole::Learner->value]);
-    $assessment = Assessment::factory()->create(['passing_score_pct' => 50]);
+    // Pinned to a non-pre-test type: pre-tests never get a Passed/Failed status.
+    $assessment = Assessment::factory()->create(['type' => AssessmentType::PostTest->value, 'passing_score_pct' => 50]);
     $question = Question::factory()->create(['assessment_id' => $assessment->id, 'points' => 10]);
     $correctChoice = QuestionChoice::factory()->create(['question_id' => $question->id, 'is_correct' => true]);
     $wrongChoice = QuestionChoice::factory()->create(['question_id' => $question->id, 'is_correct' => false]);
@@ -263,7 +265,9 @@ test('checkTimeExpired does not submit before the time limit is reached', functi
 
 test('checkTimeExpired auto-submits once the time limit has elapsed', function () {
     $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    // Pinned to a non-pre-test type: pre-tests never get a Passed/Failed status.
     $assessment = Assessment::factory()->create([
+        'type' => AssessmentType::PostTest->value,
         'is_timed' => true,
         'time_limit_minutes' => 10,
         'passing_score_pct' => 50,
@@ -294,7 +298,9 @@ test('checkTimeExpired auto-submits once the time limit has elapsed', function (
 
 test('an unanswered timed assessment is auto-graded as failed when time expires', function () {
     $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    // Pinned to a non-pre-test type: pre-tests never get a Passed/Failed status.
     $assessment = Assessment::factory()->create([
+        'type' => AssessmentType::PostTest->value,
         'is_timed' => true,
         'time_limit_minutes' => 5,
         'passing_score_pct' => 50,
