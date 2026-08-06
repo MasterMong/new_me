@@ -18,6 +18,14 @@
                 <flux:sidebar.collapse class="lg:hidden text-on-primary/60 hover:text-on-primary" />
             </flux:sidebar.header>
 
+            @php
+                $settingsRoute = match(auth()->user()->role) {
+                    \App\Enums\UserRole::Expert => route('expert.settings'),
+                    \App\Enums\UserRole::Learner => route('learn.settings.index'),
+                    default => route('profile.edit'),
+                };
+            @endphp
+
             {{-- Main Navigation --}}
             <flux:sidebar.nav class="mt-2">
                 <flux:sidebar.group class="grid gap-0.5">
@@ -242,8 +250,10 @@
                         @endif
                         @if(auth()->user()->role === \App\Enums\UserRole::Expert)
                             <flux:sidebar.item
-                                href="#"
-                                class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 font-medium"
+                                wire:navigate
+                                :href="route('expert.dashboard')"
+                                :current="request()->routeIs('expert.dashboard')"
+                                class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
                             >
                                 <x-slot name="icon">
                                     <span class="material-symbols-outlined text-[20px]">rate_review</span>
@@ -260,8 +270,8 @@
             {{-- Settings --}}
             <flux:sidebar.nav class="mb-2">
                 <flux:sidebar.item
-                    :href="route('learn.settings.index')"
-                    :current="request()->routeIs('learn.settings.*')"
+                    :href="$settingsRoute"
+                    :current="request()->routeIs(['learn.settings.*', 'expert.settings', 'profile.edit'])"
                     wire:navigate
                     class="!text-on-primary/80 hover:!text-on-primary hover:!bg-white/10 data-[current]:!bg-primary-container data-[current]:!text-on-primary font-medium"
                 >
@@ -303,7 +313,7 @@
                         </flux:menu.radio.group>
                         <flux:menu.separator />
                         <flux:menu.radio.group>
-                            <flux:menu.item :href="route('learn.settings.index')" icon="cog" wire:navigate>
+                            <flux:menu.item :href="$settingsRoute" icon="cog" wire:navigate>
                                 {{ __('Settings') }}
                             </flux:menu.item>
                         </flux:menu.radio.group>

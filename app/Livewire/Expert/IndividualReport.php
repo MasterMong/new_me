@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Expert;
 
+use App\Enums\UserRole;
 use App\Models\Module;
 use App\Models\TestAttempt;
 use App\Models\User;
@@ -15,7 +16,7 @@ class IndividualReport extends Component
 
     public function mount(User $user)
     {
-        abort_unless($user->role === 'learner', 404);
+        abort_unless($user->role === UserRole::Learner, 404);
         $this->user = $user;
     }
 

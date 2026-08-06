@@ -3,7 +3,7 @@
         <flux:heading size="xl" level="1">แดชบอร์ดผู้เชี่ยวชาญ (Expert Dashboard)</flux:heading>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <flux:card>
             <div class="flex items-center gap-4">
                 <div class="p-3 bg-amber-100 text-amber-600 rounded-lg">
@@ -12,6 +12,18 @@
                 <div>
                     <div class="text-sm font-medium text-zinc-500 dark:text-zinc-400">ใบงานรอตรวจทั้งหมด</div>
                     <div class="text-3xl font-semibold text-zinc-900 dark:text-white">{{ $totalPending }}</div>
+                </div>
+            </div>
+        </flux:card>
+
+        <flux:card>
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-rose-100 text-rose-600 rounded-lg">
+                    <span class="material-symbols-outlined text-3xl">warning</span>
+                </div>
+                <div>
+                    <div class="text-sm font-medium text-zinc-500 dark:text-zinc-400">รอตรวจเกิน 3 วัน</div>
+                    <div class="text-3xl font-semibold text-zinc-900 dark:text-white">{{ $totalOverdue }}</div>
                 </div>
             </div>
         </flux:card>
@@ -56,6 +68,9 @@
                                     <flux:badge color="warning" class="font-bold">{{ $module->pending_reviews_count }}</flux:badge>
                                 @else
                                     <span class="text-zinc-400">0</span>
+                                @endif
+                                @if($module->overdue_reviews_count > 0)
+                                    <div class="text-xs text-rose-600 mt-1">{{ $module->overdue_reviews_count }} รายการเกิน 3 วัน</div>
                                 @endif
                             </td>
                             <td class="px-6 py-4 text-right">

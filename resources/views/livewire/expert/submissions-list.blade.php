@@ -47,6 +47,14 @@
                                 @if($submission->attempt_number > 1)
                                     <span class="ml-1 text-xs text-zinc-400">(ครั้งที่ {{ $submission->attempt_number }})</span>
                                 @endif
+                                @if($submission->status->value === 'pending_review' && $submission->submitted_at)
+                                    @php($waitingDays = (int) $submission->submitted_at->diffInDays(now()))
+                                    <div class="mt-1">
+                                        <flux:badge size="sm" color="{{ $waitingDays > 3 ? 'danger' : 'zinc' }}">
+                                            รอมาแล้ว {{ $waitingDays }} วัน
+                                        </flux:badge>
+                                    </div>
+                                @endif
                             </td>
                             <td class="px-6 py-4">
                                 @if($submission->status->value === 'pending_review')

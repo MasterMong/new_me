@@ -6,8 +6,8 @@ use App\Models\Enrollment;
 use App\Models\ExpertReview;
 use App\Models\TestAttempt;
 use App\Notifications\ExpertReviewCompleted;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
-use Livewire\Attributes\Validate;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
@@ -15,18 +15,31 @@ class ReviewSubmission extends Component
 {
     public TestAttempt $attempt;
 
-    #[Validate('required|in:passed,revision_needed')]
+    public Collection $previousAttempts;
+
     public string $status = '';
 
-    #[Validate('nullable|numeric|min:0')]
     public ?float $score = null;
 
-    #[Validate('required|string|min:5')]
     public string $feedback = '';
 
-    public function mount(TestAttempt $attempt)
+    protected function rules(): array
     {
-        $this->attempt = $attempt->load(['user', 'assessment.module', 'answers.question']);
+        return [
+            'status' => 'required|in:passed,revision_needed',
+            'score' => $this->attempt->max_score !== null
+                ? 'nullable|numeric|min:0|max:'.$this->attempt->max_score
+                : 'nullable|numeric|min:0',
+            'feedback' => 'required|string|min:5',
+        ];
+    }
+
+    public function mount(TestAttempt $attempt): void
+    {
+        $this->attempt = $attempt->load([
+            'user.position', 'user.affiliation',
+            'assessment.module', 'answers.question',
+        ]);
 
         // Prevent accessing attempts that are not ready for review
         abort_unless(in_array($this->attempt->status->value, ['pending_review', 'passed', 'failed', 'revision_needed']), 403);
@@ -37,8 +50,15 @@ class ReviewSubmission extends Component
         if ($this->attempt->expertReview) {
             $this->status = $this->attempt->expertReview->status->value;
             $this->score = $this->attempt->expertReview->score;
-            $this->feedback = $this->attempt->expertReview->feedback;
+            $this->feedback = $this->attempt->expertReview->feedback ?? '';
         }
+
+        $this->previousAttempts = TestAttempt::where('user_id', $this->attempt->user_id)
+            ->where('assessment_id', $this->attempt->assessment_id)
+            ->where('id', '!=', $this->attempt->id)
+            ->with('expertReview')
+            ->orderByDesc('attempt_number')
+            ->get();
     }
 
     public function submitReview()
