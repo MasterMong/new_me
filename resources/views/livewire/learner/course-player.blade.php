@@ -1,21 +1,101 @@
-<div class="flex h-[calc(100vh-64px)] overflow-hidden bg-zinc-950" 
-     x-data="youtubePlayer({ 
-        videoId: '{{ $this->extractYoutubeId($activeContent->file_url) }}',
+<div class="flex h-[calc(100vh-64px)] overflow-hidden bg-zinc-950"
+     x-data="youtubePlayer({
+        videoId: '{{ $activeContent->content_type === \App\Enums\ContentType::Video ? $this->extractYoutubeId($activeContent->file_url) : '' }}',
         contentId: {{ $activeContent->id }},
         initialPosition: {{ $activeContent->views->where('user_id', auth()->id())->first()?->last_position_sec ?? 0 }}
      })">
-    
+
     {{-- Main Content Area --}}
     <div class="flex-1 flex flex-col relative">
-        {{-- Video Player Container --}}
+        {{-- Content Player Container --}}
         <div class="flex-1 flex items-center justify-center bg-black relative">
-            @if($activeContent->content_type->value === 'video')
-                <div id="player" class="w-full h-full"></div>
-            @elseif($activeContent->content_type->value === 'document')
-                <iframe src="{{ $activeContent->file_url }}" class="w-full h-full border-0"></iframe>
-            @else
-                <div class="text-white">ไม่รองรับรูปแบบเนื้อหานี้</div>
-            @endif
+            @switch($activeContent->content_type)
+                @case(\App\Enums\ContentType::Video)
+                    @if($this->extractYoutubeId($activeContent->file_url))
+                        <div id="player" class="w-full h-full"></div>
+                    @else
+                        <video
+                            controls
+                            class="w-full h-full"
+                            src="{{ $activeContent->file_url }}"
+                            @timeupdate.throttle.5000ms="$wire.updateProgress(Math.floor($el.currentTime), Math.floor($el.currentTime), false)"
+                            @ended="$wire.updateProgress(Math.floor($el.duration), Math.floor($el.duration), true)"
+                        ></video>
+                    @endif
+                    @break
+
+                @case(\App\Enums\ContentType::Document)
+                    <iframe src="{{ $activeContent->file_url }}" class="w-full h-full border-0 bg-white"></iframe>
+                    @break
+
+                @case(\App\Enums\ContentType::Link)
+                    <div class="flex flex-col items-center justify-center text-center p-10 max-w-md">
+                        <div class="size-16 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-6">
+                            <flux:icon.link variant="outline" class="size-8" />
+                        </div>
+                        <flux:heading size="xl" class="text-white mb-2">{{ $activeContent->title }}</flux:heading>
+                        <flux:subheading class="text-zinc-400 mb-6">เนื้อหานี้เป็นลิงก์ภายนอก คลิกด้านล่างเพื่อเปิด</flux:subheading>
+                        <flux:button variant="primary" href="{{ $activeContent->file_url }}" target="_blank">
+                            <flux:icon.arrow-top-right-on-square variant="mini" class="mr-2" />
+                            เปิดลิงก์
+                        </flux:button>
+                    </div>
+                    @break
+
+                @case(\App\Enums\ContentType::Test)
+                    @php
+                        $assessment = $activeContent->assessment;
+                        $userAttempts = $assessment?->attempts->where('user_id', auth()->id()) ?? collect();
+                        $latestAttempt = $userAttempts->sortByDesc('attempt_number')->first();
+                        $questionCount = $assessment?->questions->count() ?? 0;
+                        $maxAttempts = $assessment?->max_attempts ?? 0;
+                        $attemptsUsed = $userAttempts->count();
+
+                        $statusMeta = match ($latestAttempt?->status) {
+                            \App\Enums\TestAttemptStatus::Passed => ['label' => 'ผ่านแล้ว', 'color' => 'text-green-400', 'cta' => 'ดูผลคะแนน'],
+                            \App\Enums\TestAttemptStatus::Failed => ['label' => 'ไม่ผ่าน', 'color' => 'text-red-400', 'cta' => 'ทำใหม่อีกครั้ง'],
+                            \App\Enums\TestAttemptStatus::PendingReview => ['label' => 'รอผู้เชี่ยวชาญตรวจ', 'color' => 'text-amber-400', 'cta' => 'ดูสถานะ'],
+                            \App\Enums\TestAttemptStatus::RevisionNeeded => ['label' => 'ต้องแก้ไข', 'color' => 'text-amber-400', 'cta' => 'แก้ไขคำตอบ'],
+                            \App\Enums\TestAttemptStatus::InProgress => ['label' => 'ทำค้างไว้', 'color' => 'text-primary', 'cta' => 'ทำต่อ'],
+                            default => ['label' => 'ยังไม่ได้เริ่ม', 'color' => 'text-zinc-400', 'cta' => 'เริ่มทำแบบทดสอบ'],
+                        };
+                    @endphp
+                    <div class="flex flex-col items-center text-center p-10 max-w-md">
+                        <div class="size-16 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-6">
+                            <flux:icon.clipboard-document-check variant="outline" class="size-8" />
+                        </div>
+                        <flux:heading size="xl" class="text-white mb-2">{{ $assessment?->title ?? $activeContent->title }}</flux:heading>
+                        <flux:text class="{{ $statusMeta['color'] }} font-semibold mb-6">{{ $statusMeta['label'] }}</flux:text>
+
+                        <div class="grid grid-cols-3 gap-3 w-full mb-6 text-left">
+                            <div class="bg-zinc-900 rounded-xl p-3">
+                                <flux:text class="text-zinc-500 text-xs block mb-1">จำนวนคำถาม</flux:text>
+                                <flux:heading size="lg" class="text-white">{{ $questionCount }}</flux:heading>
+                            </div>
+                            <div class="bg-zinc-900 rounded-xl p-3">
+                                <flux:text class="text-zinc-500 text-xs block mb-1">เกณฑ์ผ่าน</flux:text>
+                                <flux:heading size="lg" class="text-white">{{ $assessment?->passing_score_pct }}%</flux:heading>
+                            </div>
+                            <div class="bg-zinc-900 rounded-xl p-3">
+                                <flux:text class="text-zinc-500 text-xs block mb-1">เวลาทำ</flux:text>
+                                <flux:heading size="lg" class="text-white">{{ $assessment?->is_timed ? $assessment->time_limit_minutes.' น.' : 'ไม่จำกัด' }}</flux:heading>
+                            </div>
+                        </div>
+
+                        @if($assessment)
+                            <flux:text class="text-zinc-500 mb-6">
+                                ทำไปแล้ว {{ $attemptsUsed }} ครั้ง{{ $maxAttempts > 0 ? ' จาก '.$maxAttempts.' ครั้ง' : '' }}
+                            </flux:text>
+
+                            <flux:button variant="primary" href="{{ route('learn.assessments.show', $assessment) }}" wire:navigate>
+                                {{ $statusMeta['cta'] }}
+                            </flux:button>
+                        @else
+                            <flux:text class="text-zinc-500">ยังไม่มีแบบทดสอบเชื่อมโยงกับเนื้อหานี้</flux:text>
+                        @endif
+                    </div>
+                    @break
+            @endswitch
 
             {{-- Sequential Gating Overlay --}}
             <template x-if="!isAccessible">
@@ -36,72 +116,45 @@
                 <flux:text class="text-zinc-500">{{ $course->title }} • {{ $module->title }}</flux:text>
             </div>
             <div class="flex items-center gap-4">
+                @if($activeContent->content_type === \App\Enums\ContentType::Document)
+                    <flux:button variant="ghost" class="text-zinc-400 hover:text-white" href="{{ $activeContent->file_url }}" target="_blank">
+                        <flux:icon.arrow-top-right-on-square variant="mini" class="mr-2" />
+                        เปิดในแท็บใหม่
+                    </flux:button>
+                @endif
+
+                @if(in_array($activeContent->content_type, [\App\Enums\ContentType::Document, \App\Enums\ContentType::Link]))
+                    @php $activeIsCompleted = $activeContent->isCompletedFor(auth()->user()); @endphp
+                    @if($activeIsCompleted)
+                        <flux:button variant="primary" disabled class="bg-green-600 border-0">
+                            <flux:icon.check variant="mini" class="mr-2" />
+                            เรียนจบแล้ว
+                        </flux:button>
+                    @else
+                        <flux:button variant="primary" wire:click="markComplete({{ $activeContent->id }})">
+                            <flux:icon.check variant="mini" class="mr-2" />
+                            ทำเครื่องหมายว่าเรียนจบแล้ว
+                        </flux:button>
+                    @endif
+                @endif
+
                 <flux:button variant="ghost" class="text-zinc-400 hover:text-white" href="{{ route('learn.courses.show', $course) }}" wire:navigate>
                     <flux:icon.arrow-left variant="mini" class="mr-2" />
                     กลับไปหน้ารวม
                 </flux:button>
-                <flux:button variant="primary" x-show="isCompleted" class="bg-green-600 hover:bg-green-500 border-0">
-                    <flux:icon.check variant="mini" class="mr-2" />
-                    เรียนจบแล้ว
-                </flux:button>
+
+                @if($activeContent->content_type === \App\Enums\ContentType::Video)
+                    <flux:button variant="primary" x-show="isCompleted" class="bg-green-600 hover:bg-green-500 border-0">
+                        <flux:icon.check variant="mini" class="mr-2" />
+                        เรียนจบแล้ว
+                    </flux:button>
+                @endif
             </div>
         </div>
     </div>
 
-    {{-- Sidebar Content List --}}
-    <div class="w-80 bg-zinc-900 border-l border-zinc-800 flex flex-col shrink-0 overflow-hidden">
-        <div class="p-6 border-b border-zinc-800 shrink-0">
-            <flux:heading class="text-white mb-1">เนื้อหาในโมดูล</flux:heading>
-            <flux:subheading class="text-zinc-500">{{ $contents->count() }} บทเรียน</flux:subheading>
-        </div>
-
-        <div class="flex-1 overflow-y-auto custom-scrollbar">
-            @foreach($contents as $content)
-                <button 
-                    wire:click="selectContent({{ $content->id }})"
-                    @class([
-                        'w-full p-4 flex items-start gap-4 transition-all text-left border-b border-zinc-800/50',
-                        'bg-primary/10 border-l-4 border-l-primary' => $activeContent->id === $content->id,
-                        'hover:bg-zinc-800' => $activeContent->id !== $content->id && $content->is_accessible,
-                        'opacity-50 cursor-not-allowed' => !$content->is_accessible,
-                    ])
-                    {{ !$content->is_accessible ? 'disabled' : '' }}
-                >
-                    <div @class([
-                        'size-8 rounded-full flex items-center justify-center shrink-0 text-sm font-bold',
-                        'bg-green-500 text-white' => $content->is_completed,
-                        'bg-primary text-white' => !$content->is_completed && $content->is_accessible,
-                        'bg-zinc-800 text-zinc-600' => !$content->is_accessible,
-                    ])>
-                        @if($content->is_completed)
-                            <flux:icon.check variant="micro" />
-                        @elseif(!$content->is_accessible)
-                            <flux:icon.lock-closed variant="micro" />
-                        @else
-                            {{ $loop->iteration }}
-                        @endif
-                    </div>
-                    
-                    <div class="flex-1 min-w-0">
-                        <p @class([
-                            'text-sm font-medium truncate',
-                            'text-white' => $activeContent->id === $content->id,
-                            'text-zinc-300' => $activeContent->id !== $content->id && $content->is_accessible,
-                            'text-zinc-600' => !$content->is_accessible,
-                        ])>
-                            {{ $content->title }}
-                        </p>
-                        <div class="flex items-center gap-2 mt-1">
-                            <span class="text-[10px] text-zinc-500 flex items-center gap-1">
-                                <flux:icon.play variant="micro" class="size-3" />
-                                {{ $content->duration_minutes }} นาที
-                            </span>
-                        </div>
-                    </div>
-                </button>
-            @endforeach
-        </div>
-    </div>
+    {{-- Tree Navigation Sidebar --}}
+    @include('livewire.learner._course-tree')
 
     {{-- YouTube API Integration --}}
     <script src="https://www.youtube.com/iframe_api"></script>
@@ -122,8 +175,8 @@
                     window.onYouTubeIframeAPIReady = () => {
                         this.loadPlayer();
                     };
-                    
-                    if (window.YT && window.YT.Player) {
+
+                    if (this.videoId && window.YT && window.YT.Player) {
                         this.loadPlayer();
                     }
 
@@ -139,6 +192,8 @@
                 },
 
                 loadPlayer() {
+                    if (!this.videoId || !document.getElementById('player')) return;
+
                     this.player = new YT.Player('player', {
                         height: '100%',
                         width: '100%',
@@ -178,7 +233,7 @@
                     this.timer = setInterval(() => {
                         this.watchDuration += 1;
                         const currentTime = Math.floor(this.player.getCurrentTime());
-                        
+
                         // Sync with backend every 10 seconds
                         if (this.watchDuration % 10 === 0) {
                             this.saveProgress(false);
@@ -198,20 +253,4 @@
             }));
         });
     </script>
-
-    <style>
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #27272a;
-            border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #3f3f46;
-        }
-    </style>
 </div>

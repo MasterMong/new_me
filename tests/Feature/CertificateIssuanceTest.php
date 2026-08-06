@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\AssessmentType;
+use App\Enums\ContentType;
 use App\Enums\EnrollmentStatus;
 use App\Enums\GradingMode;
 use App\Enums\TestAttemptStatus;
@@ -34,7 +35,7 @@ function makeEligibleEnrollment(): Enrollment
     $course = Course::factory()->create(['passing_score_pct' => 60]);
     $module = Module::factory()->create(['course_id' => $course->id, 'is_required' => true]);
 
-    $content = ModuleContent::factory()->create(['module_id' => $module->id]);
+    $content = ModuleContent::factory()->create(['module_id' => $module->id, 'content_type' => ContentType::Video]);
     $content->views()->create(['user_id' => $user->id, 'is_completed' => true, 'viewed_at' => now()]);
 
     $postTest = Assessment::factory()->create([
@@ -65,7 +66,7 @@ test('learner is not eligible if a required module is incomplete', function () {
 
     // Add a second required module with unwatched content.
     $module = Module::factory()->create(['course_id' => $enrollment->course_id, 'is_required' => true]);
-    ModuleContent::factory()->create(['module_id' => $module->id]);
+    ModuleContent::factory()->create(['module_id' => $module->id, 'content_type' => ContentType::Video]);
 
     expect($enrollment->isEligibleForCertificate())->toBeFalse();
 });
@@ -102,7 +103,7 @@ test('a module-scoped post-test does not satisfy the course-wide post-test condi
     $course = Course::factory()->create(['passing_score_pct' => 60]);
     $module = Module::factory()->create(['course_id' => $course->id, 'is_required' => true]);
 
-    $content = ModuleContent::factory()->create(['module_id' => $module->id]);
+    $content = ModuleContent::factory()->create(['module_id' => $module->id, 'content_type' => ContentType::Video]);
     $content->views()->create(['user_id' => $user->id, 'is_completed' => true, 'viewed_at' => now()]);
 
     // Only a module-scoped post-test exists — no course-wide one.
@@ -170,7 +171,7 @@ test('completing the last required module content issues a certificate via Cours
     $user = User::factory()->create(['role' => UserRole::Learner->value]);
     $course = Course::factory()->create(['passing_score_pct' => 60]);
     $module = Module::factory()->create(['course_id' => $course->id, 'is_required' => true]);
-    $content = ModuleContent::factory()->create(['module_id' => $module->id]);
+    $content = ModuleContent::factory()->create(['module_id' => $module->id, 'content_type' => ContentType::Video]);
 
     $postTest = Assessment::factory()->create([
         'course_id' => $course->id,
@@ -198,7 +199,7 @@ test('passing the post-test issues a certificate via AssessmentPlayer', function
     $user = User::factory()->create(['role' => UserRole::Learner->value]);
     $course = Course::factory()->create(['passing_score_pct' => 50]);
     $module = Module::factory()->create(['course_id' => $course->id, 'is_required' => true]);
-    $content = ModuleContent::factory()->create(['module_id' => $module->id]);
+    $content = ModuleContent::factory()->create(['module_id' => $module->id, 'content_type' => ContentType::Video]);
     $content->views()->create(['user_id' => $user->id, 'is_completed' => true, 'viewed_at' => now()]);
 
     $postTest = Assessment::factory()->create([
@@ -232,7 +233,7 @@ test('expert marking an assessment passed issues a certificate via ReviewSubmiss
     $user = User::factory()->create(['role' => UserRole::Learner->value]);
     $course = Course::factory()->create(['passing_score_pct' => 50]);
     $module = Module::factory()->create(['course_id' => $course->id, 'is_required' => true]);
-    $content = ModuleContent::factory()->create(['module_id' => $module->id]);
+    $content = ModuleContent::factory()->create(['module_id' => $module->id, 'content_type' => ContentType::Video]);
     $content->views()->create(['user_id' => $user->id, 'is_completed' => true, 'viewed_at' => now()]);
 
     $postTest = Assessment::factory()->create([
@@ -281,7 +282,7 @@ test('submitting a course review issues a certificate via the CourseReview compo
     $user = User::factory()->create(['role' => UserRole::Learner->value]);
     $course = Course::factory()->create(['passing_score_pct' => 60]);
     $module = Module::factory()->create(['course_id' => $course->id, 'is_required' => true]);
-    $content = ModuleContent::factory()->create(['module_id' => $module->id]);
+    $content = ModuleContent::factory()->create(['module_id' => $module->id, 'content_type' => ContentType::Video]);
     $content->views()->create(['user_id' => $user->id, 'is_completed' => true, 'viewed_at' => now()]);
 
     $postTest = Assessment::factory()->create([

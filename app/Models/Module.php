@@ -88,7 +88,8 @@ class Module extends Model
      * Content completion percentage for the given user, excluding content
      * restricted to a group they don't belong to. A module with no content
      * is trivially 100% (nothing to complete).
-     * Expects `contents.views` (and ideally `contents.groupAccess`) eager-loaded.
+     * Expects `contents.views`, `contents.groupAccess`, and
+     * `contents.assessment.attempts` eager-loaded.
      */
     public function progressPercentFor(User $user): int
     {
@@ -99,9 +100,7 @@ class Module extends Model
             return 100;
         }
 
-        $completed = $visibleContents->filter(function (ModuleContent $content) use ($user) {
-            return $content->views->where('user_id', $user->id)->where('is_completed', true)->isNotEmpty();
-        })->count();
+        $completed = $visibleContents->filter(fn (ModuleContent $content) => $content->isCompletedFor($user))->count();
 
         return (int) round(($completed / $total) * 100);
     }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\AssessmentType;
+use App\Enums\ContentType;
 use App\Enums\TestAttemptStatus;
 use App\Enums\UserRole;
 use App\Livewire\Admin\Reporting\CourseProgress;
@@ -143,7 +144,7 @@ test('user details module breakdown reflects completion, locking, and post-test 
     $course = Course::factory()->create();
 
     $module1 = Module::factory()->create(['course_id' => $course->id, 'sort_order' => 1]);
-    $content1 = ModuleContent::factory()->create(['module_id' => $module1->id]);
+    $content1 = ModuleContent::factory()->create(['module_id' => $module1->id, 'content_type' => ContentType::Video]);
     $content1->views()->create(['user_id' => $learner->id, 'is_completed' => true, 'viewed_at' => now()]);
 
     $postTest = Assessment::factory()->create([

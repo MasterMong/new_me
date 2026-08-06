@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\AssessmentType;
+use App\Enums\ContentType;
 use App\Enums\TestAttemptStatus;
 use App\Enums\UserRole;
 use App\Livewire\Learner\CoursePath;
@@ -91,14 +92,14 @@ test('module progress ignores content restricted to another group', function () 
 
     $module = Module::factory()->create(['course_id' => $course->id]);
 
-    $visibleContent = ModuleContent::factory()->create(['module_id' => $module->id, 'sort_order' => 1]);
+    $visibleContent = ModuleContent::factory()->create(['module_id' => $module->id, 'sort_order' => 1, 'content_type' => ContentType::Video]);
     $visibleContent->views()->create([
         'user_id' => $user->id,
         'is_completed' => true,
         'viewed_at' => now(),
     ]);
 
-    $restrictedContent = ModuleContent::factory()->create(['module_id' => $module->id, 'sort_order' => 2]);
+    $restrictedContent = ModuleContent::factory()->create(['module_id' => $module->id, 'sort_order' => 2, 'content_type' => ContentType::Video]);
     $restrictedGroup = LearnerGroup::factory()->create();
     $restrictedContent->groupAccess()->create(['group_id' => $restrictedGroup->id]);
 
@@ -338,7 +339,7 @@ test('a module with a post-test is not considered completed until the post-test 
     Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
 
     $module = Module::factory()->create(['course_id' => $course->id, 'sort_order' => 1]);
-    $content = ModuleContent::factory()->create(['module_id' => $module->id]);
+    $content = ModuleContent::factory()->create(['module_id' => $module->id, 'content_type' => ContentType::Video]);
     $content->views()->create([
         'user_id' => $user->id,
         'is_completed' => true,

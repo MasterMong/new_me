@@ -2,6 +2,10 @@
 
 namespace App\Livewire\Learner;
 
+use App\Enums\AssessmentType;
+use App\Enums\ContentType;
+use App\Enums\TestAttemptStatus;
+use App\Models\Assessment;
 use App\Models\ContentView;
 use App\Models\Course;
 use App\Models\Enrollment;
@@ -22,10 +26,13 @@ class CoursePlayer extends Component
 
     public ?Enrollment $enrollment = null;
 
+    public array $expandedModuleIds = [];
+
     public function mount(Course $course, Module $module, ?ModuleContent $content = null)
     {
         $this->course = $course;
         $this->module = $module;
+        $this->expandedModuleIds = [$module->id];
 
         $this->enrollment = Enrollment::where('user_id', Auth::id())
             ->where('course_id', $course->id)
@@ -55,6 +62,15 @@ class CoursePlayer extends Component
         }
     }
 
+    public function toggleModule(int $moduleId): void
+    {
+        if (in_array($moduleId, $this->expandedModuleIds, true)) {
+            $this->expandedModuleIds = array_values(array_diff($this->expandedModuleIds, [$moduleId]));
+        } else {
+            $this->expandedModuleIds[] = $moduleId;
+        }
+    }
+
     public function updateProgress($durationSec, $lastPositionSec, $isCompleted = false)
     {
         if (! $this->activeContent) {
@@ -80,24 +96,182 @@ class CoursePlayer extends Component
         }
     }
 
+    /**
+     * Explicit completion signal for content types with no automatic
+     * tracking (document/link) — the learner confirms they've reviewed it.
+     */
+    public function markComplete(int $contentId): void
+    {
+        abort_unless($this->activeContent && $this->activeContent->id === $contentId, 403);
+        abort_unless(
+            in_array($this->activeContent->content_type, [ContentType::Document, ContentType::Link], true),
+            403
+        );
+
+        ContentView::updateOrCreate(
+            [
+                'user_id' => Auth::id(),
+                'content_id' => $this->activeContent->id,
+            ],
+            [
+                'is_completed' => true,
+                'viewed_at' => now(),
+            ]
+        );
+
+        $this->dispatch('contentCompleted');
+        $this->enrollment->issueCertificateIfEligible();
+    }
+
     public function isContentAccessible(ModuleContent $content): bool
     {
-        if (! $this->module->is_sequential) {
+        return $content->isAccessibleFor(Auth::user());
+    }
+
+    public function render()
+    {
+        $user = Auth::user();
+
+        $contents = $this->module->contents()
+            ->visibleTo($user)
+            ->orderBy('sort_order')
+            ->get()
+            ->map(function ($content) use ($user) {
+                $content->is_completed = $content->isCompletedFor($user);
+                $content->is_accessible = $this->isContentAccessible($content);
+
+                return $content;
+            });
+
+        if ($this->activeContent->content_type === ContentType::Test) {
+            $this->activeContent->loadMissing([
+                'assessment.attempts' => fn ($query) => $query->where('user_id', $user->id),
+                'assessment.questions',
+            ]);
+        }
+
+        $tree = $this->buildTree($user);
+
+        $coursePreTest = $this->course->assessments()->where('type', 'pre_test')->whereNull('module_id')->first();
+        $coursePostTest = $this->course->assessments()->where('type', 'post_test')->whereNull('module_id')->first();
+
+        return view('livewire.learner.course-player', [
+            'contents' => $contents,
+            'tree' => $tree,
+            'coursePreTest' => $coursePreTest,
+            'coursePostTest' => $coursePostTest,
+        ])->title($this->activeContent->title.' - '.$this->course->title);
+    }
+
+    /**
+     * Whole-course module list (with per-module and per-content-item lock/
+     * completion flags) used to populate the tree navigation sidebar.
+     */
+    protected function buildTree($user)
+    {
+        $courseModules = $this->course->modules()
+            ->with([
+                'contents' => fn ($query) => $query->orderBy('sort_order'),
+                'contents.views',
+                'contents.groupAccess',
+                'contents.assessment.attempts' => fn ($query) => $query->where('user_id', $user->id),
+                'assessments.attempts' => fn ($query) => $query->where('user_id', $user->id),
+                'prerequisites',
+            ])
+            ->get();
+
+        return $courseModules
+            ->values()
+            ->map(function (Module $module, int $index) use ($courseModules, $user) {
+                $previousModule = $index > 0 ? $courseModules[$index - 1] : null;
+                $module->is_accessible = $this->isModuleAccessible($module, $previousModule);
+                $module->progress_percent = $module->progressPercentFor($user);
+                $module->is_completed = $module->isCompletedFor($user);
+                $module->pre_test = $module->assessments->firstWhere('type', AssessmentType::PreTest);
+                $module->post_test = $module->assessments->firstWhere('type', AssessmentType::PostTest);
+
+                $module->contents->each(function (ModuleContent $content) use ($user) {
+                    $content->is_completed = $content->isCompletedFor($user);
+                    $content->is_accessible = $content->isAccessibleFor($user);
+                });
+
+                $module->setRelation(
+                    'contents',
+                    $module->contents->filter(fn (ModuleContent $content) => $content->isVisibleTo($user))->values()
+                );
+
+                return $module;
+            });
+    }
+
+    protected function isModuleAccessible(Module $module, ?Module $previousModule): bool
+    {
+        $coursePreTest = $this->course->assessments()->where('type', 'pre_test')->whereNull('module_id')->first();
+        if ($coursePreTest && ! $coursePreTest->attempts()->where('user_id', Auth::id())->exists()) {
+            return false;
+        }
+
+        if (! $this->moduleOwnPreTestAttempted($module)) {
+            return false;
+        }
+
+        foreach ($module->prerequisites as $prerequisite) {
+            if ($prerequisite->prerequisite_type->value === 'module') {
+                $prereqModule = $prerequisite->prerequisiteModule;
+                if (! $prereqModule || ! $prereqModule->isCompletedFor(Auth::user())) {
+                    return false;
+                }
+            } elseif ($prerequisite->prerequisite_type->value === 'assessment') {
+                $prereqAssessment = $prerequisite->prerequisiteAssessment;
+                if (! $this->isAssessmentPassed($prereqAssessment, $prerequisite->min_score_pct)) {
+                    return false;
+                }
+            }
+        }
+
+        if (! $this->previousModuleAssignmentsPassed($previousModule)) {
+            return false;
+        }
+
+        if (! $this->modulePostTestPassed($previousModule)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function moduleOwnPreTestAttempted(Module $module): bool
+    {
+        $preTest = $module->assessments->firstWhere('type', AssessmentType::PreTest);
+
+        if (! $preTest) {
             return true;
         }
 
-        // Get all contents visible to the user that come before this one
-        $previousContents = $this->module->contents()
-            ->visibleTo(Auth::user())
-            ->where('sort_order', '<', $content->sort_order)
-            ->get();
+        return $preTest->attempts->isNotEmpty();
+    }
 
-        foreach ($previousContents as $prev) {
-            $view = ContentView::where('user_id', Auth::id())
-                ->where('content_id', $prev->id)
-                ->first();
+    protected function modulePostTestPassed(?Module $module): bool
+    {
+        return ! $module || $module->postTestPassedFor(Auth::user());
+    }
 
-            if (! $view || ! $view->is_completed) {
+    protected function previousModuleAssignmentsPassed(?Module $previousModule): bool
+    {
+        if (! $previousModule) {
+            return true;
+        }
+
+        $assignments = $previousModule->assessments->filter(
+            fn ($assessment) => $assessment->type === AssessmentType::Assignment
+        );
+
+        foreach ($assignments as $assignment) {
+            $passed = $assignment->attempts->contains(
+                fn ($attempt) => $attempt->status === TestAttemptStatus::Passed
+            );
+
+            if (! $passed) {
                 return false;
             }
         }
@@ -105,23 +279,18 @@ class CoursePlayer extends Component
         return true;
     }
 
-    public function render()
+    protected function isAssessmentPassed(?Assessment $assessment, $minScore): bool
     {
-        $contents = $this->module->contents()
-            ->visibleTo(Auth::user())
-            ->orderBy('sort_order')
-            ->get()
-            ->map(function ($content) {
-                $view = $content->views->where('user_id', Auth::id())->first();
-                $content->is_completed = $view?->is_completed ?? false;
-                $content->is_accessible = $this->isContentAccessible($content);
+        if (! $assessment) {
+            return false;
+        }
 
-                return $content;
-            });
+        $bestAttempt = $assessment->attempts()
+            ->where('user_id', Auth::id())
+            ->orderByDesc('score_pct')
+            ->first();
 
-        return view('livewire.learner.course-player', [
-            'contents' => $contents,
-        ])->title($this->activeContent->title.' - '.$this->course->title);
+        return $bestAttempt && $bestAttempt->score_pct >= $minScore;
     }
 
     protected function extractYoutubeId($url): ?string
