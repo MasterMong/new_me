@@ -80,35 +80,6 @@
         <p class="text-sm font-semibold text-on-surface/60 mb-3">เส้นทางการเรียนทั้งหมด</p>
 
         <div class="rounded-2xl border border-outline-variant/40 bg-surface-container-lowest divide-y divide-outline-variant/30 overflow-hidden">
-            {{-- Pre-test row --}}
-            @if($preTest)
-                @php
-                    $preTestAttempted = $preTest->attempts()->where('user_id', auth()->id())->exists();
-                    $preTestIsCurrent = $nextStep && ($nextStep['key'] ?? null) === 'assessment:'.$preTest->id;
-                @endphp
-                <a href="{{ route('learn.assessments.show', $preTest) }}" wire:navigate
-                   class="flex items-center gap-4 px-5 py-4 hover:bg-primary/[0.03] transition-colors {{ $preTestIsCurrent ? 'bg-secondary-container/10' : '' }}">
-                    <div @class([
-                        'size-9 shrink-0 rounded-full flex items-center justify-center',
-                        'bg-primary text-on-primary' => $preTestAttempted,
-                        'bg-secondary-container text-on-secondary-container' => ! $preTestAttempted,
-                    ])>
-                        @if($preTestAttempted)
-                            <flux:icon.check variant="mini" />
-                        @else
-                            <flux:icon.document-text variant="mini" />
-                        @endif
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="font-semibold truncate">{{ $preTest->title }}</p>
-                        <p class="text-xs text-on-surface/50">แบบทดสอบก่อนเรียนของหลักสูตร</p>
-                    </div>
-                    <span class="text-xs font-semibold text-primary shrink-0">
-                        {{ $preTestAttempted ? 'ดูผลคะแนน' : 'เริ่มทำแบบทดสอบ' }}
-                    </span>
-                </a>
-            @endif
-
             {{-- Module rows --}}
             @foreach($modules as $module)
                 @php
@@ -161,51 +132,6 @@
                     @endif
                 </div>
             @endforeach
-
-            {{-- Post-test row --}}
-            @if($postTest)
-                @php
-                    $allModulesCompleted = $modules->every(fn($m) => $m->is_completed);
-                    $postTestPassed = $postTest->attempts->contains(fn($a) => $a->status === \App\Enums\TestAttemptStatus::Passed);
-                    $postTestIsCurrent = $nextStep && ($nextStep['key'] ?? null) === 'assessment:'.$postTest->id;
-                @endphp
-                @if($allModulesCompleted)
-                    <a href="{{ route('learn.assessments.show', $postTest) }}" wire:navigate
-                       class="flex items-center gap-4 px-5 py-4 hover:bg-primary/[0.03] transition-colors {{ $postTestIsCurrent ? 'bg-secondary-container/10' : '' }}">
-                        <div @class([
-                            'size-9 shrink-0 rounded-full flex items-center justify-center',
-                            'bg-primary text-on-primary' => $postTestPassed,
-                            'bg-secondary-container text-on-secondary-container' => ! $postTestPassed,
-                        ])>
-                            @if($postTestPassed)
-                                <flux:icon.check variant="mini" />
-                            @else
-                                <flux:icon.trophy variant="mini" />
-                            @endif
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="font-semibold truncate">{{ $postTest->title }}</p>
-                            <p class="text-xs text-on-surface/50">แบบทดสอบหลังเรียนสรุปหลักสูตร</p>
-                        </div>
-                        <span class="text-xs font-semibold text-primary shrink-0">
-                            {{ $postTestPassed ? 'ดูผลคะแนน' : 'เริ่มทำแบบทดสอบ' }}
-                        </span>
-                    </a>
-                @else
-                    <div class="flex items-center gap-4 px-5 py-4">
-                        <div class="size-9 shrink-0 rounded-full bg-surface-container-high text-on-surface/40 flex items-center justify-center">
-                            <flux:icon.lock-closed variant="mini" />
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="font-semibold truncate">{{ $postTest->title }}</p>
-                            <p class="text-xs text-on-surface/40">
-                                <flux:icon.lock-closed variant="micro" class="inline -mt-0.5" />
-                                ต้องเรียนจบทุกโมดูลก่อน
-                            </p>
-                        </div>
-                    </div>
-                @endif
-            @endif
         </div>
     </div>
 </div>
