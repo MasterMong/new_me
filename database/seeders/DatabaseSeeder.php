@@ -13,17 +13,10 @@ class DatabaseSeeder extends Seeder
             AffiliationSeeder::class,
             LearnerGroupSeeder::class,
             UserSeeder::class,
-            CourseSeeder::class,
-            QuestionSeeder::class,
+            RealCourseSeeder::class,
             UserGroupMembershipSeeder::class,
-            ContentGroupAccessSeeder::class,
-            CourseGroupAccessSeeder::class,
-            ModulePrerequisiteSeeder::class,
-            ModuleExpertAssignmentSeeder::class,
             CertificateTemplateSeeder::class,
-            EnrollmentSeeder::class,
-            LearnerProgressSeeder::class,
-            CourseReviewAndCertificateSeeder::class,
+            RealCourseEnrollmentSeeder::class,
         ]);
     }
 }

@@ -11,9 +11,13 @@ class CertificateTemplateSeeder extends Seeder
 {
     public function run(): void
     {
-        $course1 = Course::where('duration_hours', 6)->first();
+        $course = Course::first();
 
-        $path = 'certificates/templates/course-'.$course1->id.'.jpg';
+        if (! $course) {
+            return;
+        }
+
+        $path = 'certificates/templates/course-'.$course->id.'.jpg';
         $width = 1600;
         $height = 1131; // A4 landscape aspect ratio
 
@@ -22,7 +26,7 @@ class CertificateTemplateSeeder extends Seeder
         }
 
         CertificateTemplate::updateOrCreate(
-            ['course_id' => $course1->id],
+            ['course_id' => $course->id],
             [
                 'template_image_url' => Storage::disk('public')->url($path),
                 'name_x' => (int) ($width * 0.5),
