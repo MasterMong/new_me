@@ -12,7 +12,10 @@
     </div>
 
     <div class="space-y-6">
-        <flux:heading size="lg">ประวัติการส่งใบงาน (เฉพาะโมดูลที่รับผิดชอบ)</flux:heading>
+        <div class="flex items-center justify-between gap-4">
+            <flux:heading size="lg">ประวัติการส่งใบงาน (เฉพาะโมดูลที่รับผิดชอบ)</flux:heading>
+            <flux:button variant="ghost" size="sm" icon="arrow-down-tray" wire:click="exportCsv">Export CSV</flux:button>
+        </div>
 
         <div class="bg-white dark:bg-zinc-900 shadow-sm rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800">
             <div class="overflow-x-auto">
