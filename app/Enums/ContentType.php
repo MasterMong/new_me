@@ -8,4 +8,14 @@ enum ContentType: string
     case Document = 'document';
     case Link = 'link';
     case Test = 'test';
+
+    public function label(): string
+    {
+        return match ($this) {
+            self::Video => 'วิดีโอ',
+            self::Document => 'เอกสาร',
+            self::Link => 'ลิงก์',
+            self::Test => 'แบบทดสอบ',
+        };
+    }
 }

@@ -7,6 +7,7 @@ use App\Enums\UserRole;
 use App\Livewire\Learner\CoursePath;
 use App\Models\Assessment;
 use App\Models\Course;
+use App\Models\CourseReview;
 use App\Models\Enrollment;
 use App\Models\LearnerGroup;
 use App\Models\Module;
@@ -383,4 +384,121 @@ test('the course pre-test is not re-queried once per module', function () {
     // once per module (5 modules here) instead of reusing the value render()
     // already computed once for the view.
     expect($preTestQueries->count())->toBeLessThanOrEqual(1);
+});
+
+test('the spotlighted next step is the course pre-test when it has not been attempted', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    $preTest = Assessment::factory()->create([
+        'course_id' => $course->id,
+        'type' => AssessmentType::PreTest->value,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(CoursePath::class, ['course' => $course])
+        ->assertViewHas('nextStep', fn ($nextStep) => $nextStep['type'] === 'pretest' && $nextStep['key'] === 'assessment:'.$preTest->id);
+});
+
+test('the spotlighted next step is the first accessible incomplete module once the pre-test is done', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    $preTest = Assessment::factory()->create([
+        'course_id' => $course->id,
+        'type' => AssessmentType::PreTest->value,
+    ]);
+    TestAttempt::factory()->create([
+        'user_id' => $user->id,
+        'assessment_id' => $preTest->id,
+        'status' => TestAttemptStatus::Passed->value,
+    ]);
+
+    $module = Module::factory()->create(['course_id' => $course->id, 'sort_order' => 1]);
+    ModuleContent::factory()->create(['module_id' => $module->id, 'content_type' => ContentType::Video]);
+
+    $this->actingAs($user);
+
+    Livewire::test(CoursePath::class, ['course' => $course])
+        ->assertViewHas('nextStep', fn ($nextStep) => $nextStep['type'] === 'module' && $nextStep['key'] === 'module:'.$module->id);
+});
+
+test('a locked module reports the specific reason it is locked', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    $module1 = Module::factory()->create(['course_id' => $course->id, 'sort_order' => 1, 'module_number' => 1]);
+    Module::factory()->create(['course_id' => $course->id, 'sort_order' => 2, 'module_number' => 2]);
+
+    Assessment::factory()->create([
+        'course_id' => $course->id,
+        'module_id' => $module1->id,
+        'type' => AssessmentType::PostTest->value,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(CoursePath::class, ['course' => $course])
+        ->assertViewHas('modules', function ($modules) {
+            return $modules->firstWhere('sort_order', 2)->lock_reason
+                === 'ต้องสอบผ่านแบบทดสอบหลังเรียนของโมดูลที่ 1 ก่อน';
+        });
+});
+
+test('the spotlight prompts for a course review once every module and the post-test are done', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    $module = Module::factory()->create(['course_id' => $course->id, 'sort_order' => 1]);
+    $content = ModuleContent::factory()->create(['module_id' => $module->id, 'content_type' => ContentType::Video]);
+    $content->views()->create(['user_id' => $user->id, 'is_completed' => true, 'viewed_at' => now()]);
+
+    $postTest = Assessment::factory()->create([
+        'course_id' => $course->id,
+        'module_id' => null,
+        'type' => AssessmentType::PostTest->value,
+    ]);
+    TestAttempt::factory()->create([
+        'user_id' => $user->id,
+        'assessment_id' => $postTest->id,
+        'status' => TestAttemptStatus::Passed->value,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(CoursePath::class, ['course' => $course])
+        ->assertViewHas('nextStep', fn ($nextStep) => $nextStep['type'] === 'review');
+});
+
+test('the spotlight is empty once the module, post-test, and review are all done but no certificate exists yet', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    $module = Module::factory()->create(['course_id' => $course->id, 'sort_order' => 1]);
+    $content = ModuleContent::factory()->create(['module_id' => $module->id, 'content_type' => ContentType::Video]);
+    $content->views()->create(['user_id' => $user->id, 'is_completed' => true, 'viewed_at' => now()]);
+
+    $postTest = Assessment::factory()->create([
+        'course_id' => $course->id,
+        'module_id' => null,
+        'type' => AssessmentType::PostTest->value,
+    ]);
+    TestAttempt::factory()->create([
+        'user_id' => $user->id,
+        'assessment_id' => $postTest->id,
+        'status' => TestAttemptStatus::Passed->value,
+    ]);
+
+    CourseReview::create(['user_id' => $user->id, 'course_id' => $course->id, 'rating' => 5]);
+
+    $this->actingAs($user);
+
+    Livewire::test(CoursePath::class, ['course' => $course])
+        ->assertViewHas('nextStep', fn ($nextStep) => $nextStep === null);
 });
