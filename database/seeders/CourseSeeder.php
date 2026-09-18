@@ -180,7 +180,7 @@ class CourseSeeder extends Seeder
             'module_id' => $module->id,
             'content_type' => ContentType::Video->value,
             'title' => 'วิดีโอบรรยาย: '.$topic,
-            'file_url' => "https://example.com/videos/{$attrs['seed_prefix']}/module{$number}.mp4",
+            'file_url' => 'https://phukhieo.ac.th/wp-content/uploads/2022/03/2022-03-02_0-22-24.mp4',
             'duration_minutes' => fake()->numberBetween(15, 60),
             'sort_order' => $sortOrder++,
         ]);

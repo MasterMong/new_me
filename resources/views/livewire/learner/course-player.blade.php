@@ -201,6 +201,7 @@
                         height: '100%',
                         width: '100%',
                         videoId: this.videoId,
+                        host: 'https://www.youtube-nocookie.com',
                         playerVars: {
                             'autoplay': 0,
                             'controls': 1,
@@ -252,6 +253,14 @@
                 saveProgress(completed) {
                     const currentTime = Math.floor(this.player.getCurrentTime());
                     @this.updateProgress(this.watchDuration, currentTime, completed);
+                },
+
+                destroy() {
+                    this.stopTracking();
+                    if (this.player && this.player.destroy) {
+                        this.player.destroy();
+                    }
+                    this.player = null;
                 }
             }));
         });
