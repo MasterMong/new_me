@@ -41,13 +41,44 @@ test('parses a question authored as a Word auto-numbered list with no literal ma
         ->and($promptQuestion['choices'][$promptQuestion['correct']])->toBe('บทบาท + บริบท + งานที่ต้องการ + รูปแบบ Output');
 });
 
-test('a question with more than one bold choice is kept with a best-effort answer and a warning', function () {
+test('M8 parses cleanly with no ambiguous-answer warnings', function () {
+    // Was previously ambiguous: a stray bold space left over from editing made
+    // the Hattie & Timperley question look like it had two correct choices
+    // (see the RealCourseSeeder commit history) — fixed directly in the
+    // source .docx, so this now parses with zero warnings.
     $warnings = [];
     $questions = $this->parser->parseQuestions(realCourseFixturePath('4. Pre-Post Test/M8 แบบทดสอบ.docx'), $warnings);
 
+    $hattieQuestion = collect($questions)->first(fn ($q) => str_contains($q['text'], 'Hattie'));
+
     expect($questions)->toHaveCount(20)
+        ->and($warnings)->toBe([])
+        ->and($hattieQuestion['choices'][$hattieQuestion['correct']])->toBe('Where am I going? → How am I going? → Where to next?');
+});
+
+test('an ambiguous bold marking is kept with a best-effort answer and a warning', function () {
+    $extractor = new class extends DocxTextExtractor
+    {
+        public function paragraphRuns(string $path): array
+        {
+            return [
+                [['text' => 'คะแนนเต็ม 1 คะแนน', 'bold' => false]],
+                [['text' => 'คำถามทดสอบ', 'bold' => false]],
+                [['text' => 'ก. หนึ่ง', 'bold' => true]],
+                [['text' => 'ข. สอง', 'bold' => false]],
+                [['text' => 'ค. สาม', 'bold' => false]],
+                [['text' => 'ง. สี่', 'bold' => true]],
+            ];
+        }
+    };
+
+    $warnings = [];
+    $questions = (new RealCourseContentParser($extractor))->parseQuestions('unused-path-stubbed-extractor', $warnings);
+
+    expect($questions)->toHaveCount(1)
+        ->and($questions[0]['correct'])->toBe(0)
         ->and($warnings)->toHaveCount(1)
-        ->and($warnings[0])->toContain('Hattie');
+        ->and($warnings[0])->toContain('found 2');
 });
 
 test('parses a module outline with a title on its own line and no worksheet threshold', function () {
