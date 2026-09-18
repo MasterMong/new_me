@@ -15,6 +15,7 @@ use App\Models\QuestionChoice;
 use App\Models\User;
 use App\Services\DocxTextExtractor;
 use App\Services\RealCourseContentParser;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
@@ -118,9 +119,74 @@ class RealCourseSeeder extends Seeder
 
         if ($hasWorksheet) {
             $this->createWorksheetAssignment($course, $module, $outline);
+        } else {
+            $this->createSelfDownloadWorksheet($module, $n, $outline['title']);
         }
 
         return $outline['hours'];
+    }
+
+    /**
+     * A placeholder self-download worksheet + answer key for modules with no
+     * expert-graded assignment (see course description: "ใบงานแบบผู้เรียน
+     * ดาวน์โหลดเอง"). No worksheet template files exist in the source
+     * materials to seed real ones from — these are clearly-labeled stand-ins
+     * an admin replaces via the module content editor once real worksheets
+     * are ready.
+     */
+    private function createSelfDownloadWorksheet(Module $module, int $n, string $moduleTitle): void
+    {
+        $worksheetPath = "course-content/module-{$n}-worksheet-placeholder.pdf";
+        $answerKeyPath = "course-content/module-{$n}-worksheet-answer-key-placeholder.pdf";
+
+        if (! Storage::disk('public')->exists($worksheetPath)) {
+            Storage::disk('public')->put(
+                $worksheetPath,
+                Pdf::loadHTML($this->placeholderWorksheetHtml($moduleTitle, isAnswerKey: false))->output()
+            );
+        }
+
+        if (! Storage::disk('public')->exists($answerKeyPath)) {
+            Storage::disk('public')->put(
+                $answerKeyPath,
+                Pdf::loadHTML($this->placeholderWorksheetHtml($moduleTitle, isAnswerKey: true))->output()
+            );
+        }
+
+        ModuleContent::create([
+            'module_id' => $module->id,
+            'content_type' => ContentType::Worksheet->value,
+            'title' => 'ใบงาน: '.$moduleTitle,
+            'file_url' => Storage::disk('public')->url($worksheetPath),
+            'answer_key_url' => Storage::disk('public')->url($answerKeyPath),
+            'duration_minutes' => null,
+            'sort_order' => 999,
+        ]);
+    }
+
+    private function placeholderWorksheetHtml(string $moduleTitle, bool $isAnswerKey): string
+    {
+        $heading = $isAnswerKey ? 'เฉลยใบงาน (ตัวอย่าง)' : 'ใบงาน (ตัวอย่าง)';
+        $body = $isAnswerKey
+            ? 'นี่คือไฟล์เฉลยตัวอย่าง — รอไฟล์เฉลยจริงจากทีมผู้สอน'
+            : 'นี่คือไฟล์ใบงานตัวอย่าง — รอไฟล์ใบงานจริงจากทีมผู้สอน';
+
+        return <<<HTML
+            <html>
+                <head>
+                    <style>
+                        body { font-family: 'DejaVu Sans', sans-serif; padding: 60px; color: #14213d; }
+                        h1 { color: #003e74; }
+                        p { font-size: 14px; color: #545f77; }
+                    </style>
+                </head>
+                <body>
+                    <h1>{$heading}</h1>
+                    <h2>{$moduleTitle}</h2>
+                    <p>{$body}</p>
+                </body>
+            </html>
+        HTML;
     }
 
     /**
