@@ -24,7 +24,7 @@ class ModuleContent extends Model
     public const ANSWER_KEY_DELAY_MINUTES = 10;
 
     protected $fillable = [
-        'module_id', 'content_type', 'assessment_id', 'title', 'file_url', 'answer_key_url', 'duration_minutes', 'sort_order',
+        'module_id', 'content_type', 'assessment_id', 'title', 'file_url', 'body', 'answer_key_url', 'duration_minutes', 'sort_order',
     ];
 
     protected $casts = [

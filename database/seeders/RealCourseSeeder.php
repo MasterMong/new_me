@@ -17,8 +17,8 @@ use App\Services\DocxTextExtractor;
 use App\Services\RealCourseContentParser;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 /**
  * Builds the actual ME-Learning course — 9 modules on M&E of basic
@@ -32,7 +32,9 @@ use Illuminate\Support\Facades\Storage;
  *   clips exist yet, so these point at a real, playable placeholder video
  *   until the actual footage is uploaded through the admin course-content UI.
  * - Document content: the module's "เอกสารประกอบ" knowledge-sheet .docx,
- *   converted to a real PDF and stored on the public disk — not a fake link.
+ *   rendered as rich-text HTML with its embedded images stored on the
+ *   public disk (see RealCourseContentParser::renderKnowledgeSheetHtml()) —
+ *   a real content page, not a PDF in an iframe.
  * - Pre-test and post-test: the source docs provide one combined MCQ bank
  *   per module ("แบบทดสอบ pre-test และ post-test"), so both assessments are
  *   seeded from the same parsed question set.
@@ -238,6 +240,11 @@ class RealCourseSeeder extends Seeder
         }
     }
 
+    /**
+     * The module's knowledge sheet, rendered as rich-text HTML (with its
+     * source docx's embedded images stored to the public disk) rather than
+     * a PDF rendered in an iframe — see RealCourseContentParser::renderKnowledgeSheetHtml().
+     */
     private function createDocumentContent(Module $module, string $base, int $n, string $moduleTitle): void
     {
         $matches = glob("{$base}/5. เอกสารประกอบ/M{$n}/*.docx");
@@ -248,60 +255,22 @@ class RealCourseSeeder extends Seeder
             return;
         }
 
-        $pdfUrl = $this->convertToStoredPdf($matches[0], $n);
+        $html = $this->parser->renderKnowledgeSheetHtml($matches[0], function (string $contents, string $filename) use ($n) {
+            $extension = pathinfo($filename, PATHINFO_EXTENSION) ?: 'png';
+            $path = "course-content/knowledge-sheet-images/module-{$n}-".Str::random(8).".{$extension}";
+            Storage::disk('public')->put($path, $contents);
 
-        if ($pdfUrl === null) {
-            return;
-        }
+            return Storage::disk('public')->url($path);
+        });
 
         ModuleContent::create([
             'module_id' => $module->id,
             'content_type' => ContentType::Document->value,
-            'title' => 'เอกสารประกอบการเรียน: '.$moduleTitle,
-            'file_url' => $pdfUrl,
+            'title' => 'ใบความรู้: '.$moduleTitle,
+            'body' => $html,
             'duration_minutes' => null,
             'sort_order' => 1000,
         ]);
-    }
-
-    /**
-     * Convert the module's knowledge-sheet .docx to a real PDF via a
-     * headless LibreOffice and store it on the public disk. Returns null
-     * (with a warning recorded) if the `soffice` binary isn't available in
-     * this environment, rather than failing the whole import over one
-     * missing document.
-     */
-    private function convertToStoredPdf(string $docxPath, int $n): ?string
-    {
-        $tmpDir = storage_path('app/tmp-course-import');
-
-        if (! is_dir($tmpDir)) {
-            mkdir($tmpDir, 0755, true);
-        }
-
-        $result = Process::timeout(120)->run([
-            'soffice', '--headless', '--convert-to', 'pdf', '--outdir', $tmpDir, $docxPath,
-        ]);
-
-        if (! $result->successful()) {
-            $this->warnings[] = "M{$n}: soffice failed to convert the supporting document to PDF — skipped its document content item. ({$result->errorOutput()})";
-
-            return null;
-        }
-
-        $generatedPdf = $tmpDir.'/'.pathinfo($docxPath, PATHINFO_FILENAME).'.pdf';
-
-        if (! is_file($generatedPdf)) {
-            $this->warnings[] = "M{$n}: expected converted PDF not found at {$generatedPdf} — skipped its document content item.";
-
-            return null;
-        }
-
-        $storedPath = "course-content/module-{$n}-เอกสารประกอบ.pdf";
-        Storage::disk('public')->put($storedPath, file_get_contents($generatedPdf));
-        unlink($generatedPdf);
-
-        return Storage::disk('public')->url($storedPath);
     }
 
     /**

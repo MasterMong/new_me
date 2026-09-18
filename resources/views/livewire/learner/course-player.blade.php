@@ -26,7 +26,15 @@
                     @break
 
                 @case(\App\Enums\ContentType::Document)
-                    <iframe src="{{ $activeContent->file_url }}" class="w-full h-full border-0 bg-white"></iframe>
+                    @if($activeContent->body)
+                        <div class="w-full h-full overflow-y-auto bg-white">
+                            <div class="rich-content max-w-3xl mx-auto px-8 py-12">
+                                {!! $activeContent->body !!}
+                            </div>
+                        </div>
+                    @else
+                        <iframe src="{{ $activeContent->file_url }}" class="w-full h-full border-0 bg-white"></iframe>
+                    @endif
                     @break
 
                 @case(\App\Enums\ContentType::Link)
@@ -219,7 +227,7 @@
                 <flux:text class="text-zinc-500">{{ $course->title }} • {{ $module->title }}</flux:text>
             </div>
             <div class="flex items-center gap-4">
-                @if($activeContent->content_type === \App\Enums\ContentType::Document)
+                @if($activeContent->content_type === \App\Enums\ContentType::Document && $activeContent->file_url)
                     <flux:button variant="ghost" class="text-zinc-400 hover:text-white" href="{{ $activeContent->file_url }}" target="_blank">
                         <flux:icon.arrow-top-right-on-square variant="mini" class="mr-2" />
                         เปิดในแท็บใหม่
@@ -365,4 +373,43 @@
             }));
         });
     </script>
+
+    <style>
+        .rich-content h2, .rich-content h3 {
+            font-weight: 700;
+            color: #003e74;
+            margin-top: 1.75rem;
+            margin-bottom: 0.5rem;
+        }
+        .rich-content h2 { font-size: 1.5rem; }
+        .rich-content h3 { font-size: 1.25rem; }
+        .rich-content h2:first-child, .rich-content h3:first-child {
+            margin-top: 0;
+        }
+        .rich-content p {
+            color: #27272a;
+            line-height: 1.75;
+            margin-bottom: 0.75rem;
+        }
+        .rich-content ol, .rich-content ul {
+            padding-inline-start: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .rich-content ol { list-style: decimal; }
+        .rich-content ul { list-style: disc; }
+        .rich-content li {
+            color: #27272a;
+            line-height: 1.75;
+            margin-bottom: 0.25rem;
+        }
+        .rich-content a {
+            color: #003e74;
+            text-decoration: underline;
+        }
+        .rich-content img {
+            max-width: 100%;
+            border-radius: 0.75rem;
+            margin-block: 1rem;
+        }
+    </style>
 </div>

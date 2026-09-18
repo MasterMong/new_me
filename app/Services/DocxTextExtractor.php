@@ -82,6 +82,42 @@ class DocxTextExtractor
         return implode("\n", array_column($this->paragraphs($path), 'text'));
     }
 
+    /**
+     * Every image embedded in the document (word/media/*), in the order
+     * they're stored in the zip. Docx images are commonly anchored/floating
+     * drawings rather than simple inline runs, so there's no reliable way
+     * to tie one back to a specific paragraph — callers that need images
+     * alongside text get them as a flat list instead.
+     *
+     * @return list<array{filename: string, contents: string}>
+     */
+    public function images(string $path): array
+    {
+        $zip = new ZipArchive;
+
+        if ($zip->open($path) !== true) {
+            throw new RuntimeException("Unable to open docx file: {$path}");
+        }
+
+        $images = [];
+
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $name = $zip->getNameIndex($i);
+
+            if ($name !== false && str_starts_with($name, 'word/media/')) {
+                $contents = $zip->getFromIndex($i);
+
+                if ($contents !== false) {
+                    $images[] = ['filename' => basename($name), 'contents' => $contents];
+                }
+            }
+        }
+
+        $zip->close();
+
+        return $images;
+    }
+
     private function readDocumentXml(string $path): string
     {
         $zip = new ZipArchive;

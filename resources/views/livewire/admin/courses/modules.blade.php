@@ -437,6 +437,25 @@
                     <flux:input wire:model="contentAnswerKeyUrl" placeholder="https://..." />
                     <flux:error name="contentAnswerKeyUrl" />
                 </flux:field>
+            @elseif ($contentType === 'document')
+                <flux:field>
+                    <flux:label>เนื้อหาใบความรู้</flux:label>
+                    @include('partials.rich-editor', [
+                        'model' => 'contentBody',
+                        'value' => $contentBody,
+                        'placeholder' => 'เขียนเนื้อหาใบความรู้ที่นี่ พิมพ์หัวข้อ ย่อหน้า และแทรกรูปภาพได้...',
+                        'imageModel' => 'contentBodyImage',
+                    ])
+                    <flux:description>แสดงเป็นหน้าเนื้อหาให้ผู้เรียนอ่านโดยตรง แทนไฟล์ PDF</flux:description>
+                    <flux:error name="contentBody" />
+                    <flux:error name="contentBodyImage" />
+                </flux:field>
+                <flux:field>
+                    <flux:label>URL ไฟล์เพิ่มเติม (ถ้ามี)</flux:label>
+                    <flux:input wire:model="contentFileUrl" placeholder="https://..." />
+                    <flux:description>ใช้เป็นทางเลือกสำรองเมื่อไม่ได้กรอกเนื้อหาด้านบน — ผู้เรียนจะเห็นเนื้อหา rich text ก่อนเสมอถ้ามี</flux:description>
+                    <flux:error name="contentFileUrl" />
+                </flux:field>
             @else
                 <flux:field>
                     <flux:label>

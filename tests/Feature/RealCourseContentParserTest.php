@@ -121,3 +121,45 @@ test('parses the course overview doc into its five bold-headed sections', functi
         // map, so their bodies shouldn't be attributed to any field.
         ->and($overview)->toHaveCount(5);
 });
+
+test('renders a knowledge sheet docx as headed, listed rich-text html with its images appended', function () {
+    $resolvedImages = [];
+
+    $html = $this->parser->renderKnowledgeSheetHtml(
+        realCourseFixturePath('5. เอกสารประกอบ/M1/M1. ปรับ 18 ส.ค. 69 10.54 น..docx'),
+        function (string $contents, string $filename) use (&$resolvedImages) {
+            $resolvedImages[] = $filename;
+
+            return 'https://example.com/'.$filename;
+        }
+    );
+
+    expect($html)->toContain('<h3>วัตถุประสงค์</h3>')
+        ->and($html)->toContain('<p>')
+        // "1. เพื่อ..." / "2. เพื่อ..." lines fold into a single ordered list.
+        ->and($html)->toContain(
+            '<ol><li>เพื่อให้ผู้เข้ารับการพัฒนามีความรู้ความเข้าใจเกี่ยวกับหลักการ แนวคิด และทฤษฎีการติดตามและประเมินผลการจัดการศึกษาขั้นพื้นฐาน</li>'
+            .'<li>เพื่อให้ผู้เข้ารับการพัฒนามีความรู้ความเข้าใจเกี่ยวกับทฤษฎีที่เกี่ยวข้องกับการติดตามและประเมินผลการจัดการศึกษาขั้นพื้นฐาน</li></ol>'
+        )
+        ->and($html)->toContain('<h3>รูปประกอบเนื้อหา</h3>')
+        ->and($html)->toContain('<img src="https://example.com/')
+        ->and($resolvedImages)->not->toBeEmpty();
+});
+
+test('the knowledge sheet renderer skips the image gallery when the source docx has no images', function () {
+    $resolverCalled = false;
+
+    $html = $this->parser->renderKnowledgeSheetHtml(
+        realCourseFixturePath('1. คำอธิบายหลหักสูตร/1. รายละเอียดหลักสูตร.docx'),
+        function () use (&$resolverCalled) {
+            $resolverCalled = true;
+
+            return 'https://example.com/pic.png';
+        }
+    );
+
+    expect($html)->toContain('<h3>กลุ่มเป้าหมาย</h3>')
+        ->and($html)->not->toContain('รูปประกอบเนื้อหา')
+        ->and($html)->not->toContain('<img')
+        ->and($resolverCalled)->toBeFalse();
+});

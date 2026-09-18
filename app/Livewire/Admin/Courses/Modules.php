@@ -58,6 +58,10 @@ class Modules extends Component
 
     public string $contentFileUrl = '';
 
+    public string $contentBody = '';
+
+    public $contentBodyImage = null;
+
     public string $contentAnswerKeyUrl = '';
 
     public string $contentDurationMinutes = '';
@@ -230,6 +234,7 @@ class Modules extends Component
         $this->contentType = $content->content_type->value;
         $this->contentTitle = $content->title;
         $this->contentFileUrl = $content->file_url ?? '';
+        $this->contentBody = $content->body ?? '';
         $this->contentAnswerKeyUrl = $content->answer_key_url ?? '';
         $this->contentDurationMinutes = $content->duration_minutes !== null
             ? (string) $content->duration_minutes
@@ -250,6 +255,7 @@ class Modules extends Component
             'content_type' => $this->contentType,
             'title' => $this->contentTitle,
             'file_url' => $this->contentFileUrl ?: null,
+            'body' => $this->contentType === 'document' ? ($this->contentBody ?: null) : null,
             'answer_key_url' => $this->contentType === 'worksheet' ? ($this->contentAnswerKeyUrl ?: null) : null,
             'duration_minutes' => $this->contentDurationMinutes !== ''
                 ? (float) $this->contentDurationMinutes
@@ -279,6 +285,24 @@ class Modules extends Component
         }
 
         $this->showContentModal = false;
+    }
+
+    /**
+     * Handles an image dropped into a knowledge sheet's rich-text editor:
+     * stores it on the public disk and hands the URL back to the editor to
+     * embed at the cursor position. The editor's own JS clears the pending
+     * upload state; this only needs to reset the property so the same image
+     * can be re-selected later without Livewire treating it as unchanged.
+     */
+    public function updatedContentBodyImage(): void
+    {
+        $this->validate(['contentBodyImage' => ['image', 'max:2048']]);
+
+        $path = $this->contentBodyImage->store('course-content/knowledge-sheet-images', 'public');
+
+        $this->dispatch('content-image-uploaded', url: Storage::disk('public')->url($path));
+
+        $this->contentBodyImage = null;
     }
 
     public function deleteContent(int $contentId): void
@@ -394,6 +418,7 @@ class Modules extends Component
             'contentType' => ['required', 'in:video,document,link,test,worksheet,outline'],
             'contentTitle' => ['required', 'string', 'max:500'],
             'contentFileUrl' => ['nullable', 'string', 'max:1000'],
+            'contentBody' => ['nullable', 'string'],
             'contentAnswerKeyUrl' => ['nullable', 'string', 'max:1000'],
             'contentDurationMinutes' => ['nullable', 'numeric', 'min:0'],
             'contentAssessmentId' => [
@@ -439,6 +464,8 @@ class Modules extends Component
         $this->contentType = 'video';
         $this->contentTitle = '';
         $this->contentFileUrl = '';
+        $this->contentBody = '';
+        $this->contentBodyImage = null;
         $this->contentAnswerKeyUrl = '';
         $this->contentDurationMinutes = '';
         $this->contentAssessmentId = null;

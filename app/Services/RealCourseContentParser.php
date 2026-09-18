@@ -215,6 +215,67 @@ class RealCourseContentParser
     }
 
     /**
+     * Render a knowledge-sheet ("ใบความรู้") docx as simple rich-text HTML
+     * for the learner-facing content viewer: a bold paragraph becomes a
+     * heading, consecutive "1. …" / "2. …" lines become an ordered list,
+     * and everything else is a paragraph. The docx's own embedded images
+     * are appended at the end as a gallery — they're anchored/floating
+     * drawings in the source file with no reliable link back to a specific
+     * paragraph, so reproducing their original in-text position isn't
+     * attempted; $imageUrlResolver is handed each image's raw bytes and
+     * filename and returns the public URL to embed.
+     *
+     * @param  callable(string $contents, string $filename): string  $imageUrlResolver
+     */
+    public function renderKnowledgeSheetHtml(string $path, callable $imageUrlResolver): string
+    {
+        $html = '';
+        $listItems = [];
+
+        $flushList = function () use (&$html, &$listItems) {
+            if ($listItems === []) {
+                return;
+            }
+
+            $html .= '<ol>'.implode('', array_map(fn ($item) => '<li>'.e($item).'</li>', $listItems)).'</ol>';
+            $listItems = [];
+        };
+
+        foreach ($this->extractor->paragraphs($path) as $paragraph) {
+            if ($paragraph['bold']) {
+                $flushList();
+                $html .= '<h3>'.e($paragraph['text']).'</h3>';
+
+                continue;
+            }
+
+            if (preg_match('/^\d+[.)]\s*(.+)/u', $paragraph['text'], $matches)) {
+                $listItems[] = $matches[1];
+
+                continue;
+            }
+
+            $flushList();
+            $html .= '<p>'.e($paragraph['text']).'</p>';
+        }
+
+        $flushList();
+
+        $images = $this->extractor->images($path);
+
+        if ($images !== []) {
+            $html .= '<h3>รูปประกอบเนื้อหา</h3>';
+
+            foreach ($images as $image) {
+                $url = $imageUrlResolver($image['contents'], $image['filename']);
+                $html .= '<img src="'.e($url).'" alt="">';
+            }
+        }
+
+        return $html;
+    }
+
+    /**
      * @param  list<string>  $lines
      * @return array{0: string, 1: int} [title, index of first line after the title]
      */
