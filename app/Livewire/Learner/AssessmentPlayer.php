@@ -11,6 +11,7 @@ use App\Models\Enrollment;
 use App\Models\TestAnswer;
 use App\Models\TestAttempt;
 use App\Notifications\AssignmentSubmitted;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
@@ -47,14 +48,14 @@ class AssessmentPlayer extends Component
     public function mount(Assessment $assessment)
     {
         $this->assessment = $assessment;
-        $this->questions = $this->assessment->questions()->with('choices')->get();
-        $this->totalQuestions = $this->questions->count();
+        $this->totalQuestions = $this->assessment->questions()->count();
 
         if ($this->totalQuestions === 0) {
             return redirect()->route('learn.courses.show', $this->assessment->course_id);
         }
 
         $this->startAttempt();
+        $this->questions = $this->orderedQuestions($this->currentAttempt);
     }
 
     protected function startAttempt()
@@ -154,6 +155,48 @@ class AssessmentPlayer extends Component
 
         $this->reset(['answers', 'essayAnswers', 'uploadedFiles', 'existingFileUrls', 'currentIndex', 'score', 'isFinished']);
         $this->createNewAttempt($attemptsCount);
+        $this->questions = $this->orderedQuestions($this->currentAttempt);
+    }
+
+    /**
+     * This attempt's questions (and each question's choices), reordered
+     * from the assessment's canonical sort_order so a retry doesn't just
+     * show the same sequence the learner already saw and may have
+     * memorized. The shuffle is seeded from the attempt's own id, so it's
+     * stable across requests/reloads for as long as this attempt is open,
+     * but different from every other attempt.
+     */
+    protected function orderedQuestions(TestAttempt $attempt): Collection
+    {
+        $questions = $this->assessment->questions()->with('choices')->get();
+
+        return $this->seededShuffle($questions, $attempt->id)
+            ->map(function ($question) use ($attempt) {
+                $question->setRelation('choices', $this->seededShuffle($question->choices, $attempt->id + $question->id));
+
+                return $question;
+            });
+    }
+
+    /**
+     * A Fisher-Yates shuffle driven by a small local PRNG rather than
+     * mt_srand()/shuffle() — those reseed the process-global Mersenne
+     * Twister, which would leak into any other randomness (factories,
+     * Str::random(), unrelated shuffles) for the rest of this worker's
+     * lifetime. Deterministic: the same $seed always yields the same order.
+     */
+    protected function seededShuffle(Collection $items, int $seed): Collection
+    {
+        $arr = $items->values()->all();
+        $state = $seed;
+
+        for ($i = count($arr) - 1; $i > 0; $i--) {
+            $state = ($state * 1103515245 + 12345) & 0x7FFFFFFF;
+            $j = $state % ($i + 1);
+            [$arr[$i], $arr[$j]] = [$arr[$j], $arr[$i]];
+        }
+
+        return collect($arr);
     }
 
     public function canRetry(): bool

@@ -351,3 +351,47 @@ test('revision retries are capped by the assessment max_attempts', function () {
 
     expect(TestAttempt::where('assessment_id', $assessment->id)->count())->toBe(1);
 });
+
+test('a retry shows questions in a different order than the previous attempt', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $assessment = Assessment::factory()->create([
+        'type' => AssessmentType::PostTest->value,
+        'passing_score_pct' => 100,
+        'max_attempts' => 3,
+    ]);
+
+    $questions = collect(range(1, 8))->map(
+        fn ($n) => Question::factory()->create(['assessment_id' => $assessment->id, 'sort_order' => $n])
+    );
+
+    $this->actingAs($user);
+
+    $component = Livewire::test(AssessmentPlayer::class, ['assessment' => $assessment]);
+    $firstOrder = $component->instance()->questions->pluck('id')->all();
+
+    $component->call('finish');
+    // finish() with no answers selected on a 0-point assessment still fails (0% < 100%).
+    $component->call('retryAttempt');
+    $secondOrder = $component->instance()->questions->pluck('id')->all();
+
+    expect($firstOrder)->not->toBe($secondOrder)
+        ->and(collect($firstOrder)->sort()->values()->all())->toBe(collect($secondOrder)->sort()->values()->all());
+});
+
+test('the question order for an in-progress attempt stays stable across reloads', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $assessment = Assessment::factory()->create();
+    collect(range(1, 8))->each(
+        fn ($n) => Question::factory()->create(['assessment_id' => $assessment->id, 'sort_order' => $n])
+    );
+
+    $this->actingAs($user);
+
+    $first = Livewire::test(AssessmentPlayer::class, ['assessment' => $assessment]);
+    $firstOrder = $first->instance()->questions->pluck('id')->all();
+
+    $second = Livewire::test(AssessmentPlayer::class, ['assessment' => $assessment]);
+    $secondOrder = $second->instance()->questions->pluck('id')->all();
+
+    expect($firstOrder)->toBe($secondOrder);
+});
