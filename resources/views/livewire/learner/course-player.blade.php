@@ -9,7 +9,7 @@
     {{-- Main Content Area --}}
     <div class="flex-1 flex flex-col relative">
         {{-- Content Player Container --}}
-        <div class="flex-1 flex items-center justify-center bg-black relative">
+        <div class="flex-1 flex items-center justify-center bg-black relative overflow-hidden">
             @switch($activeContent->content_type)
                 @case(\App\Enums\ContentType::Video)
                     @if($this->extractYoutubeId($activeContent->file_url))
@@ -27,7 +27,7 @@
 
                 @case(\App\Enums\ContentType::Document)
                     @if($activeContent->body)
-                        <div class="w-full h-full overflow-y-auto bg-white">
+                        <div class="w-full h-full self-stretch overflow-y-auto bg-white">
                             <div class="rich-content max-w-3xl mx-auto px-8 py-12">
                                 {!! $activeContent->body !!}
                             </div>
@@ -121,7 +121,7 @@
                             \App\Enums\ContentType::Outline => 'list-bullet',
                         };
                     @endphp
-                    <div class="flex flex-col items-center text-center p-10 max-w-lg overflow-y-auto">
+                    <div class="w-full h-full self-stretch flex flex-col items-center text-center p-10 max-w-lg mx-auto overflow-y-auto">
                         <div class="size-16 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-6 shrink-0">
                             <flux:icon.list-bullet variant="outline" class="size-8" />
                         </div>
