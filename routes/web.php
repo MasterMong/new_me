@@ -120,6 +120,6 @@ if (app()->isLocal()) {
         $user = User::where('email', $request->input('email'))->firstOrFail();
         Auth::login($user);
 
-        return redirect()->intended('/dashboard');
+        return redirect()->intended('/');
     })->name('quick-login');
 }
