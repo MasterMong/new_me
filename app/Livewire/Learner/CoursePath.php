@@ -84,13 +84,21 @@ class CoursePath extends Component
                 $module->is_completed = $this->isModuleCompleted($module);
                 $module->pre_test = $module->assessments->firstWhere('type', AssessmentType::PreTest);
                 $module->post_test = $module->assessments->firstWhere('type', AssessmentType::PostTest);
+                // A module whose only remaining gate is its own un-attempted
+                // pre-test is still the learner's current step (the pre-test
+                // itself) — otherwise the spotlight falls through to the
+                // post-completion steps (course review) at course start.
+                $module->is_startable = ! $module->is_completed
+                    && ! $module->is_locked_out
+                    && $this->checkModuleAccessibility($module, $previousModule, $preTest, ignoreOwnPreTest: true);
+
                 $module->lock_reason = match (true) {
                     $module->is_locked_out => 'ทำแบบทดสอบหลังเรียนไม่ผ่านครบ '.$module->post_test->max_attempts.' ครั้ง ต้องเริ่มเรียนโมดูลนี้ใหม่',
-                    ! $module->is_accessible => $this->moduleLockReason($module, $previousModule, $preTest),
+                    ! $module->is_startable => $this->moduleLockReason($module, $previousModule, $preTest),
                     default => null,
                 };
 
-                if ($module->is_accessible && ! $module->is_completed) {
+                if ($module->is_startable) {
                     $module->next_action = $this->moduleNextAction($module);
                 }
 
@@ -142,7 +150,7 @@ class CoursePath extends Component
             ];
         }
 
-        $activeModule = $modules->first(fn ($m) => $m->is_accessible && ! $m->is_completed);
+        $activeModule = $modules->first(fn ($m) => $m->is_startable);
 
         if ($activeModule) {
             return [
@@ -244,7 +252,7 @@ class CoursePath extends Component
             ->implode(' · ');
     }
 
-    protected function checkModuleAccessibility($module, ?Module $previousModule, $coursePreTest): bool
+    protected function checkModuleAccessibility($module, ?Module $previousModule, $coursePreTest, bool $ignoreOwnPreTest = false): bool
     {
         // Course-wide pre-test must be completed if it exists
         if ($coursePreTest && ! $coursePreTest->attempts()->where('user_id', Auth::id())->exists()) {
@@ -252,7 +260,7 @@ class CoursePath extends Component
         }
 
         // This module's own pre-test must be attempted before its content unlocks
-        if (! $this->moduleOwnPreTestAttempted($module)) {
+        if (! $ignoreOwnPreTest && ! $this->moduleOwnPreTestAttempted($module)) {
             return false;
         }
 

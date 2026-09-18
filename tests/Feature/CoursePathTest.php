@@ -259,6 +259,61 @@ test('a module with its own pre-test is locked until that pre-test is attempted'
         });
 });
 
+test('the spotlight is the module pre-test, not the course review, when the first module pre-test is un-attempted', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    $module = Module::factory()->create(['course_id' => $course->id, 'sort_order' => 1]);
+    ModuleContent::factory()->create(['module_id' => $module->id, 'content_type' => ContentType::Video]);
+    $preTest = Assessment::factory()->create([
+        'course_id' => $course->id,
+        'module_id' => $module->id,
+        'type' => AssessmentType::PreTest->value,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(CoursePath::class, ['course' => $course])
+        ->assertViewHas('modules', function ($modules) {
+            $m = $modules->first();
+
+            return $m->is_accessible === false && $m->is_startable === true;
+        })
+        ->assertViewHas('nextStep', fn ($nextStep) => $nextStep['type'] === 'module'
+            && $nextStep['key'] === 'module:'.$module->id
+            && $nextStep['href'] === route('learn.assessments.show', $preTest));
+});
+
+test('a later module blocked by more than its own pre-test is not startable', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    $module1 = Module::factory()->create(['course_id' => $course->id, 'sort_order' => 1]);
+    $module2 = Module::factory()->create(['course_id' => $course->id, 'sort_order' => 2]);
+
+    Assessment::factory()->create([
+        'course_id' => $course->id,
+        'module_id' => $module2->id,
+        'type' => AssessmentType::PreTest->value,
+    ]);
+    Assessment::factory()->create([
+        'course_id' => $course->id,
+        'module_id' => $module1->id,
+        'type' => AssessmentType::PostTest->value,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(CoursePath::class, ['course' => $course])
+        ->assertViewHas('modules', function ($modules) {
+            $m2 = $modules->firstWhere('sort_order', 2);
+
+            return $m2->is_startable === false && $m2->is_accessible === false;
+        });
+});
+
 test('a module unlocks once its own pre-test has been attempted', function () {
     $user = User::factory()->create(['role' => UserRole::Learner->value]);
     $course = Course::factory()->create();

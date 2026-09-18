@@ -117,17 +117,17 @@
                 <div @class([
                     'flex items-center gap-4 px-5 py-4 transition-colors',
                     'bg-secondary-container/10' => $isCurrent,
-                    'hover:bg-primary/[0.03]' => $module->is_accessible,
+                    'hover:bg-primary/[0.03]' => $module->is_accessible || $module->is_startable,
                 ])>
                     <div @class([
                         'size-9 shrink-0 rounded-full flex items-center justify-center font-bold text-sm',
                         'bg-primary text-on-primary' => $module->is_completed,
-                        'bg-secondary-container text-on-secondary-container' => ! $module->is_completed && $module->is_accessible,
-                        'bg-surface-container-high text-on-surface/40' => ! $module->is_accessible,
+                        'bg-secondary-container text-on-secondary-container' => ! $module->is_completed && ($module->is_accessible || $module->is_startable),
+                        'bg-surface-container-high text-on-surface/40' => ! $module->is_completed && ! $module->is_accessible && ! $module->is_startable,
                     ])>
                         @if($module->is_completed)
                             <flux:icon.check variant="mini" />
-                        @elseif(! $module->is_accessible)
+                        @elseif(! $module->is_accessible && ! $module->is_startable)
                             <flux:icon.lock-closed variant="mini" />
                         @else
                             {{ $module->module_number }}
@@ -136,10 +136,10 @@
 
                     <div class="flex-1 min-w-0">
                         <p class="font-semibold truncate">โมดูล {{ $module->module_number }}: {{ $module->title }}</p>
-                        <p class="text-xs {{ $module->is_accessible ? 'text-on-surface/50' : 'text-on-surface/40' }}">
+                        <p class="text-xs {{ $module->is_accessible || $module->is_startable ? 'text-on-surface/50' : 'text-on-surface/40' }}">
                             @if($module->is_completed)
                                 เรียนจบแล้ว
-                            @elseif($module->is_accessible)
+                            @elseif($module->is_accessible || $module->is_startable)
                                 {{ $module->next_action['subtitle'] }}
                             @else
                                 <flux:icon.lock-closed variant="micro" class="inline -mt-0.5" />
@@ -153,7 +153,7 @@
                            class="text-xs font-semibold text-primary shrink-0">
                             เรียนอีกครั้ง
                         </a>
-                    @elseif($module->is_accessible)
+                    @elseif($module->is_accessible || $module->is_startable)
                         <a href="{{ $module->next_action['href'] }}" wire:navigate
                            class="text-xs font-semibold text-primary shrink-0">
                             {{ $module->next_action['label'] }}
