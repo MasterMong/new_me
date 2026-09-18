@@ -42,32 +42,27 @@ class CoursePlayer extends Component
             return redirect()->route('courses.show', $course);
         }
 
-        $previousModule = Module::where('course_id', $course->id)
-            ->where('sort_order', '<', $module->sort_order)
-            ->orderByDesc('sort_order')
-            ->with(['assessments.attempts' => fn ($query) => $query->where('user_id', Auth::id())])
-            ->first();
-
         $this->module->load([
             'prerequisites',
             'assessments.attempts' => fn ($query) => $query->where('user_id', Auth::id()),
         ]);
 
-        $coursePreTest = $this->course->assessments()->where('type', 'pre_test')->whereNull('module_id')->first();
-
         if ($this->module->isLockedOutFor(Auth::user())) {
             return redirect()->route('learn.courses.show', $this->course);
         }
 
-        abort_unless($this->isModuleAccessible($this->module, $previousModule, $coursePreTest), 403, 'โมดูลนี้ยังไม่ถูกปลดล็อค');
+        // The module's own outline is a preview of what it covers, so it's
+        // reachable even before the module's own pre-test is attempted —
+        // everything else still requires it, same as before.
+        $targetContent = $content ?? $this->module->contents()->visibleTo(Auth::user())->orderBy('sort_order')->first();
+        $ignoreOwnPreTest = $targetContent?->content_type === ContentType::Outline;
 
-        // Default to first content if none selected
-        if (! $content) {
-            $this->activeContent = $this->module->contents()->visibleTo(Auth::user())->orderBy('sort_order')->first();
-        } else {
+        abort_unless($this->moduleIsAccessible($ignoreOwnPreTest), 403, 'โมดูลนี้ยังไม่ถูกปลดล็อค');
+
+        if ($content) {
             abort_unless($content->isVisibleTo(Auth::user()), 403);
-            $this->activeContent = $content;
         }
+        $this->activeContent = $targetContent;
 
         if (! $this->activeContent) {
             return redirect()->route('learn.courses.show', $this->course);
@@ -76,9 +71,41 @@ class CoursePlayer extends Component
 
     public function selectContent(ModuleContent $content)
     {
+        if (! $this->moduleIsAccessible($content->content_type === ContentType::Outline)) {
+            return;
+        }
+
         if ($content->isVisibleTo(Auth::user()) && $this->isContentAccessible($content)) {
             $this->activeContent = $content;
         }
+    }
+
+    /**
+     * Whether the current module is unlocked for the authenticated learner.
+     * $ignoreOwnPreTest lets the module's own outline content stay reachable
+     * before its pre-test is attempted, without loosening the gate for
+     * anything else — selectContent() re-checks this on every switch so
+     * that bypass can't be used to reach other content in the same session.
+     */
+    protected function moduleIsAccessible(bool $ignoreOwnPreTest = false): bool
+    {
+        // selectContent() calls this on every switch from a fresh request;
+        // loadMissing guarantees these are present (correctly user-scoped)
+        // even when Livewire's snapshot didn't carry them over from mount().
+        $this->module->loadMissing([
+            'prerequisites',
+            'assessments.attempts' => fn ($query) => $query->where('user_id', Auth::id()),
+        ]);
+
+        $previousModule = Module::where('course_id', $this->course->id)
+            ->where('sort_order', '<', $this->module->sort_order)
+            ->orderByDesc('sort_order')
+            ->with(['assessments.attempts' => fn ($query) => $query->where('user_id', Auth::id())])
+            ->first();
+
+        $coursePreTest = $this->course->assessments()->where('type', 'pre_test')->whereNull('module_id')->first();
+
+        return $this->isModuleAccessible($this->module, $previousModule, $coursePreTest, $ignoreOwnPreTest);
     }
 
     public function toggleModule(int $moduleId): void
@@ -123,7 +150,7 @@ class CoursePlayer extends Component
     {
         abort_unless($this->activeContent && $this->activeContent->id === $contentId, 403);
         abort_unless(
-            in_array($this->activeContent->content_type, [ContentType::Document, ContentType::Link], true),
+            in_array($this->activeContent->content_type, [ContentType::Document, ContentType::Link, ContentType::Outline], true),
             403
         );
 
@@ -242,7 +269,7 @@ class CoursePlayer extends Component
             });
     }
 
-    protected function isModuleAccessible(Module $module, ?Module $previousModule, ?Assessment $coursePreTest): bool
+    protected function isModuleAccessible(Module $module, ?Module $previousModule, ?Assessment $coursePreTest, bool $ignoreOwnPreTest = false): bool
     {
         if ($module->isLockedOutFor(Auth::user())) {
             return false;
@@ -252,7 +279,7 @@ class CoursePlayer extends Component
             return false;
         }
 
-        if (! $this->moduleOwnPreTestAttempted($module)) {
+        if (! $ignoreOwnPreTest && ! $this->moduleOwnPreTestAttempted($module)) {
             return false;
         }
 

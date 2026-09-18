@@ -6,6 +6,7 @@ use App\Enums\TestAttemptStatus;
 use App\Enums\UserRole;
 use App\Livewire\Learner\CoursePath;
 use App\Models\Assessment;
+use App\Models\ContentView;
 use App\Models\Course;
 use App\Models\CourseReview;
 use App\Models\Enrollment;
@@ -283,6 +284,67 @@ test('the spotlight is the module pre-test, not the course review, when the firs
         ->assertViewHas('nextStep', fn ($nextStep) => $nextStep['type'] === 'module'
             && $nextStep['key'] === 'module:'.$module->id
             && $nextStep['href'] === route('learn.assessments.show', $preTest));
+});
+
+test('the spotlight routes to the module outline before its pre-test when both are un-attempted', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    $module = Module::factory()->create(['course_id' => $course->id, 'sort_order' => 1]);
+    $outline = ModuleContent::factory()->create([
+        'module_id' => $module->id,
+        'content_type' => ContentType::Outline->value,
+        'sort_order' => 0,
+    ]);
+    Assessment::factory()->create([
+        'course_id' => $course->id,
+        'module_id' => $module->id,
+        'type' => AssessmentType::PreTest->value,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(CoursePath::class, ['course' => $course])
+        ->assertViewHas('nextStep', fn ($nextStep) => $nextStep['type'] === 'module'
+            && $nextStep['href'] === route('learn.courses.play', ['course' => $course->id, 'module' => $module->id, 'content' => $outline->id]));
+});
+
+test('the spotlight moves on to the pre-test once the module outline has been read', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    $module = Module::factory()->create(['course_id' => $course->id, 'sort_order' => 1]);
+    $outline = ModuleContent::factory()->create([
+        'module_id' => $module->id,
+        'content_type' => ContentType::Outline->value,
+        'sort_order' => 0,
+    ]);
+    // A second, un-viewed content item — otherwise the outline being the
+    // module's only content would make it read as 100% complete (and thus
+    // no longer "startable") the moment it's marked read.
+    ModuleContent::factory()->create([
+        'module_id' => $module->id,
+        'content_type' => ContentType::Video->value,
+        'sort_order' => 1,
+    ]);
+    ContentView::create([
+        'user_id' => $user->id,
+        'content_id' => $outline->id,
+        'is_completed' => true,
+        'viewed_at' => now(),
+    ]);
+    $preTest = Assessment::factory()->create([
+        'course_id' => $course->id,
+        'module_id' => $module->id,
+        'type' => AssessmentType::PreTest->value,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(CoursePath::class, ['course' => $course])
+        ->assertViewHas('nextStep', fn ($nextStep) => $nextStep['href'] === route('learn.assessments.show', $preTest));
 });
 
 test('a later module blocked by more than its own pre-test is not startable', function () {

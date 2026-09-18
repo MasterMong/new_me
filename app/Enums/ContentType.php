@@ -9,6 +9,7 @@ enum ContentType: string
     case Link = 'link';
     case Test = 'test';
     case Worksheet = 'worksheet';
+    case Outline = 'outline';
 
     public function label(): string
     {
@@ -18,6 +19,7 @@ enum ContentType: string
             self::Link => 'ลิงก์',
             self::Test => 'แบบทดสอบ',
             self::Worksheet => 'ใบงาน',
+            self::Outline => 'ภาพรวมโมดูล',
         };
     }
 }

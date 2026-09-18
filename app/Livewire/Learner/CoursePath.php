@@ -210,12 +210,23 @@ class CoursePath extends Component
 
     /**
      * The specific next thing to do inside an accessible, not-yet-completed
-     * module: its own pre-test, its content, or its own post-test.
+     * module: its outline, its own pre-test, its content, or its own
+     * post-test.
      *
      * @return array{label: string, subtitle: string, href: string}
      */
     protected function moduleNextAction(Module $module): array
     {
+        $outline = $module->contents->firstWhere('content_type', ContentType::Outline);
+
+        if ($outline && ! $outline->isCompletedFor(Auth::user())) {
+            return [
+                'label' => 'ดูภาพรวมโมดูล',
+                'subtitle' => 'ก่อนเริ่มแบบทดสอบก่อนเรียนของโมดูลนี้',
+                'href' => route('learn.courses.play', ['course' => $this->course->id, 'module' => $module->id, 'content' => $outline->id]),
+            ];
+        }
+
         if ($module->pre_test && $module->pre_test->attempts->isEmpty()) {
             return [
                 'label' => 'ทำแบบทดสอบก่อนเรียน',

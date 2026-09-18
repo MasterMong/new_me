@@ -99,6 +99,54 @@
                     </div>
                     @break
 
+                @case(\App\Enums\ContentType::Outline)
+                    @php
+                        $outlineTopics = $contents
+                            ->reject(fn ($c) => $c->id === $activeContent->id)
+                            ->groupBy(fn ($c) => $c->content_type->value);
+                        $outlineIcon = fn (\App\Enums\ContentType $type) => match ($type) {
+                            \App\Enums\ContentType::Video => 'play-circle',
+                            \App\Enums\ContentType::Document => 'document-text',
+                            \App\Enums\ContentType::Link => 'link',
+                            \App\Enums\ContentType::Test => 'clipboard-document-check',
+                            \App\Enums\ContentType::Worksheet => 'arrow-down-tray',
+                            \App\Enums\ContentType::Outline => 'list-bullet',
+                        };
+                    @endphp
+                    <div class="flex flex-col items-center text-center p-10 max-w-lg overflow-y-auto">
+                        <div class="size-16 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-6 shrink-0">
+                            <flux:icon.list-bullet variant="outline" class="size-8" />
+                        </div>
+                        <flux:heading size="xl" class="text-white mb-2">{{ $module->title }}</flux:heading>
+                        @if($module->description)
+                            <flux:subheading class="text-zinc-400 mb-8">{{ $module->description }}</flux:subheading>
+                        @endif
+
+                        @if($outlineTopics->isNotEmpty())
+                            <div class="w-full text-left space-y-4">
+                                <p class="text-xs font-bold text-zinc-500 uppercase tracking-widest">เนื้อหาในโมดูลนี้</p>
+                                @foreach($outlineTopics as $type => $items)
+                                    <div>
+                                        <p class="text-xs text-zinc-500 mb-1.5">{{ \App\Enums\ContentType::from($type)->label() }}</p>
+                                        <ul class="space-y-1.5">
+                                            @foreach($items as $item)
+                                                <li class="flex items-center gap-2 bg-zinc-900 rounded-lg px-3 py-2">
+                                                    <flux:icon
+                                                        :icon="$outlineIcon($item->content_type)"
+                                                        variant="micro"
+                                                        class="size-4 shrink-0 text-zinc-500"
+                                                    />
+                                                    <span class="text-sm text-zinc-200 truncate">{{ $item->title }}</span>
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+                    @break
+
                 @case(\App\Enums\ContentType::Worksheet)
                     @php
                         $worksheetDownloadedAt = $activeContent->worksheetDownloadedAtFor(auth()->user());
@@ -178,7 +226,7 @@
                     </flux:button>
                 @endif
 
-                @if(in_array($activeContent->content_type, [\App\Enums\ContentType::Document, \App\Enums\ContentType::Link]))
+                @if(in_array($activeContent->content_type, [\App\Enums\ContentType::Document, \App\Enums\ContentType::Link, \App\Enums\ContentType::Outline]))
                     @php $activeIsCompleted = $activeContent->isCompletedFor(auth()->user()); @endphp
                     @if($activeIsCompleted)
                         <flux:button variant="primary" disabled class="bg-green-600 border-0">

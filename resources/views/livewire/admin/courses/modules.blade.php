@@ -162,6 +162,7 @@
                                                     \App\Enums\ContentType::Link     => ['green', 'ลิงก์',   'link'],
                                                     \App\Enums\ContentType::Test     => ['purple', 'ทดสอบ', 'quiz'],
                                                     \App\Enums\ContentType::Worksheet => ['amber', 'ใบงาน', 'assignment'],
+                                                    \App\Enums\ContentType::Outline => ['zinc', 'Outline', 'list_alt'],
                                                 };
                                             @endphp
                                             <div class="flex items-center gap-1.5">
@@ -371,8 +372,9 @@
             {{-- Content type --}}
             <flux:field>
                 <flux:label>ประเภทเนื้อหา <span class="text-error">*</span></flux:label>
-                <div class="grid grid-cols-3 sm:grid-cols-5 gap-2 mt-1">
+                <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 mt-1">
                     @foreach ([
+                        ['outline', 'list_alt', 'Outline'],
                         ['video', 'play_circle', 'วิดีโอ'],
                         ['document', 'description', 'เอกสาร'],
                         ['link', 'link', 'ลิงก์'],
@@ -403,7 +405,11 @@
             </flux:field>
 
             {{-- URL / Test Selection --}}
-            @if ($contentType === 'test')
+            @if ($contentType === 'outline')
+                <p class="text-xs text-on-surface/50 -mt-1">
+                    แสดงคำอธิบายโมดูลและรายการเนื้อหาทั้งหมดโดยอัตโนมัติ ไม่ต้องระบุ URL
+                </p>
+            @elseif ($contentType === 'test')
                 <flux:field>
                     <flux:label>เลือกแบบทดสอบ <span class="text-error">*</span></flux:label>
                     <flux:select wire:model="contentAssessmentId" placeholder="กรุณาเลือกแบบทดสอบ...">

@@ -391,7 +391,7 @@ class Modules extends Component
     protected function contentRules(): array
     {
         return [
-            'contentType' => ['required', 'in:video,document,link,test,worksheet'],
+            'contentType' => ['required', 'in:video,document,link,test,worksheet,outline'],
             'contentTitle' => ['required', 'string', 'max:500'],
             'contentFileUrl' => ['nullable', 'string', 'max:1000'],
             'contentAnswerKeyUrl' => ['nullable', 'string', 'max:1000'],

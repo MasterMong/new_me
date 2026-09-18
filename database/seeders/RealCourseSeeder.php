@@ -120,6 +120,7 @@ class RealCourseSeeder extends Seeder
             'sort_order' => $n,
         ]);
 
+        $this->createOutlineContent($module);
         $this->createVideoContents($module, $outline);
         $this->createDocumentContent($module, $base, $n, $outline['title']);
         $this->createModuleTests($course, $module, $base, $n, $outline);
@@ -194,6 +195,22 @@ class RealCourseSeeder extends Seeder
                 </body>
             </html>
         HTML;
+    }
+
+    /**
+     * The module's overview item — shown first in the learner's content
+     * tree, before its own pre-test. Its body (objectives + a list of the
+     * module's other content) is composed at render time from the module
+     * and its sibling contents, so nothing besides a title is stored here.
+     */
+    private function createOutlineContent(Module $module): void
+    {
+        ModuleContent::create([
+            'module_id' => $module->id,
+            'content_type' => ContentType::Outline->value,
+            'title' => 'ภาพรวมโมดูล: '.$module->title,
+            'sort_order' => 0,
+        ]);
     }
 
     /**
