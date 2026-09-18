@@ -399,19 +399,28 @@
         @fluxScripts
 
         <script>
-            // Dark mode not yet designed — force light after Alpine and on each Livewire navigation
-            const forceLightMode = () => {
-                if (window.Flux) {
-                    if (typeof window.Flux.applyAppearance === 'function') {
-                        window.Flux.applyAppearance('light');
-                    } else {
-                        window.Flux.appearance = 'light';
+            // Dark mode not yet designed — force light after Alpine and on each Livewire navigation.
+            // wire:navigate keeps the same JS realm alive across page swaps and re-executes this
+            // inline body script every time, so the listener registration is guarded to run once
+            // per realm — otherwise a top-level `const` here throws a redeclaration SyntaxError
+            // (and silently breaks any script that runs after it on that swapped-in page).
+            if (! window.__forceLightModeBound) {
+                window.__forceLightModeBound = true;
+
+                window.forceLightMode = function () {
+                    if (window.Flux) {
+                        if (typeof window.Flux.applyAppearance === 'function') {
+                            window.Flux.applyAppearance('light');
+                        } else {
+                            window.Flux.appearance = 'light';
+                        }
                     }
-                }
+                };
+
+                document.addEventListener('livewire:navigated', window.forceLightMode);
             }
 
-            forceLightMode();
-            document.addEventListener('livewire:navigated', forceLightMode);
+            window.forceLightMode();
         </script>
     </body>
 </html>
