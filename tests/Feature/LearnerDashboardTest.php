@@ -1,9 +1,12 @@
 <?php
 
+use App\Enums\ContentType;
 use App\Enums\UserRole;
 use App\Livewire\Learner\Dashboard;
 use App\Models\Course;
 use App\Models\Enrollment;
+use App\Models\Module;
+use App\Models\ModuleContent;
 use App\Models\User;
 use Livewire\Livewire;
 
@@ -40,4 +43,38 @@ test('learner dashboard shows enrolled courses', function () {
 
     Livewire::test(Dashboard::class)
         ->assertSee('Test Learning Course');
+});
+
+test('an in-progress course is featured as the active enrollment and a completed one is badged', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+
+    $inProgressCourse = Course::factory()->create(['title' => 'In Progress Course']);
+    $inProgressModule = Module::factory()->create(['course_id' => $inProgressCourse->id]);
+    $watchedContent = ModuleContent::factory()->create([
+        'module_id' => $inProgressModule->id,
+        'content_type' => ContentType::Document->value,
+    ]);
+    ModuleContent::factory()->create([
+        'module_id' => $inProgressModule->id,
+        'content_type' => ContentType::Document->value,
+    ]);
+    $watchedContent->views()->create(['user_id' => $user->id, 'is_completed' => true, 'viewed_at' => now()]);
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $inProgressCourse->id]);
+
+    $completedCourse = Course::factory()->create(['title' => 'Completed Course']);
+    $completedModule = Module::factory()->create(['course_id' => $completedCourse->id]);
+    $completedContent = ModuleContent::factory()->create([
+        'module_id' => $completedModule->id,
+        'content_type' => ContentType::Document->value,
+    ]);
+    $completedContent->views()->create(['user_id' => $user->id, 'is_completed' => true, 'viewed_at' => now()]);
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $completedCourse->id]);
+
+    $this->actingAs($user);
+
+    Livewire::test(Dashboard::class)
+        ->assertViewHas('activeEnrollment', fn ($enrollment) => $enrollment->course->is($inProgressCourse))
+        ->assertViewHas('otherEnrollments', fn ($others) => $others->contains(fn ($e) => $e->course->is($completedCourse)))
+        ->assertSee('กำลังเรียนอยู่')
+        ->assertSee('เรียนจบแล้ว');
 });

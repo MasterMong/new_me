@@ -14,17 +14,44 @@ class Dashboard extends Component
 {
     public function render()
     {
-        $enrollments = Enrollment::with(['user', 'course.modules.contents.views', 'course.modules.contents.groupAccess'])
-            ->where('user_id', Auth::id())
+        $user = Auth::user();
+
+        $enrollments = Enrollment::with([
+            'user',
+            'course.modules.contents.views',
+            'course.modules.contents.groupAccess',
+            'course.modules.assessments.attempts',
+        ])
+            ->where('user_id', $user->id)
             ->get()
-            ->map(function ($enrollment) {
+            ->map(function (Enrollment $enrollment) use ($user) {
                 $enrollment->progress_percent = $enrollment->calculateProgressPercent();
+                $enrollment->completed_module_count = $enrollment->course->modules
+                    ->filter(fn ($module) => $module->isCompletedFor($user))
+                    ->count();
+                $enrollment->total_module_count = $enrollment->course->modules->count();
+                $enrollment->last_activity_at = $enrollment->course->modules
+                    ->flatMap(fn ($module) => $module->contents)
+                    ->flatMap(fn ($content) => $content->views)
+                    ->where('user_id', $user->id)
+                    ->max('viewed_at');
 
                 return $enrollment;
             });
 
+        $activeEnrollment = $enrollments
+            ->filter(fn (Enrollment $e) => $e->progress_percent > 0 && $e->progress_percent < 100)
+            ->sortByDesc('last_activity_at')
+            ->first();
+
+        $otherEnrollments = $activeEnrollment
+            ? $enrollments->reject(fn (Enrollment $e) => $e->id === $activeEnrollment->id)
+            : $enrollments;
+
         return view('livewire.learner.dashboard', [
-            'enrollments' => $enrollments,
+            'activeEnrollment' => $activeEnrollment,
+            'otherEnrollments' => $otherEnrollments,
+            'hasEnrollments' => $enrollments->isNotEmpty(),
         ]);
     }
 }
