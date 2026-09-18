@@ -19,7 +19,28 @@
     </div>
 
     {{-- Spotlight: the one thing to do right now --}}
-    @if($nextStep)
+    @if($nextStep && $nextStep['type'] === 'locked')
+        <div class="mb-10 flex gap-4 rounded-2xl border border-error/30 bg-error-container/40 p-6">
+            <div class="size-10 shrink-0 rounded-full bg-error text-on-error flex items-center justify-center">
+                <flux:icon.lock-closed variant="mini" />
+            </div>
+            <div class="flex-1 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <p class="text-xs font-semibold text-on-error-container mb-1">โมดูลนี้ถูกล็อค</p>
+                    <flux:heading size="lg">{{ $nextStep['title'] }}</flux:heading>
+                    <p class="text-sm text-on-surface/60 mt-0.5">{{ $nextStep['subtitle'] }}</p>
+                </div>
+                <flux:button
+                    variant="danger"
+                    wire:click="restartModule({{ $nextStep['restartModuleId'] }})"
+                    wire:confirm="ความคืบหน้าทั้งหมดในโมดูลนี้ (เนื้อหา แบบทดสอบก่อนเรียน และแบบทดสอบหลังเรียน) จะถูกล้าง และเริ่มใหม่ตั้งแต่ต้น ยืนยันหรือไม่?"
+                    class="shrink-0"
+                >
+                    {{ $nextStep['cta'] }}
+                </flux:button>
+            </div>
+        </div>
+    @elseif($nextStep)
         <div class="mb-10 flex gap-4 rounded-2xl border border-secondary-container bg-secondary-container/10 p-6">
             <div class="size-10 shrink-0 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
                 @if($nextStep['type'] === 'done')

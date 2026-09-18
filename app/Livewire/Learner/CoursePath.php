@@ -39,6 +39,25 @@ class CoursePath extends Component
         return $this->course->title;
     }
 
+    /**
+     * Wipe progress in a module the learner has locked themselves out of
+     * (exhausted the post-test's attempts without passing) so they can
+     * redo it from the Outline. Re-checks the lock server-side rather than
+     * trusting the button was only ever shown for a genuinely locked module.
+     */
+    public function restartModule(int $moduleId): void
+    {
+        $module = $this->course->modules()
+            ->with(['assessments.attempts' => fn ($query) => $query->where('user_id', Auth::id())])
+            ->findOrFail($moduleId);
+
+        abort_unless($module->isLockedOutFor(Auth::user()), 403);
+
+        $module->resetProgressFor(Auth::user());
+
+        $this->dispatch('toast', message: 'เริ่มเรียนโมดูลนี้ใหม่เรียบร้อยแล้ว', type: 'success');
+    }
+
     public function render()
     {
         $courseModules = $this->course->modules()
@@ -55,13 +74,21 @@ class CoursePath extends Component
             ->map(function ($module, $index) use ($courseModules, $preTest) {
                 $previousModule = $index > 0 ? $courseModules[$index - 1] : null;
                 $module->is_accessible = $this->checkModuleAccessibility($module, $previousModule, $preTest);
+                $module->is_locked_out = $module->isLockedOutFor(Auth::user());
+
+                if ($module->is_locked_out) {
+                    $module->is_accessible = false;
+                }
+
                 $module->progress_percent = $this->calculateModuleProgress($module);
                 $module->is_completed = $this->isModuleCompleted($module);
                 $module->pre_test = $module->assessments->firstWhere('type', AssessmentType::PreTest);
                 $module->post_test = $module->assessments->firstWhere('type', AssessmentType::PostTest);
-                $module->lock_reason = $module->is_accessible
-                    ? null
-                    : $this->moduleLockReason($module, $previousModule, $preTest);
+                $module->lock_reason = match (true) {
+                    $module->is_locked_out => 'ทำแบบทดสอบหลังเรียนไม่ผ่านครบ '.$module->post_test->max_attempts.' ครั้ง ต้องเริ่มเรียนโมดูลนี้ใหม่',
+                    ! $module->is_accessible => $this->moduleLockReason($module, $previousModule, $preTest),
+                    default => null,
+                };
 
                 if ($module->is_accessible && ! $module->is_completed) {
                     $module->next_action = $this->moduleNextAction($module);
@@ -99,6 +126,19 @@ class CoursePath extends Component
                 'subtitle' => 'แบบทดสอบก่อนเรียนของหลักสูตร',
                 'href' => route('learn.assessments.show', $preTest),
                 'cta' => 'เริ่มทำแบบทดสอบ',
+            ];
+        }
+
+        $lockedModule = $modules->first(fn ($m) => $m->is_locked_out);
+
+        if ($lockedModule) {
+            return [
+                'type' => 'locked',
+                'key' => 'module:'.$lockedModule->id,
+                'title' => 'โมดูล '.$lockedModule->module_number.': '.$lockedModule->title,
+                'subtitle' => $lockedModule->lock_reason,
+                'cta' => 'เริ่มเรียนโมดูลนี้ใหม่',
+                'restartModuleId' => $lockedModule->id,
             ];
         }
 

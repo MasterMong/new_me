@@ -55,6 +55,10 @@ class CoursePlayer extends Component
 
         $coursePreTest = $this->course->assessments()->where('type', 'pre_test')->whereNull('module_id')->first();
 
+        if ($this->module->isLockedOutFor(Auth::user())) {
+            return redirect()->route('learn.courses.show', $this->course);
+        }
+
         abort_unless($this->isModuleAccessible($this->module, $previousModule, $coursePreTest), 403, 'โมดูลนี้ยังไม่ถูกปลดล็อค');
 
         // Default to first content if none selected
@@ -221,6 +225,10 @@ class CoursePlayer extends Component
 
     protected function isModuleAccessible(Module $module, ?Module $previousModule, ?Assessment $coursePreTest): bool
     {
+        if ($module->isLockedOutFor(Auth::user())) {
+            return false;
+        }
+
         if ($coursePreTest && ! $coursePreTest->attempts()->where('user_id', Auth::id())->exists()) {
             return false;
         }

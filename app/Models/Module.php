@@ -130,4 +130,50 @@ class Module extends Model
     {
         return $this->progressPercentFor($user) === 100 && $this->postTestPassedFor($user);
     }
+
+    /**
+     * Whether this module's own post-test is exhausted for this user — every
+     * attempt used, none passed. Once locked out, the learner can't retake
+     * the test; they must resetProgressFor() and redo the module from the
+     * Outline. A module with no post-test, or one with unlimited attempts
+     * (max_attempts <= 0), can never lock out this way.
+     * Expects `assessments.attempts` eager-loaded, filtered to this user.
+     */
+    public function isLockedOutFor(User $user): bool
+    {
+        $postTest = $this->assessments->firstWhere('type', AssessmentType::PostTest);
+
+        if (! $postTest || $postTest->max_attempts <= 0) {
+            return false;
+        }
+
+        $attempts = $postTest->attempts->where('user_id', $user->id);
+
+        if ($attempts->count() < $postTest->max_attempts) {
+            return false;
+        }
+
+        return ! $attempts->contains(fn ($attempt) => $attempt->status === TestAttemptStatus::Passed);
+    }
+
+    /**
+     * Wipe this user's progress in this module — watched content, and
+     * attempts on the module's own pre-test and post-test (answers and any
+     * expert review cascade with the attempt) — so they restart from the
+     * Outline with a fresh set of post-test attempts. Only meaningful once
+     * isLockedOutFor() is true; the worksheet/assignment (if any) and its
+     * expert review are left untouched, since exhausting the post-test is
+     * the only thing that triggers this reset.
+     */
+    public function resetProgressFor(User $user): void
+    {
+        $contentIds = $this->contents()->pluck('id');
+        ContentView::where('user_id', $user->id)->whereIn('content_id', $contentIds)->delete();
+
+        $assessmentIds = $this->assessments()
+            ->whereIn('type', [AssessmentType::PreTest->value, AssessmentType::PostTest->value])
+            ->pluck('id');
+
+        TestAttempt::where('user_id', $user->id)->whereIn('assessment_id', $assessmentIds)->delete();
+    }
 }

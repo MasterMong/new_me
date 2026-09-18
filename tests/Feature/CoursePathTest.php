@@ -475,6 +475,146 @@ test('the spotlight prompts for a course review once every module and the post-t
         ->assertViewHas('nextStep', fn ($nextStep) => $nextStep['type'] === 'review');
 });
 
+test('a module locks out once its post-test attempts are exhausted without a pass', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    $module = Module::factory()->create(['course_id' => $course->id, 'sort_order' => 1, 'module_number' => 1]);
+    $postTest = Assessment::factory()->create([
+        'course_id' => $course->id,
+        'module_id' => $module->id,
+        'type' => AssessmentType::PostTest->value,
+        'max_attempts' => 3,
+    ]);
+    TestAttempt::factory()->count(3)->create([
+        'user_id' => $user->id,
+        'assessment_id' => $postTest->id,
+        'status' => TestAttemptStatus::Failed->value,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(CoursePath::class, ['course' => $course])
+        ->assertViewHas('modules', function ($modules) {
+            $m = $modules->first();
+
+            return $m->is_locked_out === true
+                && $m->is_accessible === false
+                && str_contains($m->lock_reason, 'ไม่ผ่านครบ 3 ครั้ง');
+        })
+        ->assertViewHas('nextStep', fn ($nextStep) => $nextStep['type'] === 'locked' && $nextStep['restartModuleId'] === $module->id);
+});
+
+test('a module with a passed attempt among its 3 is not locked out', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    $module = Module::factory()->create(['course_id' => $course->id, 'sort_order' => 1]);
+    $postTest = Assessment::factory()->create([
+        'course_id' => $course->id,
+        'module_id' => $module->id,
+        'type' => AssessmentType::PostTest->value,
+        'max_attempts' => 3,
+    ]);
+    TestAttempt::factory()->count(2)->create([
+        'user_id' => $user->id,
+        'assessment_id' => $postTest->id,
+        'status' => TestAttemptStatus::Failed->value,
+    ]);
+    TestAttempt::factory()->create([
+        'user_id' => $user->id,
+        'assessment_id' => $postTest->id,
+        'status' => TestAttemptStatus::Passed->value,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(CoursePath::class, ['course' => $course])
+        ->assertViewHas('modules', fn ($modules) => $modules->first()->is_locked_out === false);
+});
+
+test('restarting a locked-out module clears content views and both its test attempts', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    $module = Module::factory()->create(['course_id' => $course->id, 'sort_order' => 1]);
+    $content = ModuleContent::factory()->create(['module_id' => $module->id, 'content_type' => ContentType::Video]);
+    $content->views()->create(['user_id' => $user->id, 'is_completed' => true, 'viewed_at' => now()]);
+
+    $preTest = Assessment::factory()->create([
+        'course_id' => $course->id,
+        'module_id' => $module->id,
+        'type' => AssessmentType::PreTest->value,
+    ]);
+    TestAttempt::factory()->create([
+        'user_id' => $user->id,
+        'assessment_id' => $preTest->id,
+        'status' => TestAttemptStatus::Submitted->value,
+    ]);
+
+    $postTest = Assessment::factory()->create([
+        'course_id' => $course->id,
+        'module_id' => $module->id,
+        'type' => AssessmentType::PostTest->value,
+        'max_attempts' => 3,
+    ]);
+    TestAttempt::factory()->count(3)->create([
+        'user_id' => $user->id,
+        'assessment_id' => $postTest->id,
+        'status' => TestAttemptStatus::Failed->value,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(CoursePath::class, ['course' => $course])
+        ->call('restartModule', $module->id);
+
+    expect($content->views()->where('user_id', $user->id)->count())->toBe(0)
+        ->and(TestAttempt::where('user_id', $user->id)->where('assessment_id', $preTest->id)->count())->toBe(0)
+        ->and(TestAttempt::where('user_id', $user->id)->where('assessment_id', $postTest->id)->count())->toBe(0);
+});
+
+test('restartModule refuses to reset a module that is not actually locked out', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    $module = Module::factory()->create(['course_id' => $course->id, 'sort_order' => 1]);
+
+    $this->actingAs($user);
+
+    Livewire::test(CoursePath::class, ['course' => $course])
+        ->call('restartModule', $module->id)
+        ->assertForbidden();
+});
+
+test('directly visiting a locked-out module redirects to the course path instead of a bare 403', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    $module = Module::factory()->create(['course_id' => $course->id, 'sort_order' => 1]);
+    $postTest = Assessment::factory()->create([
+        'course_id' => $course->id,
+        'module_id' => $module->id,
+        'type' => AssessmentType::PostTest->value,
+        'max_attempts' => 3,
+    ]);
+    TestAttempt::factory()->count(3)->create([
+        'user_id' => $user->id,
+        'assessment_id' => $postTest->id,
+        'status' => TestAttemptStatus::Failed->value,
+    ]);
+
+    $this->actingAs($user);
+
+    $this->get(route('learn.courses.play', ['course' => $course, 'module' => $module]))
+        ->assertRedirect(route('learn.courses.show', $course));
+});
+
 test('the spotlight is empty once the module, post-test, and review are all done but no certificate exists yet', function () {
     $user = User::factory()->create(['role' => UserRole::Learner->value]);
     $course = Course::factory()->create();
