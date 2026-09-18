@@ -142,6 +142,25 @@ class CoursePlayer extends Component
         $this->enrollment->issueCertificateIfEligible();
     }
 
+    /**
+     * Records the first time a worksheet is downloaded — starts the
+     * answer key's unlock timer (ModuleContent::ANSWER_KEY_DELAY_MINUTES).
+     * Re-downloading the worksheet afterward doesn't push the timer back.
+     */
+    public function markWorksheetDownloaded(int $contentId): void
+    {
+        abort_unless($this->activeContent && $this->activeContent->id === $contentId, 403);
+        abort_unless($this->activeContent->content_type === ContentType::Worksheet, 403);
+
+        ContentView::firstOrCreate(
+            ['user_id' => Auth::id(), 'content_id' => $contentId],
+            ['is_completed' => true, 'viewed_at' => now()]
+        );
+
+        $this->dispatch('contentCompleted');
+        $this->enrollment->issueCertificateIfEligible();
+    }
+
     public function isContentAccessible(ModuleContent $content): bool
     {
         return $content->isAccessibleFor(Auth::user());

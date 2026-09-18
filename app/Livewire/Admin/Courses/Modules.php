@@ -58,6 +58,8 @@ class Modules extends Component
 
     public string $contentFileUrl = '';
 
+    public string $contentAnswerKeyUrl = '';
+
     public string $contentDurationMinutes = '';
 
     public ?int $contentAssessmentId = null;
@@ -228,6 +230,7 @@ class Modules extends Component
         $this->contentType = $content->content_type->value;
         $this->contentTitle = $content->title;
         $this->contentFileUrl = $content->file_url ?? '';
+        $this->contentAnswerKeyUrl = $content->answer_key_url ?? '';
         $this->contentDurationMinutes = $content->duration_minutes !== null
             ? (string) $content->duration_minutes
             : '';
@@ -247,6 +250,7 @@ class Modules extends Component
             'content_type' => $this->contentType,
             'title' => $this->contentTitle,
             'file_url' => $this->contentFileUrl ?: null,
+            'answer_key_url' => $this->contentType === 'worksheet' ? ($this->contentAnswerKeyUrl ?: null) : null,
             'duration_minutes' => $this->contentDurationMinutes !== ''
                 ? (float) $this->contentDurationMinutes
                 : null,
@@ -387,9 +391,10 @@ class Modules extends Component
     protected function contentRules(): array
     {
         return [
-            'contentType' => ['required', 'in:video,document,link,test'],
+            'contentType' => ['required', 'in:video,document,link,test,worksheet'],
             'contentTitle' => ['required', 'string', 'max:500'],
             'contentFileUrl' => ['nullable', 'string', 'max:1000'],
+            'contentAnswerKeyUrl' => ['nullable', 'string', 'max:1000'],
             'contentDurationMinutes' => ['nullable', 'numeric', 'min:0'],
             'contentAssessmentId' => [
                 'nullable',
@@ -434,6 +439,7 @@ class Modules extends Component
         $this->contentType = 'video';
         $this->contentTitle = '';
         $this->contentFileUrl = '';
+        $this->contentAnswerKeyUrl = '';
         $this->contentDurationMinutes = '';
         $this->contentAssessmentId = null;
         $this->selectedGroupIds = [];

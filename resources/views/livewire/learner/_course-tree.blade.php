@@ -4,6 +4,7 @@
         \App\Enums\ContentType::Document => 'document-text',
         \App\Enums\ContentType::Link => 'link',
         \App\Enums\ContentType::Test => 'clipboard-document-check',
+        \App\Enums\ContentType::Worksheet => 'arrow-down-tray',
     };
 @endphp
 

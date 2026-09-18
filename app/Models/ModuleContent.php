@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ContentType;
 use App\Enums\TestAttemptStatus;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,8 +17,14 @@ class ModuleContent extends Model
 
     public $timestamps = false;
 
+    /**
+     * Minutes a worksheet's answer key stays locked after the learner
+     * downloads the worksheet itself.
+     */
+    public const ANSWER_KEY_DELAY_MINUTES = 10;
+
     protected $fillable = [
-        'module_id', 'content_type', 'assessment_id', 'title', 'file_url', 'duration_minutes', 'sort_order',
+        'module_id', 'content_type', 'assessment_id', 'title', 'file_url', 'answer_key_url', 'duration_minutes', 'sort_order',
     ];
 
     protected $casts = [
@@ -126,5 +133,30 @@ class ModuleContent extends Model
             ->filter(fn (ModuleContent $content) => $content->isVisibleTo($user));
 
         return $previousContents->every(fn (ModuleContent $content) => $content->isCompletedFor($user));
+    }
+
+    /**
+     * When the given user first downloaded this worksheet, or null if they
+     * haven't yet. Expects `views` eager-loaded for accuracy/performance.
+     */
+    public function worksheetDownloadedAtFor(User $user): ?CarbonInterface
+    {
+        if (! $this->relationLoaded('views')) {
+            $this->load('views');
+        }
+
+        return $this->views->where('user_id', $user->id)->first()?->viewed_at;
+    }
+
+    /**
+     * Whether this worksheet's answer key has unlocked for the given user —
+     * ANSWER_KEY_DELAY_MINUTES have passed since they downloaded the
+     * worksheet itself.
+     */
+    public function answerKeyUnlockedFor(User $user): bool
+    {
+        $downloadedAt = $this->worksheetDownloadedAtFor($user);
+
+        return $downloadedAt !== null && $downloadedAt->lte(now()->subMinutes(self::ANSWER_KEY_DELAY_MINUTES));
     }
 }

@@ -161,6 +161,7 @@
                                                     \App\Enums\ContentType::Document => ['blue',  'เอกสาร', 'description'],
                                                     \App\Enums\ContentType::Link     => ['green', 'ลิงก์',   'link'],
                                                     \App\Enums\ContentType::Test     => ['purple', 'ทดสอบ', 'quiz'],
+                                                    \App\Enums\ContentType::Worksheet => ['amber', 'ใบงาน', 'assignment'],
                                                 };
                                             @endphp
                                             <div class="flex items-center gap-1.5">
@@ -370,12 +371,13 @@
             {{-- Content type --}}
             <flux:field>
                 <flux:label>ประเภทเนื้อหา <span class="text-error">*</span></flux:label>
-                <div class="grid grid-cols-4 gap-2 mt-1">
+                <div class="grid grid-cols-3 sm:grid-cols-5 gap-2 mt-1">
                     @foreach ([
                         ['video', 'play_circle', 'วิดีโอ'],
                         ['document', 'description', 'เอกสาร'],
                         ['link', 'link', 'ลิงก์'],
-                        ['test', 'quiz', 'แบบทดสอบ']
+                        ['test', 'quiz', 'แบบทดสอบ'],
+                        ['worksheet', 'assignment', 'ใบงาน'],
                     ] as [$val, $icon, $label])
                         <button
                             wire:click="$set('contentType', '{{ $val }}')"
@@ -413,6 +415,21 @@
                         @endforeach
                     </flux:select>
                     <flux:error name="contentAssessmentId" />
+                </flux:field>
+            @elseif ($contentType === 'worksheet')
+                <flux:field>
+                    <flux:label>URL ใบงาน (ไฟล์ให้ผู้เรียนดาวน์โหลด)</flux:label>
+                    <flux:input wire:model="contentFileUrl" placeholder="https://..." />
+                    <flux:error name="contentFileUrl" />
+                </flux:field>
+                <flux:field>
+                    <flux:label>URL เฉลย</flux:label>
+                    <flux:description>
+                        ปลดล็อคให้ดาวน์โหลดได้ {{ \App\Models\ModuleContent::ANSWER_KEY_DELAY_MINUTES }} นาที
+                        หลังผู้เรียนดาวน์โหลดใบงาน
+                    </flux:description>
+                    <flux:input wire:model="contentAnswerKeyUrl" placeholder="https://..." />
+                    <flux:error name="contentAnswerKeyUrl" />
                 </flux:field>
             @else
                 <flux:field>

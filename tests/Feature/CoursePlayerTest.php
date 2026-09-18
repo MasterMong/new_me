@@ -514,3 +514,99 @@ test('the course pre-test is not re-queried once per module while building the t
     // course size instead of staying flat.
     expect($preTestQueries->count())->toBeLessThanOrEqual(2);
 });
+
+test('a worksheet content item renders its download UI', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    $module = Module::factory()->create(['course_id' => $course->id]);
+    ModuleContent::factory()->create([
+        'module_id' => $module->id,
+        'content_type' => ContentType::Worksheet->value,
+        'title' => 'ใบงานที่ 1.1',
+        'file_url' => 'https://example.com/worksheet.pdf',
+        'answer_key_url' => 'https://example.com/answer-key.pdf',
+    ]);
+
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    $this->actingAs($user);
+
+    $this->get(route('learn.courses.play', [$course, $module]))
+        ->assertOk()
+        ->assertSee('ดาวน์โหลดใบงาน')
+        ->assertSee('ดาวน์โหลดใบงานก่อนเพื่อปลดล็อคเฉลย');
+});
+
+test('downloading a worksheet starts the answer key timer but does not unlock it immediately', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    $module = Module::factory()->create(['course_id' => $course->id]);
+    $content = ModuleContent::factory()->create([
+        'module_id' => $module->id,
+        'content_type' => ContentType::Worksheet->value,
+    ]);
+
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    $this->actingAs($user);
+
+    Livewire::test(CoursePlayer::class, ['course' => $course, 'module' => $module, 'content' => $content])
+        ->call('markWorksheetDownloaded', $content->id)
+        ->assertSeeText('เฉลยจะปลดล็อคในอีก');
+
+    $content = $content->fresh();
+
+    expect($content->answerKeyUnlockedFor($user))->toBeFalse()
+        ->and($content->worksheetDownloadedAtFor($user))->not->toBeNull();
+});
+
+test('the answer key unlocks once the delay has passed', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    $module = Module::factory()->create(['course_id' => $course->id]);
+    $content = ModuleContent::factory()->create([
+        'module_id' => $module->id,
+        'content_type' => ContentType::Worksheet->value,
+        'answer_key_url' => 'https://example.com/answer-key.pdf',
+    ]);
+    $content->views()->create([
+        'user_id' => $user->id,
+        'is_completed' => true,
+        'viewed_at' => now()->subMinutes(ModuleContent::ANSWER_KEY_DELAY_MINUTES + 1),
+    ]);
+
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    $this->actingAs($user);
+
+    expect($content->answerKeyUnlockedFor($user))->toBeTrue();
+
+    $this->get(route('learn.courses.play', [$course, $module, $content]))
+        ->assertOk()
+        ->assertSee('ดาวน์โหลดเฉลย')
+        ->assertDontSee('เฉลยจะปลดล็อคในอีก');
+});
+
+test('a repeat worksheet download does not push the answer key timer back', function () {
+    $user = User::factory()->create(['role' => UserRole::Learner->value]);
+    $course = Course::factory()->create();
+    $module = Module::factory()->create(['course_id' => $course->id]);
+    $content = ModuleContent::factory()->create([
+        'module_id' => $module->id,
+        'content_type' => ContentType::Worksheet->value,
+    ]);
+    // Truncated to whole seconds: the `viewed_at` column has no fractional-second
+    // precision, so comparing against a microsecond-precise Carbon instance later
+    // would spuriously fail even when the stored timestamp didn't actually change.
+    $firstDownload = now()->subMinutes(5)->startOfSecond();
+    $content->views()->create(['user_id' => $user->id, 'is_completed' => true, 'viewed_at' => $firstDownload]);
+
+    Enrollment::factory()->create(['user_id' => $user->id, 'course_id' => $course->id]);
+
+    $this->actingAs($user);
+
+    Livewire::test(CoursePlayer::class, ['course' => $course, 'module' => $module, 'content' => $content])
+        ->call('markWorksheetDownloaded', $content->id);
+
+    expect($content->fresh()->views()->where('user_id', $user->id)->first()->viewed_at->eq($firstDownload))->toBeTrue();
+});

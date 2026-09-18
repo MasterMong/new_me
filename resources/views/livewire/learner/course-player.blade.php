@@ -98,6 +98,58 @@
                         @endif
                     </div>
                     @break
+
+                @case(\App\Enums\ContentType::Worksheet)
+                    @php
+                        $worksheetDownloadedAt = $activeContent->worksheetDownloadedAtFor(auth()->user());
+                        $answerKeyUnlocked = $activeContent->answerKeyUnlockedFor(auth()->user());
+                        $answerKeyMinutesLeft = $worksheetDownloadedAt && ! $answerKeyUnlocked
+                            ? max(0, \App\Models\ModuleContent::ANSWER_KEY_DELAY_MINUTES - (int) $worksheetDownloadedAt->diffInMinutes(now()))
+                            : 0;
+                    @endphp
+                    <div class="flex flex-col items-center justify-center text-center p-10 max-w-md" wire:poll.30s>
+                        <div class="size-16 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-6">
+                            <flux:icon.arrow-down-tray variant="outline" class="size-8" />
+                        </div>
+                        <flux:heading size="xl" class="text-white mb-2">{{ $activeContent->title }}</flux:heading>
+                        <flux:subheading class="text-zinc-400 mb-8">
+                            ดาวน์โหลดใบงาน ทำให้เสร็จ แล้วจึงดาวน์โหลดเฉลยเพื่อตรวจคำตอบของคุณเอง
+                        </flux:subheading>
+
+                        <div class="flex flex-col gap-3 w-full">
+                            <a
+                                href="{{ $activeContent->file_url }}"
+                                download
+                                wire:click="markWorksheetDownloaded({{ $activeContent->id }})"
+                                class="flex items-center justify-center gap-2 rounded-xl bg-primary text-white px-6 py-3 font-semibold hover:bg-primary/90 transition-colors"
+                            >
+                                <flux:icon.arrow-down-tray variant="mini" />
+                                ดาวน์โหลดใบงาน
+                            </a>
+
+                            @if($answerKeyUnlocked)
+                                <a
+                                    href="{{ $activeContent->answer_key_url }}"
+                                    download
+                                    class="flex items-center justify-center gap-2 rounded-xl bg-green-600 text-white px-6 py-3 font-semibold hover:bg-green-500 transition-colors"
+                                >
+                                    <flux:icon.check-circle variant="mini" />
+                                    ดาวน์โหลดเฉลย
+                                </a>
+                            @elseif($worksheetDownloadedAt)
+                                <div class="flex items-center justify-center gap-2 rounded-xl bg-zinc-800 text-zinc-500 px-6 py-3 font-semibold">
+                                    <flux:icon.lock-closed variant="mini" />
+                                    เฉลยจะปลดล็อคในอีก {{ $answerKeyMinutesLeft }} นาที
+                                </div>
+                            @else
+                                <div class="flex items-center justify-center gap-2 rounded-xl bg-zinc-800 text-zinc-500 px-6 py-3 font-semibold">
+                                    <flux:icon.lock-closed variant="mini" />
+                                    ดาวน์โหลดใบงานก่อนเพื่อปลดล็อคเฉลย
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                    @break
             @endswitch
 
             {{-- Sequential Gating Overlay --}}
