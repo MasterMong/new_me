@@ -45,6 +45,55 @@
             </div>
         </div>
 
+        {{-- Section 1b: Structured course info (target audience, format, completion criteria, instructors, certification) --}}
+        <div class="rounded-3xl border border-outline-variant/30 bg-white p-8 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
+            <div class="flex items-center gap-4 mb-8 pb-6 border-b border-outline-variant/20">
+                <div class="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                    <span class="material-symbols-outlined text-[24px]">fact_check</span>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold font-headline text-on-surface tracking-tight">รายละเอียดหลักสูตร</h2>
+                    <p class="text-sm text-on-surface/50">แสดงในหน้าแนะนำคอร์สสำหรับผู้เรียนและหน้าสาธารณะ</p>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <flux:field>
+                    <flux:label>กลุ่มเป้าหมาย</flux:label>
+                    <flux:textarea wire:model="targetAudience" rows="3" placeholder="นักวิชาการศึกษา / นักวิเคราะห์นโยบาย (บุคลากรส่วนกลาง)&#10;บุคลากรใน สพท. / สถานศึกษาสังกัด สพฐ." />
+                    <flux:description>หนึ่งบรรทัดต่อหนึ่งกลุ่มเป้าหมาย</flux:description>
+                    <flux:error name="targetAudience" />
+                </flux:field>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <flux:field>
+                        <flux:label>รูปแบบการเรียนรู้</flux:label>
+                        <flux:input wire:model="learningFormat" placeholder="ศึกษาด้วยตนเอง ผ่าน e-Learning" />
+                        <flux:error name="learningFormat" />
+                    </flux:field>
+
+                    <flux:field>
+                        <flux:label>เกณฑ์การจบหลักสูตร</flux:label>
+                        <flux:input wire:model="completionCriteria" placeholder="เช่น มีผลการเรียนมากกว่า 80% และผ่านชิ้นงานครบทุกชิ้น" />
+                        <flux:error name="completionCriteria" />
+                    </flux:field>
+                </div>
+
+                <flux:field>
+                    <flux:label>ทีมวิทยากร / พี่เลี้ยง</flux:label>
+                    <flux:textarea wire:model="instructorTeam" rows="2" placeholder="บันทึกคลิปการสอน และตรวจใบงานพร้อมเฉลย" />
+                    <flux:error name="instructorTeam" />
+                </flux:field>
+
+                <flux:field>
+                    <flux:label>การรับรองจาก สพฐ.</flux:label>
+                    <flux:textarea wire:model="certificationInfo" rows="3" placeholder="การรับเกียรติบัตร&#10;ทำเนียบนักติดตามฯ ระดับพื้นฐาน" />
+                    <flux:description>หนึ่งบรรทัดต่อหนึ่งรายการ</flux:description>
+                    <flux:error name="certificationInfo" />
+                </flux:field>
+            </div>
+        </div>
+
         {{-- Section 2: Course Details --}}
         <div class="rounded-3xl border border-outline-variant/30 bg-white p-8 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
             <div class="flex items-center gap-4 mb-8 pb-6 border-b border-outline-variant/20">

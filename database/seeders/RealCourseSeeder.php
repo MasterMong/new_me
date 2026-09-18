@@ -68,11 +68,18 @@ class RealCourseSeeder extends Seeder
         $admin = User::where('role', 'admin')->first();
         $base = base_path(self::SOURCE_ROOT);
 
+        $overview = $this->parser->parseCourseOverview("{$base}/1. คำอธิบายหลหักสูตร/1. รายละเอียดหลักสูตร.docx");
+
         $course = Course::create([
             'title' => 'หลักสูตรพัฒนาศักยภาพนักติดตาม ประเมินผลการบริหารและการจัดการศึกษาขั้นพื้นฐาน',
             'description' => 'หลักสูตรพัฒนาศักยภาพนักวิชาการศึกษา บุคลากรในสำนักงานเขตพื้นที่การศึกษาและสถานศึกษา '
                 .'ให้มีความรู้ ความเข้าใจ และทักษะในการติดตามและประเมินผลการบริหารและการจัดการศึกษาขั้นพื้นฐานอย่างเป็นระบบ '
                 .'ศึกษาด้วยตนเองผ่าน e-Learning ครบ 9 โมดูล',
+            'target_audience' => $overview['target_audience'] ?? null,
+            'learning_format' => $overview['learning_format'] ?? null,
+            'completion_criteria' => $overview['completion_criteria'] ?? null,
+            'instructor_team' => $overview['instructor_team'] ?? null,
+            'certification_info' => $overview['certification_info'] ?? null,
             'thumbnail_url' => 'https://picsum.photos/seed/me-learning-core/800/450',
             'duration_hours' => 0,
             'passing_score_pct' => 80,

@@ -21,6 +21,16 @@ class Edit extends Component
 
     public string $description = '';
 
+    public string $targetAudience = '';
+
+    public string $learningFormat = '';
+
+    public string $completionCriteria = '';
+
+    public string $instructorTeam = '';
+
+    public string $certificationInfo = '';
+
     public ?string $durationHours = null;
 
     public int $passingScorePct = 70;
@@ -46,6 +56,11 @@ class Edit extends Component
         $this->course = $course;
         $this->title = $course->title;
         $this->description = $course->description ?? '';
+        $this->targetAudience = $course->target_audience ?? '';
+        $this->learningFormat = $course->learning_format ?? '';
+        $this->completionCriteria = $course->completion_criteria ?? '';
+        $this->instructorTeam = $course->instructor_team ?? '';
+        $this->certificationInfo = $course->certification_info ?? '';
         $this->durationHours = $course->duration_hours ? (string) $course->duration_hours : null;
         $this->passingScorePct = $course->passing_score_pct;
         $this->hasTest = $course->has_test;
@@ -64,6 +79,11 @@ class Edit extends Component
         return [
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
+            'targetAudience' => ['nullable', 'string'],
+            'learningFormat' => ['nullable', 'string'],
+            'completionCriteria' => ['nullable', 'string'],
+            'instructorTeam' => ['nullable', 'string'],
+            'certificationInfo' => ['nullable', 'string'],
             'durationHours' => ['nullable', 'numeric', 'min:0.5', 'max:9999'],
             'passingScorePct' => ['required', 'integer', 'min:0', 'max:100'],
             'hasTest' => ['boolean'],
@@ -104,6 +124,11 @@ class Edit extends Component
         $this->course->update([
             'title' => $this->title,
             'description' => $this->description ?: null,
+            'target_audience' => $this->targetAudience ?: null,
+            'learning_format' => $this->learningFormat ?: null,
+            'completion_criteria' => $this->completionCriteria ?: null,
+            'instructor_team' => $this->instructorTeam ?: null,
+            'certification_info' => $this->certificationInfo ?: null,
             'thumbnail_url' => $thumbnailUrl,
             'duration_hours' => $this->durationHours ?: null,
             'passing_score_pct' => $this->passingScorePct,

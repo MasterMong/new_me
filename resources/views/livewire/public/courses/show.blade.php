@@ -93,6 +93,86 @@
     <section class="py-16 px-8">
         <div class="max-w-7xl mx-auto">
             <div class="lg:w-2/3 space-y-12">
+                @php
+                    $targetAudienceList = $course->targetAudienceList();
+                    $certificationList = $course->certificationInfoList();
+                    $hasCourseDetails = $targetAudienceList || $course->learning_format || $course->completion_criteria || $course->instructor_team || $certificationList;
+                @endphp
+                @if($hasCourseDetails)
+                    <div class="space-y-6">
+                        <h2 class="text-2xl font-bold font-headline text-primary flex items-center gap-2">
+                            <span class="material-symbols-outlined">fact_check</span>
+                            รายละเอียดหลักสูตร
+                        </h2>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            @if($targetAudienceList)
+                                <div class="bg-surface-container-lowest rounded-2xl p-6 border border-outline-variant/10">
+                                    <div class="flex items-center gap-2 mb-3">
+                                        <span class="material-symbols-outlined text-primary">groups</span>
+                                        <h3 class="font-bold text-primary">กลุ่มเป้าหมาย</h3>
+                                    </div>
+                                    <ul class="space-y-1.5">
+                                        @foreach($targetAudienceList as $line)
+                                            <li class="flex items-start gap-2 text-sm text-on-surface-variant">
+                                                <span class="material-symbols-outlined text-[16px] text-primary/60 mt-0.5">check</span>
+                                                <span>{{ $line }}</span>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+
+                            @if($course->learning_format)
+                                <div class="bg-surface-container-lowest rounded-2xl p-6 border border-outline-variant/10">
+                                    <div class="flex items-center gap-2 mb-3">
+                                        <span class="material-symbols-outlined text-primary">laptop_mac</span>
+                                        <h3 class="font-bold text-primary">รูปแบบการเรียนรู้</h3>
+                                    </div>
+                                    <p class="text-sm text-on-surface-variant leading-relaxed">{{ $course->learning_format }}</p>
+                                </div>
+                            @endif
+
+                            @if($course->completion_criteria)
+                                <div class="bg-surface-container-lowest rounded-2xl p-6 border border-outline-variant/10">
+                                    <div class="flex items-center gap-2 mb-3">
+                                        <span class="material-symbols-outlined text-primary">task_alt</span>
+                                        <h3 class="font-bold text-primary">เกณฑ์การจบหลักสูตร</h3>
+                                    </div>
+                                    <p class="text-sm text-on-surface-variant leading-relaxed">{{ $course->completion_criteria }}</p>
+                                </div>
+                            @endif
+
+                            @if($course->instructor_team)
+                                <div class="bg-surface-container-lowest rounded-2xl p-6 border border-outline-variant/10">
+                                    <div class="flex items-center gap-2 mb-3">
+                                        <span class="material-symbols-outlined text-primary">school</span>
+                                        <h3 class="font-bold text-primary">ทีมวิทยากร / พี่เลี้ยง</h3>
+                                    </div>
+                                    <p class="text-sm text-on-surface-variant leading-relaxed">{{ $course->instructor_team }}</p>
+                                </div>
+                            @endif
+
+                            @if($certificationList)
+                                <div class="bg-surface-container-lowest rounded-2xl p-6 border border-outline-variant/10 sm:col-span-2">
+                                    <div class="flex items-center gap-2 mb-3">
+                                        <span class="material-symbols-outlined text-primary">workspace_premium</span>
+                                        <h3 class="font-bold text-primary">การรับรองจาก สพฐ.</h3>
+                                    </div>
+                                    <ul class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                        @foreach($certificationList as $line)
+                                            <li class="flex items-start gap-2 text-sm text-on-surface-variant">
+                                                <span class="material-symbols-outlined text-[16px] text-primary/60 mt-0.5">check</span>
+                                                <span>{{ $line }}</span>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                @endif
+
                 {{-- Modules --}}
                 <div class="space-y-6">
                     <h2 class="text-2xl font-bold font-headline text-primary flex items-center gap-2">

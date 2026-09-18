@@ -104,3 +104,20 @@ test('parses a module outline with an expert-graded worksheet threshold', functi
     expect($outline['assignment_min_points'])->toBe(64)
         ->and($outline['topics'])->toHaveCount(5);
 });
+
+test('parses the course overview doc into its five bold-headed sections', function () {
+    $overview = $this->parser->parseCourseOverview(
+        realCourseFixturePath('1. คำอธิบายหลหักสูตร/1. รายละเอียดหลักสูตร.docx')
+    );
+
+    expect($overview['target_audience'])->toBe(
+        "นักวิชาการศึกษา / นักวิเคราะห์นโยบาย (บุคลากรส่วนกลาง)\nบุคลากรใน สพท. / สถานศึกษาสังกัด สพฐ.\nผู้ที่สนใจ"
+    )
+        ->and($overview['learning_format'])->toBe('ศึกษาด้วยตนเอง ผ่าน e-Learning')
+        ->and($overview['completion_criteria'])->toBe('มีผลการเรียนมากกว่า 80% และการประเมินทักษะจากผลงาน ผ่านครบ 3 ชิ้นงาน')
+        ->and($overview['instructor_team'])->toBe('บันทึกคลิปการสอน และตรวจใบงานพร้อมเฉลย')
+        ->and($overview['certification_info'])->toBe("การรับเกียรติบัตร\nทำเนียบนักติดตามฯ ระดับพื้นฐาน")
+        // "คุณลักษณะเด่น" and "คำอธิบายระดับ สมรรถนะ" aren't in the field
+        // map, so their bodies shouldn't be attributed to any field.
+        ->and($overview)->toHaveCount(5);
+});

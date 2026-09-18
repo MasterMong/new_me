@@ -14,7 +14,8 @@ class Course extends Model
     use HasFactory;
 
     protected $fillable = [
-        'title', 'description', 'thumbnail_url', 'duration_hours', 'passing_score_pct',
+        'title', 'description', 'target_audience', 'learning_format', 'completion_criteria',
+        'instructor_team', 'certification_info', 'thumbnail_url', 'duration_hours', 'passing_score_pct',
         'has_test', 'require_review', 'is_published', 'created_by',
     ];
 
@@ -77,6 +78,41 @@ class Course extends Model
     public function scopePublished(Builder $query): Builder
     {
         return $query->where('is_published', true);
+    }
+
+    /**
+     * Target audience / สพฐ. certification are entered as one bullet per
+     * line in the admin form; split them back out for display.
+     *
+     * @return array<int, string>
+     */
+    public function targetAudienceList(): array
+    {
+        return $this->splitLines($this->target_audience);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function certificationInfoList(): array
+    {
+        return $this->splitLines($this->certification_info);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function splitLines(?string $value): array
+    {
+        if (! $value) {
+            return [];
+        }
+
+        return collect(preg_split('/\r\n|\r|\n/', $value))
+            ->map(fn ($line) => trim($line))
+            ->filter()
+            ->values()
+            ->all();
     }
 
     /**

@@ -166,6 +166,55 @@ class RealCourseContentParser
     }
 
     /**
+     * Parse the course-overview doc ("รายละเอียดหลักสูตร.docx") into the
+     * structured fields the course detail page shows — target audience,
+     * learning format, completion criteria, instructor team, and สพฐ.
+     * certification info. The doc has no table or other structure to key
+     * off: it's a flat list of bold section headings each followed by
+     * plain-text body paragraphs, so a heading's own bold text is the only
+     * thing that groups the paragraphs under it. Headings the doc has that
+     * aren't in the map below (e.g. "คุณลักษณะเด่น") are intentionally
+     * dropped — the course page only surfaces the five it lists.
+     *
+     * @return array<string, string>
+     */
+    public function parseCourseOverview(string $path): array
+    {
+        $headingToField = [
+            'กลุ่มเป้าหมาย' => 'target_audience',
+            'รูปแบบการเรียนรู้' => 'learning_format',
+            'เกณฑ์การจบหลักสูตร' => 'completion_criteria',
+            'ทีมวิทยากร / พี่เลี้ยง' => 'instructor_team',
+            'การรับรองจาก สพฐ.' => 'certification_info',
+        ];
+
+        $fields = [];
+        $currentField = null;
+
+        foreach ($this->extractor->paragraphs($path) as $paragraph) {
+            if ($paragraph['text'] === '') {
+                continue;
+            }
+
+            if ($paragraph['bold']) {
+                $currentField = $headingToField[$paragraph['text']] ?? null;
+
+                continue;
+            }
+
+            if ($currentField === null) {
+                continue;
+            }
+
+            $fields[$currentField] = isset($fields[$currentField])
+                ? $fields[$currentField]."\n".$paragraph['text']
+                : $paragraph['text'];
+        }
+
+        return $fields;
+    }
+
+    /**
      * @param  list<string>  $lines
      * @return array{0: string, 1: int} [title, index of first line after the title]
      */
